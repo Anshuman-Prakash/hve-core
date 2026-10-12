@@ -859,7 +859,8 @@ console.log(JSON.stringify(results));
       $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw $_.FullName)
       $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
     })
-    $graders | Should -HaveCount 38
+    # The SSSC smoke guard observes the workspace diff instead of a reply denial.
+    $graders | Should -HaveCount 37
     foreach ($grader in $graders) {
       $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
       $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
@@ -1788,14 +1789,14 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'missing-results'; Expected = $false; Bound = $true; Codes = 'read-error' }
     @{ Variant = 'malformed-results'; Expected = $false; Bound = $true; Codes = 'invalid-measurement' }
     @{ Variant = 'wrong-verdict'; Expected = $false; Bound = $true; Codes = 'wrong-verdict' }
-    @{ Variant = 'conflicting-verdict'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
-    @{ Variant = 'wrong-review'; Expected = $false; Bound = $true; Codes = 'review-mismatch' }
+    @{ Variant = 'conflicting-verdict'; Expected = $false; Bound = $true; Codes = 'conflicting-h1-verdict' }
+    @{ Variant = 'wrong-review'; Expected = $false; Bound = $true; Codes = 'review-outcome-mismatch' }
     @{ Variant = 'changed-criteria'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
-    @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true; Codes = 'metric-mismatch' }
+    @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
     @{ Variant = 'repeated-consistent'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'improvement-label'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'divergence-none'; Expected = $true; Bound = $true; Codes = '' }
-    @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true; Codes = 'conflicting-downstream-decision' }
     @{ Variant = 'stale-hash'; Expected = $true; Bound = $false; Codes = '' }
     @{ Variant = 'missing-binding'; Expected = $true; Bound = $false; Codes = '' }
     @{ Variant = 'wrong-slug'; Expected = $true; Bound = $false; Codes = '' }
@@ -1807,10 +1808,28 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'other-hypothesis'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'negated-criteria-change'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'crlf'; Expected = $true; Bound = $true; Codes = '' }
-    @{ Variant = 'conflicting-alias'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
-    @{ Variant = 'summary-conflict'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'conflicting-alias'; Expected = $false; Bound = $true; Codes = 'conflicting-h1-verdict' }
+    @{ Variant = 'summary-conflict'; Expected = $false; Bound = $true; Codes = 'conflicting-h1-verdict' }
     @{ Variant = 'lowered-threshold'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
     @{ Variant = 'conflicting-boundary'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
+    @{ Variant = 'missing-h1-verdict'; Expected = $false; Bound = $true; Codes = 'missing-h1-verdict' }
+    @{ Variant = 'missing-downstream-decision'; Expected = $false; Bound = $true; Codes = 'missing-downstream-decision' }
+    @{ Variant = 'missing-review-execution'; Expected = $false; Bound = $true; Codes = 'missing-review-execution' }
+    @{ Variant = 'missing-review-outcome'; Expected = $false; Bound = $true; Codes = 'missing-review-outcome' }
+    @{ Variant = 'missing-latency-reduction'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'missing-sample-size'; Expected = $false; Bound = $true; Codes = 'missing-sample-size' }
+    @{ Variant = 'missing-error-rate'; Expected = $false; Bound = $true; Codes = 'missing-error-rate' }
+    @{ Variant = 'missing-both-review-fields'; Expected = $false; Bound = $true; Codes = 'missing-review-execution,missing-review-outcome' }
+    @{ Variant = 'conflicting-review-execution'; Expected = $false; Bound = $true; Codes = 'conflicting-review-execution' }
+    @{ Variant = 'conflicting-review-outcome'; Expected = $false; Bound = $true; Codes = 'conflicting-review-outcome' }
+    @{ Variant = 'conflicting-latency-reduction'; Expected = $false; Bound = $true; Codes = 'conflicting-latency-reduction' }
+    @{ Variant = 'conflicting-sample-size'; Expected = $false; Bound = $true; Codes = 'conflicting-sample-size' }
+    @{ Variant = 'conflicting-error-rate'; Expected = $false; Bound = $true; Codes = 'conflicting-error-rate' }
+    @{ Variant = 'wrong-review-execution'; Expected = $false; Bound = $true; Codes = 'review-execution-mismatch' }
+    @{ Variant = 'wrong-sample-size'; Expected = $false; Bound = $true; Codes = 'sample-size-mismatch' }
+    @{ Variant = 'wrong-error-rate'; Expected = $false; Bound = $true; Codes = 'error-rate-mismatch' }
+    @{ Variant = 'concurrent-failures'; Expected = $false; Bound = $true; Codes = 'missing-sample-size,review-outcome-mismatch,wrong-decision' }
+    @{ Variant = 'invalid-review-record'; Expected = $false; Bound = $true; Codes = 'invalid-review-record' }
   ) {
     $workspace = Join-Path $TestDrive "outcome-$Variant"
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
@@ -1833,6 +1852,10 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     }
     if ($Variant -eq 'missing-results') { Remove-Item $resultsPath }
     if ($Variant -eq 'malformed-results') { Set-Content $resultsPath '{}' }
+    if ($Variant -eq 'invalid-review-record') {
+      $reviewPath = Join-Path $workspace '.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'
+      Set-Content $reviewPath ((Get-Content -Raw $reviewPath) -replace '(?m)^Review execution:[^\r\n]*\r?\n', '')
+    }
     $bindings = @($mounts | Where-Object dest -notlike '*/results.md' | ForEach-Object { "| $($_.dest) | $((Get-FileHash (Join-Path $workspace $_.dest) -Algorithm SHA256).Hash) |" })
     if ($Variant -eq 'reordered') { [array]::Reverse($bindings) }
     if ($Variant -eq 'stale-hash') { $bindings[0] = $bindings[0] -replace '[A-F0-9]{64}', ('0' * 64) }
@@ -1860,6 +1883,24 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'summary-conflict') { $body += "`n## Summary`nOutcome: invalidated" }
     if ($Variant -eq 'lowered-threshold') { $body += "`nThe latency threshold was lowered to 10% after execution began." }
     if ($Variant -eq 'conflicting-boundary') { $body += "`nSuccess criteria: at least 15% reduction." }
+    $removedLabels = @{
+      'missing-h1-verdict' = @('Outcome'); 'missing-downstream-decision' = @('Downstream decision')
+      'missing-review-execution' = @('Review execution'); 'missing-review-outcome' = @('Review outcome')
+      'missing-latency-reduction' = @('Latency reduction'); 'missing-sample-size' = @('Sample size'); 'missing-error-rate' = @('Error rate')
+      'missing-both-review-fields' = @('Review execution', 'Review outcome'); 'concurrent-failures' = @('Sample size')
+    }
+    if ($removedLabels.ContainsKey($Variant)) {
+      $body = (@($body -split "`n") | Where-Object { $line = $_; -not @($removedLabels[$Variant] | Where-Object { $line.StartsWith("${_}:") }) }) -join "`n"
+    }
+    $conflicts = @{
+      'conflicting-review-execution' = 'Review execution: Blocked'; 'conflicting-review-outcome' = 'Review outcome: Rejected'
+      'conflicting-latency-reduction' = 'Latency reduction: 30%'; 'conflicting-sample-size' = 'Sample size: 90'; 'conflicting-error-rate' = 'Error rate: 2%'
+    }
+    if ($conflicts.ContainsKey($Variant)) { $body += "`n" + $conflicts[$Variant] }
+    if ($Variant -eq 'wrong-review-execution') { $body = $body.Replace('Review execution: Complete', 'Review execution: Blocked') }
+    if ($Variant -eq 'wrong-sample-size') { $body = $body.Replace('Sample size: 100', 'Sample size: 90') }
+    if ($Variant -eq 'wrong-error-rate') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.7%') }
+    if ($Variant -eq 'concurrent-failures') { $body = $body.Replace('Review outcome: Accepted', 'Review outcome: Complete').Replace('Downstream decision: go', 'Downstream decision: no-go') }
     $document = $body + "`n" + ($bindings -join "`n")
     if ($Variant -eq 'crlf') { $document = $document.Replace("`n", "`r`n") }
     if ($Variant -ne 'missing-outcome') { [System.IO.File]::WriteAllText((Join-Path $session 'outcome.md'), $document) }
@@ -1870,6 +1911,164 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     (@($meaning.metadata.failureCodes) -join ',') | Should -BeExactly $Codes
     $binding.passed | Should -Be $Bound
     $binding.score | Should -Be ([int]$Bound)
+  }
+
+  It 'Stages the SSSC smoke audit contract without a prewritten report' -Tag 'SsscSmoke' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/sssc-reviewer.yml'))
+    $stimulus = @($partial.stimuli | Where-Object name -eq 'sssc-reviewer-class-recipe')
+    $stimulus | Should -HaveCount 1
+    $stimulus = $stimulus[0]
+    $stimulus.tags.Contains('advisory') | Should -BeFalse
+    $stimulus.Contains('runs') | Should -BeFalse
+    @($stimulus.graders.name) | Should -Be @('report-path-present', 'supply-chain-scope-present', 'review-completion-stated',
+      'no-contradictory-findings', 'sssc-reviewer-class-recipe-no-source-edit')
+    @($stimulus.graders | Where-Object { $_.Contains('weight') }) | Should -HaveCount 0
+    $mounts = @($stimulus.agent_environment.files)
+    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/instructions/shared/disclaimer-language.instructions.md',
+      'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
+    @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
+    foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats')
+    $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
+    $workflow | Should -Match 'uses: actions/checkout@v4'
+    $workflow | Should -Not -Match '@[0-9a-f]{40}'
+    foreach ($fixture in Get-ChildItem -LiteralPath (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke') -File) {
+      Get-Content -Raw -LiteralPath $fixture.FullName | Should -Not -Match '(?i)provenance|sbom|cosign|attest'
+    }
+  }
+
+  It 'Grades the SSSC report observations for <Variant>' -Tag 'SsscSmoke' -ForEach @(
+    @{ Variant = 'valid'; Expected = 'TTTT' }
+    @{ Variant = 'alternate-layout'; Expected = 'TTTT' }
+    @{ Variant = 'backslash-reply'; Expected = 'TTTT' }
+    @{ Variant = 'flattened-reply'; Expected = 'TTTT' }
+    @{ Variant = 'recommendation-not-claim'; Expected = 'TTTT' }
+    @{ Variant = 'ghost-path'; Expected = 'FFFF' }
+    @{ Variant = 'wrong-reply-path'; Expected = 'FTTT' }
+    @{ Variant = 'wrong-root'; Expected = 'FFFF' }
+    @{ Variant = 'multiple-reports'; Expected = 'FFFF' }
+    @{ Variant = 'empty-report'; Expected = 'FFFF' }
+    @{ Variant = 'keyword-only'; Expected = 'TTFF' }
+    @{ Variant = 'missing-disclaimer'; Expected = 'TTFT' }
+    @{ Variant = 'checked-review-box'; Expected = 'TTFT' }
+    @{ Variant = 'no-findings-claim'; Expected = 'TTTF' }
+    @{ Variant = 'fabricated-verification'; Expected = 'TTTF' }
+    @{ Variant = 'missing-limitation'; Expected = 'TTTF' }
+  ) {
+    $relative = '.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md'
+    $report = @'
+# SSSC Review Report
+
+## Professional Review Disclaimer
+
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive tool only. It does not replace professional supply chain security review boards or other qualified human reviewers.
+
+- [ ] Reviewed and validated by a qualified human reviewer
+
+## Scope
+
+Audit of the supplied `subject/` repository.
+
+## Artifact Inventory
+
+* `subject/.github/workflows/release.yml`
+* `subject/package.json`
+* `subject/Dockerfile`
+
+## Evidence Inventory
+
+* Supplied repository files only. No SBOM, provenance, or signing evidence was supplied.
+
+## Methodology or Assessment Basis
+
+Inline assessment against the supply-chain-security skill, OpenSSF Scorecard Pinned-Dependencies, and SLSA. Subagents were unavailable, which reduces rigor.
+
+## Findings
+
+| ID | Status | Severity | Priority | Evidence | Remediation |
+|----|--------|----------|----------|----------|-------------|
+| SSSC-001 | FAIL | Medium | P1 | `actions/checkout@v4` and `actions/setup-node@v4` use mutable tags. | Pin each action to a full commit SHA. |
+
+## Limitations
+
+* Provenance, signing, and SBOM controls are NOT_ASSESSED because that evidence was not supplied.
+
+## Follow-up Guidance
+
+* Pin workflow actions, then add provenance generation for releases.
+
+- [ ] Reviewed and validated by a qualified human reviewer
+'@
+    $reply = "Report written to ``$relative``."
+    $workspace = Join-Path $TestDrive "sssc-report-$Variant"
+    $reportPath = Join-Path $workspace $relative
+    switch ($Variant) {
+      'alternate-layout' {
+        $report = $report.Replace('## Professional', '## 1. Professional').Replace('## Findings', '### 6. Findings').Replace('## Limitations', '### 7) Limitations')
+        $report = $report.Replace('- [ ] Reviewed', '* [ ] Reviewed').Replace("`n", "`r`n")
+      }
+      'backslash-reply' { $reply = $reply.Replace('/', '\') }
+      'flattened-reply' { $reply = 'Report written to .copilot-tracking-sssc-reviews-2026-10-12-sssc-review-001.md.' }
+      'recommendation-not-claim' { $report += "`nTeams should verify container signatures with cosign before release.`n" }
+      'ghost-path' { $report = $null }
+      'wrong-reply-path' { $reply = $reply.Replace('sssc-review-001', 'sssc-review-002') }
+      'wrong-root' { $reportPath = Join-Path $workspace '.copilot-tracking/sssc-review/2026-10-12/sssc-review-001.md' }
+      'empty-report' { $report = '' }
+      'keyword-only' { $report = 'Supply chain review of release.yml and package.json against SLSA.' }
+      'missing-disclaimer' { $report = $report -replace '(?m)^> .*\r?\n', '' }
+      'checked-review-box' { $report = ([regex]'- \[ \]').Replace($report, '- [x]', 1) }
+      'no-findings-claim' { $report += "`nNo findings were identified.`n" }
+      'fabricated-verification' { $report += "`nContainer signatures were verified with cosign.`n" }
+      'missing-limitation' {
+        $report = $report.Replace('No SBOM, provenance, or signing evidence was supplied.', 'Repository files were reviewed.')
+        $report = $report.Replace('* Provenance, signing, and SBOM controls are NOT_ASSESSED because that evidence was not supplied.', '* The review was performed inline.')
+      }
+    }
+    New-Item -ItemType Directory -Path $workspace -Force | Out-Null
+    if ($null -ne $report) {
+      New-Item -ItemType Directory -Path (Split-Path $reportPath -Parent) -Force | Out-Null
+      [System.IO.File]::WriteAllText($reportPath, $report)
+      if ($Variant -eq 'multiple-reports') { [System.IO.File]::WriteAllText(($reportPath -replace '001\.md$', '002.md'), $report) }
+    }
+    $observed = foreach ($grader in @('report-path-present', 'supply-chain-scope-present', 'review-completion-stated', 'no-contradictory-findings')) {
+      $result = Invoke-ObservationGrader -Partial 'sssc-reviewer' -Name $grader -Reply $reply -Workspace $workspace
+      $result.score | Should -Be ([int][bool]$result.passed)
+      if ($result.passed) { 'T' } else { 'F' }
+    }
+    (-join $observed) | Should -BeExactly $Expected
+  }
+
+  It 'Allows only the new SSSC report in the workspace diff for <Variant>' -Tag 'SsscSmoke' -ForEach @(
+    @{ Variant = 'report-only'; Diff = "diff --git a/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md b/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md`nnew file mode 100644`n--- /dev/null`n+++ b/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md`n@@ -0,0 +1 @@`n+# SSSC Review Report`n"; Expected = $true }
+    @{ Variant = 'empty-diff'; Diff = ''; Expected = $true }
+    @{ Variant = 'source-edit'; Diff = "diff --git a/subject/.github/workflows/release.yml b/subject/.github/workflows/release.yml`nindex 1111111..2222222 100644`n"; Expected = $false }
+    @{ Variant = 'file-outside-root'; Diff = "diff --git a/notes.md b/notes.md`nnew file mode 100644`n"; Expected = $false }
+    @{ Variant = 'hidden-ignore-file'; Diff = "diff --git a/.gitignore b/.gitignore`nnew file mode 100644`n"; Expected = $false }
+    @{ Variant = 'deleted-input'; Diff = "diff --git a/subject/Dockerfile b/subject/Dockerfile`ndeleted file mode 100644`n"; Expected = $false }
+    @{ Variant = 'report-symlink'; Diff = "diff --git a/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md b/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md`nnew file mode 120000`n"; Expected = $false }
+    @{ Variant = 'renamed-input'; Diff = "diff --git a/subject/Dockerfile b/.copilot-tracking/sssc-reviews/2026-10-12/sssc-review-001.md`nsimilarity index 100%`nrename from subject/Dockerfile`n"; Expected = $false }
+    @{ Variant = 'traversal-path'; Diff = "diff --git a/.copilot-tracking/sssc-reviews/2026-10-12/../sssc-review-001.md b/.copilot-tracking/sssc-reviews/2026-10-12/../sssc-review-001.md`nnew file mode 100644`n"; Expected = $false }
+    @{ Variant = 'missing-baseline'; Diff = $null; Expected = $false }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/sssc-reviewer.yml'))
+    $grader = ($partial.stimuli | Where-Object name -eq 'sssc-reviewer-class-recipe').graders | Where-Object name -eq 'sssc-reviewer-class-recipe-no-source-edit'
+    $grader.type | Should -Be 'diff-not-contains'
+    $diffGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/diff-match-grader.js')).Path
+    $probe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { DiffMatchGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+console.log(JSON.stringify(await new DiffMatchGrader(input.type).grade(input)));
+'@
+    $trajectory = @{ workDir = $TestDrive }
+    if ($null -ne $Diff) { $trajectory.diff = $Diff }
+    $payload = @{ type = $grader.type; config = $grader.config; trajectory = $trajectory } | ConvertTo-Json -Depth 10 -Compress
+    $result = $payload | & node --input-type=module --eval $probe $diffGraderPath | ConvertFrom-Json
+    $LASTEXITCODE | Should -Be 0
+    $result.passed | Should -Be $Expected
+    if ($Variant -eq 'missing-baseline') { $result.status | Should -Be 'error' }
   }
 
   It 'Checks parsed coach state for <Grader> with <Variant>' -ForEach @(

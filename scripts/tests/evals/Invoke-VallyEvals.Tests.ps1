@@ -565,9 +565,13 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             @{ Case = 'sorted unique codes'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('state-mismatch', 'extension-mismatch', 'state-mismatch'); Expected = 'extension-mismatch,state-mismatch' }
             @{ Case = 'unknown code'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('state-mismatch', 'synthetic-private-code'); Expected = '<null>' }
             @{ Case = 'unlisted grader'; Grader = 'check'; Passed = $false; Codes = @('state-mismatch'); Expected = '<null>' }
-            @{ Case = 'passing with codes'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $true; Codes = @('metric-mismatch'); Expected = '<null>' }
+            @{ Case = 'passing with codes'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $true; Codes = @('sample-size-mismatch'); Expected = '<null>' }
             @{ Case = 'passing without codes'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $true; Codes = @(); Expected = '' }
-            @{ Case = 'non-array payload'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = 'metric-mismatch'; Expected = '<null>' }
+            @{ Case = 'non-array payload'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = 'sample-size-mismatch'; Expected = '<null>' }
+            @{ Case = 'independent outcome fields'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('missing-review-outcome', 'missing-review-execution'); Expected = 'missing-review-execution,missing-review-outcome' }
+            @{ Case = 'concurrent outcome fields'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('wrong-decision', 'missing-sample-size', 'review-outcome-mismatch'); Expected = 'missing-sample-size,review-outcome-mismatch,wrong-decision' }
+            @{ Case = 'retired generic outcome code'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('missing-field'); Expected = '<null>' }
+            @{ Case = 'outcome code on another grader'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('missing-sample-size'); Expected = '<null>' }
         ) {
             $runDir = Join-Path $script:WorkRoot ('codes-' + [guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -591,6 +595,34 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
         }
 
+        It 'Exports every field-specific outcome code through the producer projection' -Tag 'Diagnostic' {
+            $grader = 'experiment-outcome-separates-status-and-verdict'
+            $fieldCodes = foreach ($field in @('h1-verdict', 'downstream-decision', 'review-execution', 'review-outcome', 'latency-reduction', 'sample-size', 'error-rate')) {
+                "missing-$field"; "conflicting-$field"
+            }
+            $mismatchCodes = @('wrong-verdict', 'wrong-decision', 'review-execution-mismatch', 'review-outcome-mismatch',
+                'latency-reduction-mismatch', 'sample-size-mismatch', 'error-rate-mismatch', 'invalid-review-record')
+            $codes = @($fieldCodes) + $mismatchCodes
+            $runDir = Join-Path $script:WorkRoot ('all-codes-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            @{
+                type = 'trial-result'; stimulus = 'synthetic'; trialIndex = 0; status = 'success'; trajectory = $null
+                gradeResult = @{ score = 0; passed = $false; details = @(
+                    @{ configuredName = $grader; graderType = 'program'; passed = $false; score = 0
+                        metadata = @{ failureCodes = $codes; raw = 'synthetic-private-marker' } }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                synthetic = @{ runs = 1; graders = @(@{ name = $grader; type = 'program' }) }
+            }
+
+            $expected = [string[]]@($codes)
+            [System.Array]::Sort($expected, [System.StringComparer]::Ordinal)
+            ($result.trialDiagnostics[0].graders[0].failureCodes -join ',') | Should -BeExactly ($expected -join ',')
+            ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
         It 'Rejects a diagnostic record with <Case>' -Tag 'Diagnostic' -ForEach @(
             @{ Case = 'clean bounded fields'; Expected = $true }
             @{ Case = 'unknown error category'; Expected = $false }
@@ -601,6 +633,9 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             @{ Case = 'unsorted shells'; Expected = $false }
             @{ Case = 'forged failure code'; Expected = $false }
             @{ Case = 'codes on a passing grader'; Expected = $false }
+            @{ Case = 'field codes on a failing grader'; Expected = $true }
+            @{ Case = 'retired generic code'; Expected = $false }
+            @{ Case = 'unsorted field codes'; Expected = $false }
         ) {
             $graderName = 'experiment-outcome-separates-status-and-verdict'
             $inventory = [ordered]@{ synthetic = [ordered]@{ runs = 1; graders = @([ordered]@{ name = $graderName; type = 'program' }) } }
@@ -616,7 +651,17 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                 'unknown shell' { $trial.observedShellTools = @('pwsh') }
                 'unsorted shells' { $trial.observedShellTools = @('shell', 'bash') }
                 'forged failure code' { $trial.graders[0].failureCodes = @('synthetic-private') }
-                'codes on a passing grader' { $trial.graders[0].failureCodes = @('metric-mismatch') }
+                'codes on a passing grader' { $trial.graders[0].failureCodes = @('sample-size-mismatch') }
+                { $_ -in @('field codes on a failing grader', 'retired generic code', 'unsorted field codes') } {
+                    $trial.allGradersPassed = $false
+                    $trial.graders[0].passed = $false
+                    $trial.graders[0].score = 0.0
+                    $trial.graders[0].failureCodes = @(switch ($Case) {
+                        'field codes on a failing grader' { 'missing-review-execution', 'missing-review-outcome' }
+                        'retired generic code' { 'missing-field' }
+                        'unsorted field codes' { 'missing-review-outcome', 'missing-review-execution' }
+                    })
+                }
             }
             $diagnostics = [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
                 inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()

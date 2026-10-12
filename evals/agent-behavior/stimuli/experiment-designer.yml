@@ -895,24 +895,24 @@ stimuli:
                     ...values(text, /\bH1\b[^\S\n]*(?:(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*)?(?:[|:]|\bis\b|\n)\s*(?:(?:hypothesis\s+)?(?:outcome|verdict)\s*[:|]\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi),
                     ...values(scopedText, /^\|?[^\S\n]*(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*(?:[:|]|\n)\s*(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gim)
                   ];
-                  if (single(verdicts, 'missing-field', 'conflicting-field') !== expected) codes.add('wrong-verdict');
+                  if (single(verdicts, 'missing-h1-verdict', 'conflicting-h1-verdict') !== expected) codes.add('wrong-verdict');
                 });
                 check(() => {
-                  if (single(values(text, /(?:downstream decision|decision)\s*(?:[:|]|\n)\s*(go|no-go|adjust)\b/gi), 'missing-field', 'conflicting-field') !== decision) codes.add('wrong-decision');
+                  if (single(values(text, /(?:downstream decision|decision)\s*(?:[:|]|\n)\s*(go|no-go|adjust)\b/gi), 'missing-downstream-decision', 'conflicting-downstream-decision') !== decision) codes.add('wrong-decision');
                 });
-                check(() => {
-                  const reviewExecution = single(values(review, /^Review execution:\s*(\w+)/gim), 'review-mismatch', 'review-mismatch');
-                  const reviewOutcome = single(values(review, /^Review outcome:\s*(\w+)/gim), 'review-mismatch', 'review-mismatch');
-                  const reportedExecution = single(values(text, /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi), 'missing-field', 'conflicting-field');
-                  const reportedOutcome = single(values(text, /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi), 'missing-field', 'conflicting-field');
-                  if (reportedExecution !== reviewExecution || reportedOutcome !== reviewOutcome) codes.add('review-mismatch');
+                // Each Review field is checked separately so one missing value cannot hide the other.
+                const reviewField = (field, reportedPattern, sourcePattern) => check(() => {
+                  const reported = single(values(text, reportedPattern), 'missing-' + field, 'conflicting-' + field);
+                  if (reported !== single(values(review, sourcePattern), 'invalid-review-record', 'invalid-review-record')) codes.add(field + '-mismatch');
                 });
-                const metric = (pattern, actual) => check(() => {
-                  if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-field', 'conflicting-field') - actual) < 0.001)) codes.add('metric-mismatch');
+                reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
+                reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
+                const metric = (field, pattern, actual) => check(() => {
+                  if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
                 });
-                metric(/(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
-                metric(/(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
-                metric(/(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
+                metric('latency-reduction', /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
+                metric('sample-size', /(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
+                metric('error-rate', /(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
                 const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
                 if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
                 if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');

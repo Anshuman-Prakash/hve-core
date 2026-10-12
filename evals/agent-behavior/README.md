@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-10-12
 ---
 
 ## Purpose
@@ -91,6 +91,34 @@ for agent execution and 360 seconds total so it reaches the scan gate rather
 than stopping on missing domain inputs. The clean-scan grader accepts both raw
 JSON and JSON escaped inside a tool-result envelope, while still requiring
 `status: completed` from the scanner command.
+
+### SSSC Reviewer Smoke Scenario
+
+The `sssc-reviewer-class-recipe` stimulus in the [SSSC Reviewer partial](stimuli/sssc-reviewer.yml) is an artifact-backed smoke test rather than a reply-shape check. It stages the SSSC Reviewer contract as workspace instructions, the shared disclaimer file the contract references, the `supply-chain-security` and `security-reviewer-formats` skills, and a three-file synthetic release repository from [fixtures/sssc-smoke/](fixtures/sssc-smoke/). Suite-level skills still load alongside these skills.
+
+The subject publishes an npm package and a container image from a workflow that uses mutable action tags. It supplies no SBOM, provenance, or signing evidence, so a correct review records those controls as limitations instead of passes. The prompt asks for an inline audit with no network, install, build, publish, or scanner commands.
+
+The five graders keep their names and equal weights, but observe the workspace:
+
+| Grader                                      | Evidence                                                                                                  |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `report-path-present`                       | Exactly one regular audit report exists under the SSSC report root, and the reply names that same file    |
+| `supply-chain-scope-present`                | The report covers the supplied release files and a supply-chain framework basis                           |
+| `review-completion-stated`                  | The report has the contract sections, disclaimer, unchecked human-review boxes, and an actionable finding |
+| `no-contradictory-findings`                 | The reply and report make no unsupported verification or certification claims and record evidence limits  |
+| `sssc-reviewer-class-recipe-no-source-edit` | The workspace diff against the pre-execution baseline contains only the new report                        |
+
+A reply that claims a report without writing one, or that denies editing a file it changed, fails the corresponding graders. These checks are deterministic; they do not establish that a model run will pass.
+
+The source-edit check sees only what Git sees. A new file hidden by an agent-written `.gitignore` or written inside a `.git` directory does not appear in the diff; edits to or deletions of staged files are still caught. [#3214](https://github.com/microsoft/hve-core/issues/3214) tracks closing that gap for every diff-based write check in the suite.
+
+### Program Grader Failure Codes
+
+Program graders that emit `metadata.failureCodes` publish them only through a fixed per-grader vocabulary in [VallyRunner.psm1](../../scripts/evals/Modules/VallyRunner.psm1). Unknown codes, unsorted lists, and codes on passing graders are rejected or normalized to null, so no model text reaches published artifacts.
+
+`experiment-outcome-separates-status-and-verdict` reports one code family per outcome field: `missing-*`, `conflicting-*`, and a field mismatch for the H1 verdict, downstream decision, Review execution, Review outcome, latency reduction, sample size, and error rate. A missing or conflicting staged Review value reports `invalid-review-record`.
+
+Codes appear under `perSpec[].diagnostics.attempts[].trials[].graders[].failureCodes` in `eval-summary.json`; the coarse `failedOrErroredTrials` list does not repeat them.
 
 ### Path Separators in Tracking-File Graders
 

@@ -146,6 +146,37 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
         else { ($trial.observedShellTools -join ',') | Should -BeExactly $Expected }
         ($null -eq $trial.graders[0].failureCodes) | Should -BeTrue
     }
+    It 'handles outcome field codes through authoritative fan-in for <Case>' -ForEach @(
+        @{ Case = 'independent Review fields'; Codes = @('missing-review-execution', 'missing-review-outcome'); Valid = $true }
+        @{ Case = 'concurrent fields'; Codes = @('missing-sample-size', 'review-outcome-mismatch', 'wrong-decision'); Valid = $true }
+        @{ Case = 'unsorted codes'; Codes = @('wrong-decision', 'missing-sample-size'); Valid = $false }
+        @{ Case = 'retired generic code'; Codes = @('missing-field'); Valid = $false }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $grader = 'experiment-outcome-separates-status-and-verdict'
+        $diagnostics = $summaries[0].perSpec[0].diagnostics
+        $diagnostics.expectedStimuli.synthetic.graders[0].name = $grader
+        $diagnostics.selectionDigest = Get-AgentEvalValueDigest -Value $diagnostics.expectedStimuli
+        foreach ($trial in $diagnostics.attempts[0].trials) {
+            $trial.allGradersPassed = $false
+            $trial.graders[0].name = $grader
+            $trial.graders[0].passed = $false
+            $trial.graders[0].score = 0.0
+            $trial.graders[0].failureCodes = [string[]]$Codes
+        }
+        if (-not $Valid) {
+            { Merge-EvalSummaryValue -Plan $plan -Summary $summaries } | Should -Throw '*invalid diagnostic contract*'
+            return
+        }
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        $spec.integrity.integrityPassed | Should -BeTrue
+        $spec.integrity.allChecksPassed | Should -BeFalse
+        foreach ($trial in $spec.diagnostics.attempts[0].trials) {
+            ($trial.graders[0].failureCodes -join ',') | Should -BeExactly ($Codes -join ',')
+        }
+    }
     It 'rejects a poisoned execution fact <Case>' -ForEach @(
         @{ Case = 'raw error text' }
         @{ Case = 'forged failure code' }

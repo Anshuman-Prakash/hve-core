@@ -21,7 +21,13 @@ foreach ($stateGrader in @('data-science-rpi-blocked-state-preserves-job', 'data
         'missing-blocked-record', 'extension-mismatch', 'pointer-mismatch')
 }
 $script:VallyFailureCodeVocabulary['experiment-outcome-separates-status-and-verdict'] = @('read-error', 'oversized-input', 'ambiguous-input',
-    'missing-field', 'conflicting-field', 'invalid-measurement', 'wrong-verdict', 'wrong-decision', 'review-mismatch', 'metric-mismatch',
+    'invalid-measurement', 'invalid-review-record', 'missing-h1-verdict', 'conflicting-h1-verdict', 'wrong-verdict',
+    'missing-downstream-decision', 'conflicting-downstream-decision', 'wrong-decision',
+    'missing-review-execution', 'conflicting-review-execution', 'review-execution-mismatch',
+    'missing-review-outcome', 'conflicting-review-outcome', 'review-outcome-mismatch',
+    'missing-latency-reduction', 'conflicting-latency-reduction', 'latency-reduction-mismatch',
+    'missing-sample-size', 'conflicting-sample-size', 'sample-size-mismatch',
+    'missing-error-rate', 'conflicting-error-rate', 'error-rate-mismatch',
     'anomaly-mismatch', 'missing-confidence', 'criteria-mismatch')
 
 function Test-VallyBoundedCodeList {
