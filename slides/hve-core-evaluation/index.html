@@ -87,18 +87,41 @@
         <aside class="notes">Testing text requires the same distinctions as testing software. Static checks inspect files without an agent execution. A behavioral evaluation puts an assistant into a scenario and captures what it does. Evidence validation checks that a green summary really has the expected cases, trials and graders behind it. HVE-Core also has conventional script unit tests, but those are not the same as the script-validation Vally suite. The name of a suite is not enough to infer what it proves. Read the stimulus and its assertions.</aside>
       </section>
 
-      <section id="vally-flow" data-title="The Vally pipeline vocabulary" data-chapter="Vally fundamentals" data-sources="vally">
-        <div class="eyebrow">FIVE TERMS, ONE PIPELINE</div>
-        <h2>From test input to explainable result</h2>
-        <ol class="pipeline" aria-label="Vally evaluation pipeline">
-          <li><span class="node-label">1 / INPUT</span><h3>Stimulus</h3><p>A prompt or conversation plus checks.</p></li>
-          <li><span class="node-label">2 / RUN</span><h3>Executor</h3><p>Sets up and runs the agent.</p></li>
-          <li><span class="node-label">3 / RECORD</span><h3>Trajectory</h3><p>Events, metrics and final output.</p></li>
-          <li><span class="node-label">4 / CHECK</span><h3>Graders</h3><p>Assertions or judgments with evidence.</p></li>
-          <li><span class="node-label">5 / RESULT</span><h3>Score</h3><p>Aggregate result under a scoring rule.</p></li>
-        </ol>
-        <p class="takeaway">A trial is one execution of one stimulus. A suite selects a related collection of test cases.</p>
-        <aside class="notes">A stimulus is a test case, not merely an isolated question. It may also specify files, skills, resource limits and graders. An executor manages the run. The Copilot SDK executor is the maintained behavior-testing path in HVE-Core. A trajectory records the response and tool activity rather than only the last sentence. Each grader looks for a particular property and supplies evidence. Vally aggregates grader scores and determines a verdict according to the spec. Repeating a stimulus produces multiple trials. Static lint checks can inspect assets directly, without this agent-execution path.</aside>
+      <section id="vally-flow" data-title="How Vally runs and grades a test" data-chapter="Vally fundamentals" data-sources="vally,vallyPicture">
+        <div class="eyebrow">VALLY ARCHITECTURE / THE FULL PICTURE</div>
+        <h2>How Vally runs and grades a test</h2>
+        <figure class="vally-diagram" aria-label="Vally test execution and grading architecture">
+          <div class="vally-spec">
+            <h3>Test specification <code>eval.yaml</code></h3>
+            <dl class="vally-inputs">
+              <div><dt>Stimulus</dt><dd>The task to ask.</dd></div>
+              <div><dt>Graders</dt><dd>The checks to apply.</dd></div>
+              <div><dt>Defaults</dt><dd>Trials and time limits.</dd></div>
+            </dl>
+          </div>
+          <div class="vally-start" aria-hidden="true">&#8595;</div>
+          <div class="vally-run">
+            <div class="vally-node"><h3>Executor</h3><p>Copilot SDK runs the agent.</p></div>
+            <span class="connector" aria-hidden="true">&#8594;</span>
+            <div class="vally-node accent"><h3>Trajectory</h3><p>Recorded actions, usage and output.</p></div>
+          </div>
+          <svg class="vally-links" viewBox="0 0 1200 48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <path d="M900 0 V16 H200 M900 16 H1000 M200 16 V38 M600 16 V38 M1000 16 V38"></path>
+            <path class="arrow-head" d="M194 36 L200 46 L206 36 Z M594 36 L600 46 L606 36 Z M994 36 L1000 46 L1006 36 Z"></path>
+          </svg>
+          <div class="vally-graders" role="group" aria-label="Graders inspect the recorded run">
+            <div class="vally-node"><h3>Text check</h3><p>Required response content?</p></div>
+            <div class="vally-node"><h3>File check</h3><p>Expected artifact produced?</p></div>
+            <div class="vally-node"><h3>Model judge</h3><p>Response meets the rubric?</p></div>
+          </div>
+          <svg class="vally-links" viewBox="0 0 1200 48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <path d="M200 0 V16 H1000 V0 M600 0 V38"></path>
+            <path class="arrow-head" d="M594 36 L600 46 L606 36 Z"></path>
+          </svg>
+          <div class="vally-result"><h3>Score and verdict</h3><p>Combine grader results under the declared scoring rule.</p></div>
+          <figcaption>The spec drives execution; the trajectory feeds graders; their results produce a score and verdict. One execution is one trial.</figcaption>
+        </figure>
+        <aside class="notes">This original diagram summarizes Vally's official The Full Picture architecture rather than copying its ASCII illustration or example result numbers. Read top to bottom: eval.yaml defines a stimulus, the selected graders and shared execution defaults. A stimulus is a prompt or conversation plus test configuration, and may also declare files, skills and resource limits. The executor prepares the workspace and runs the agent through the Copilot SDK in HVE-Core's maintained behavioral-evaluation path. It captures a trajectory containing typed events, computed metrics and the final output. That recorded run feeds the configured graders, illustrated here by text checks, file checks and a model judge. These are possible grader families, not three checks that every case must run. Workspace graders can also inspect produced files in the disposable trial workspace; the trajectory connects them to that workspace. Each grader returns passed, a numeric score and evidence. Vally aggregates those results under the spec's scoring rule to produce a score and verdict. The branch lines show that multiple checks inspect one run; they do not promise concurrent execution. The score is not automatically the same as every grader passing. No fabricated score, timing, token count or live outcome appears. One executor run is one trial; repeating a stimulus produces multiple trials. A suite selects a related collection of test cases. Static lint graders inspect assets directly without this agent-execution path.</aside>
       </section>
 
       <section id="eval-schema" data-title="A test defines the task and the checks" data-chapter="Vally fundamentals" data-sources="schema,functionalCase,agentSpec,config">

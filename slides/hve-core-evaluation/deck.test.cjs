@@ -263,6 +263,25 @@ test('architecture diagram gives CI a labelled and ordered workflow', () => {
   assert.match(theme, /\[data-reading-view="true"\][^\n]*\.ci-steps \{ grid-template-columns: minmax\(0, 1fr\)/);
 });
 
+test('Vally architecture branches one trajectory into graders and aggregates their results', () => {
+  const slide = html.match(/<section id="vally-flow"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.match(slide, /<figure class="vally-diagram" aria-label="Vally test execution and grading architecture">/);
+  assert.match(slide, /Test specification <code>eval\.yaml<\/code>/);
+  for (const label of ['Stimulus', 'Graders', 'Defaults', 'Executor', 'Trajectory',
+    'Text check', 'File check', 'Model judge', 'Score and verdict']) assert.ok(slide.includes(label), label);
+  assert.ok(slide.indexOf('class="vally-spec"') < slide.indexOf('class="vally-run"'));
+  assert.ok(slide.indexOf('class="vally-run"') < slide.indexOf('class="vally-graders"'));
+  assert.ok(slide.indexOf('class="vally-graders"') < slide.indexOf('class="vally-result"'));
+  assert.equal([...slide.matchAll(/<svg class="vally-links"[^>]*aria-hidden="true" focusable="false">/g)].length, 2);
+  assert.match(slide, /The spec drives execution; the trajectory feeds graders/);
+  assert.match(slide, /One execution is one trial/);
+  assert.match(slide, /not three checks that every case must run/);
+  assert.match(slide, /do not promise concurrent execution/);
+  assert.equal(new URL(sources.vallyPicture.url).hash, '#the-full-picture');
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /\[data-reading-view="true"\][^\n]*\.vally-inputs, \.vally-run, \.vally-graders[^\n]*grid-template-columns: minmax\(0, 1fr\)/);
+});
+
 test('fundamentals state their lessons visibly and retain technical detail in notes', () => {
   const expected = {
     'eval-schema': ['A test defines the task and the checks', 'Task', 'Checks', 'Run budget',

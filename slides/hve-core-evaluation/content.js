@@ -9,6 +9,11 @@
       url: 'https://microsoft.github.io/vally/concepts/how-it-works/',
       note: 'Official pipeline concepts, checked 2026-10-11. Living documentation may differ from the repository pin.'
     },
+    vallyPicture: {
+      title: 'Vally: The full picture',
+      url: 'https://microsoft.github.io/vally/concepts/how-it-works/#the-full-picture',
+      note: 'Official execution-to-grading architecture, checked 2026-10-11. Slide 5 is an original visual summary with beginner-friendly labels, not a reproduced diagram or measured result.'
+    },
     schema: {
       title: 'Vally: Eval spec reference',
       url: 'https://microsoft.github.io/vally/reference/eval-spec/',

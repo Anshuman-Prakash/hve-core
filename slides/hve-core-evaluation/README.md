@@ -15,6 +15,10 @@ The deck starts with the architecture and AI asset definitions, explains the
 Vally pipeline and data contracts, then maps them to the maintained HVE-Core
 evaluation suites. The architecture diagram separates Vally's runner from a
 labelled HVE-Core CI lane: select tests, run Vally, check evidence and report results.
+The Vally architecture slide uses an original diagram based on
+[The Full Picture](https://microsoft.github.io/vally/concepts/how-it-works/#the-full-picture):
+test specification, executor, recorded trajectory, multiple graders and an
+aggregated score/verdict. It shows no fabricated run results.
 The suite map groups tests around structure, useful guidance,
 contract conformance and baseline preservation, with inventory counts in presenter
 notes rather than a dense table. It includes original architecture diagrams, actual spec
@@ -134,7 +138,7 @@ checks; automated results are not an accessibility certification.
 
 Checked on 2026-10-11:
 
-* `npm test --prefix slides\hve-core-evaluation`: all 31 tests passed.
+* `npm test --prefix slides\hve-core-evaluation`: all 32 tests passed.
 * `npm run bundle --prefix slides\hve-core-evaluation`: passed, including bundler
   resource/security checks and library notices.
 * The scoped `checkBundle()` command above passed source-to-bundle parity.
