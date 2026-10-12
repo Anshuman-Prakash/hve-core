@@ -8,7 +8,7 @@ ms.topic: overview
 
 ## Audience and story
 
-A 22-slide, approximately 25-minute introduction for an audience with no prior
+A 21-slide, approximately 25-minute introduction for an audience with no prior
 knowledge of HVE-Core, Copilot, YAML or Vally.
 
 The deck starts with the architecture and AI asset definitions, explains the
@@ -16,8 +16,11 @@ Vally pipeline and data contracts, then maps them to the maintained HVE-Core
 evaluation suites. The suite map groups tests around structure, useful guidance,
 contract conformance and baseline preservation, with inventory counts in presenter
 notes rather than a dense table. It includes original architecture diagrams, actual spec
-excerpts, a five-step instruction-test walkthrough, file-effect checks,
+excerpts, a six-step agent-behavior walkthrough, file-effect checks,
 multi-turn planner judging, baseline comparisons and CI evidence integrity.
+Scoring and repeatability share one slide: a single-trial verdict on the left,
+consistency across repeated trials on the right. Detailed scoring fields,
+estimators and suite trial budgets remain in presenter notes.
 
 The AI asset categories covered are instructions, agents and skills.
 The word "prompt" refers only to evaluation inputs or Vally's model-judge type,
@@ -29,6 +32,19 @@ Sources were checked on 2026-10-11 against HVE-Core `main` commit
 Suite counts were measured from the checkout's YAML, not older README tables.
 The deck does not claim current test pass rates or comprehensive correctness.
 No model-backed evals ran to produce it.
+
+## Template alignment
+
+The shared layout, presenter bar, walkthrough frame, navigation and bundler follow
+the local HTML starter. Code panels use its 27px monospace type and 1.5 line height;
+the schema excerpt uses compact YAML mappings instead of a smaller-font override.
+Evaluation-specific layouts, HVE-Core naming and the question-led suite map are
+preserved.
+
+The opening follows the [RAI Planner presentation's hero style](https://microsoft.github.io/hve-core/slides/rai-planner.html#/opening):
+a two-column composition, a large blue-accent title, a source-date pill and a
+numbered agenda. Its content and source date remain specific to this evaluation
+talk. Other slides retain the local starter's shared styling.
 
 ## Build and view
 
@@ -59,7 +75,7 @@ notes, keyboard help, reading view, optional motion and full screen.
 
 * Left/Right and Page Up/Page Down change slides.
 * Home/End move to the first/last slide.
-* Back, Next step and Reset affect only the instruction walkthrough.
+* Back, Next step and Reset affect only the agent-behavior walkthrough.
 * `[` and `]` change the walkthrough step; `R` resets it.
 * Escape dismisses a dialog and returns focus.
 * Reading view removes canvas scaling and reflows text and diagrams.
@@ -91,9 +107,13 @@ node --input-type=module -e "import { checkBundle } from './slides/hve-core-eval
 The repository-wide `npm run slides:check` also checks every other deck and
 requires their dependencies. It is not a substitute for browser inspection.
 
-The scripted walkthrough uses a real prompt and regex assertions with an authored
-response. It also demonstrates wrong advice that matches both assertions.
-Those states are teaching illustrations, not captured CI trajectories.
+The walkthrough uses the real `code-review-functional-lens` prompt and both
+graders from [the authored agent-behavior partial](../../evals/agent-behavior/stimuli/code-review-functional.yml).
+Its six steps show the prompt, a scripted response, each regex separately, the
+threshold verdict and a semantic false positive. The negated source-edit check
+detects affirmative edit claims in the response, not actual filesystem changes.
+The case is advisory and inherits five trials and a 0.7 scoring threshold.
+Responses and derived outcomes are teaching illustrations, not captured CI trajectories.
 Source excerpts explicitly identify omissions and are not complete runnable specs.
 
 Browser validation should cover all slides and walkthrough states, desktop and
@@ -106,12 +126,12 @@ checks; automated results are not an accessibility certification.
 
 Checked on 2026-10-11:
 
-* `npm test --prefix slides\hve-core-evaluation`: all 25 tests passed.
+* `npm test --prefix slides\hve-core-evaluation`: all 28 tests passed.
 * `npm run bundle --prefix slides\hve-core-evaluation`: passed, including bundler
   resource/security checks and library notices.
 * The scoped `checkBundle()` command above passed source-to-bundle parity.
 * `npm run lint:public-dependency-feeds`: passed.
-* All 22 slides and five walkthrough states were checked in system Chrome at
+* All 21 slides and six walkthrough states were checked in system Chrome at
   1600x900 and 1280x720. No measured content clipping or walkthrough scrolling
   remained; main text met 18px and code met 16px rendered-size targets.
 * Reading layouts were checked at 320px and 390px, plus increased text spacing.

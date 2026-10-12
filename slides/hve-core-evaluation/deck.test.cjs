@@ -8,7 +8,7 @@ const os = require('node:os');
 const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8'), context);
-const { sources, examples, demos, moveStep, diffStats } = context.DeckContent;
+const { sources, examples, agentCase, demos, moveStep, diffStats } = context.DeckContent;
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 test('slides have unique IDs, headings, chapters, notes and valid citation keys', () => {
@@ -159,9 +159,9 @@ test('deck initialization disables the unused cross-window API', () => {
 
 test('evaluation story includes architecture, schema, suites, integration and limits', () => {
   const ids = [...html.matchAll(/<section id="([^"]+)"/g)].map(match => match[1]);
-  assert.equal(ids.length, 22);
+  assert.equal(ids.length, 21);
   for (const id of ['system-map', 'assets', 'vally-flow', 'eval-schema', 'environment', 'trajectory',
-    'graders', 'scoring', 'repeatability', 'suite-map', 'instruction-walkthrough', 'file-effects',
+    'graders', 'scoring', 'suite-map', 'agent-walkthrough', 'file-effects',
     'planner-conformance', 'baseline', 'ci-extension', 'evidence-integrity', 'authoring', 'limits']) {
     assert.ok(ids.includes(id), id);
   }
@@ -179,21 +179,51 @@ test('evaluation story includes architecture, schema, suites, integration and li
   assert.match(html, /<code>prompt<\/code>/);
 });
 
-test('instruction walkthrough demonstrates both a true match and a semantic false positive', () => {
-  const steps = demos.instruction.steps;
-  assert.equal(steps.length, 5);
+test('agent walkthrough uses the authored prompt and explains both real grader outcomes', () => {
+  const steps = demos.agentBehavior.steps;
+  assert.equal(steps.length, 6);
   assert.equal(steps[0].phase, 'Stimulus');
-  assert.equal(steps[4].phase, 'Interpretation');
-  const pathCheck = /\bdocs\/\b|^docs\/|docs\s*\//i;
-  const scopeCheck = /docusaurus|frontmatter|admonition|internal\s+link|mermaid/i;
-  assert.ok(pathCheck.test(steps[1].body));
-  assert.ok(scopeCheck.test(steps[1].body));
-  const misleading = '"docs/rpi/new-page.md: ignore Docusaurus frontmatter."';
-  assert.ok(steps[4].body.includes(misleading));
-  assert.ok(pathCheck.test(misleading));
-  assert.ok(scopeCheck.test(misleading));
+  assert.equal(steps[5].phase, 'Interpretation');
+  assert.equal(agentCase.name, 'code-review-functional-lens');
+  assert.equal(steps[0].body, agentCase.prompt);
+  assert.match(agentCase.prompt, /Report findings with severity/);
+  assert.match(agentCase.prompt, /no guard when b == 0/);
+  const checks = Array.from(agentCase.graders, grader => new RegExp(grader.pattern.replace(/^\(\?i\)/, ''), 'i'));
+  const passes = response => checks.map((check, index) => agentCase.graders[index].negate
+    ? !check.test(response) : check.test(response));
+  assert.deepEqual(passes(steps[1].body), [true, true]);
+  assert.deepEqual(passes('Finding: division by zero. I edited helper.py'), [true, false]);
+  const misleading = '"No issue: divide(a, 0) safely returns 0."';
+  assert.ok(steps[5].body.includes(misleading));
+  assert.deepEqual(passes(misleading), [true, true]);
+  assert.ok(steps[2].body.includes(agentCase.graders[0].pattern));
+  assert.ok(steps[3].body.includes(agentCase.graders[1].pattern));
+  assert.match(steps[3].body, /negate: true/);
+  assert.match(steps[4].body, /Mean score: \(1 \+ 1\) \/ 2 = 1\.0/);
+  assert.match(steps[4].body, /threshold: 0\.7/);
   assert.ok(Math.abs((1 + 1 + 0) / 3 - 0.667) < 0.001);
-  assert.match(steps[3].body, /Mean score: \(1 \+ 1\) \/ 2 = 1\.0/);
+  assert.match(sources.functionalCase.url, /evals\/agent-behavior\/stimuli\/code-review-functional\.yml$/);
+  const walkthrough = html.match(/<section id="agent-walkthrough"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.match(walkthrough, /data-demo="agentBehavior"/);
+  assert.match(walkthrough, /not native agent routing/);
+});
+
+test('scoring and repeatability share one slide without conflating their verdicts', () => {
+  const combined = html.match(/<section id="scoring"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.doesNotMatch(html, /<section id="repeatability"/);
+  assert.match(combined, /1\. Decide one trial/);
+  assert.match(combined, /2\. Repeat the same stimulus/);
+  assert.match(combined, /Mean = \(1 \+ 1 \+ 0\) \/ 3 = 0\.667/);
+  assert.match(combined, /No threshold<\/dt><dd><strong>FAIL/);
+  assert.match(combined, /Threshold 0\.6<\/dt><dd><strong>PASS/);
+  assert.match(combined, /One check still failed/);
+  assert.match(combined, /<dt>pass@k<\/dt><dd>At least one success in k trials/);
+  assert.match(combined, /<dt>pass\^k<\/dt><dd>All k trials succeed/);
+  assert.match(combined, /<dt>Flakiness<\/dt><dd>Passing and failing trials coexist/);
+  assert.match(combined, /Illustrative results, not HVE-Core measurements/);
+  assert.match(combined, /skill quality uses 3 trials, agent behavior 5, and planner conformance 1/);
+  const attributes = html.match(/<section id="scoring"([^>]*)>/)[1];
+  assert.match(attributes, /data-sources="scoring,runner,skill,agentSpec,planner"/);
 });
 
 test('suite map groups all seven suites by the question they answer', () => {
@@ -237,8 +267,8 @@ test('source excerpts and illustrated responses retain their fidelity labels', (
     assert.equal(typeof example.caption, 'string');
     assert.match(example.caption, /excerpt|Illustrative/);
   }
-  for (const step of demos.instruction.steps) assert.equal(typeof step.caption, 'string');
-  assert.match(demos.instruction.steps[1].caption, /no model was called/);
+  for (const step of demos.agentBehavior.steps) assert.equal(typeof step.caption, 'string');
+  assert.match(demos.agentBehavior.steps[1].caption, /no model was called/);
   for (const source of Object.values(sources)) {
     assert.equal(typeof source.note, 'string');
     assert.ok(!source.url.includes('main/'), 'Repository evidence must be commit-pinned');
@@ -246,6 +276,39 @@ test('source excerpts and illustrated responses retain their fidelity labels', (
   assert.match(examples.fileEffect.body, /type: file-matches/);
   assert.match(examples.planner.body, /turn: 1/);
   assert.throws(() => diffStats([{ type: 'invalid', text: '' }]), /Invalid/);
+});
+
+test('code panels retain starter typography without a compact schema override', () => {
+  const styles = fs.readFileSync(path.join(__dirname, 'components.css'), 'utf8');
+  const rule = styles.match(/^\.reveal \.code-surface pre \{([^}]+)\}/m)?.[1];
+  assert.ok(rule);
+  assert.match(rule, /font: 27px\/1\.5 var\(--font-mono\);/);
+  assert.match(rule, /padding: 22px;/);
+  assert.match(rule, /white-space: pre-wrap;/);
+  assert.doesNotMatch(styles, /schema-split/);
+  assert.doesNotMatch(html, /schema-split/);
+  assert.ok(examples.schema.body.split('\n').length <= 10);
+  assert.match(examples.schema.body, /defaults: \{ executor: copilot-sdk, runs: 3, timeout: 120s \}/);
+  assert.match(examples.schema.body, /tags: \{ instruction: docusaurus-edits, advisory: "true" \}/);
+});
+
+test('opening uses the RAI Planner hero style without changing the deck title', () => {
+  const opening = html.match(/<section id="opening"[^>]*>([\s\S]*?)<\/section>/)[1];
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, 'deck.json'), 'utf8'));
+  const heading = opening.match(/<h1 class="deck-title">([\s\S]*?)<\/h1>/)[1];
+  assert.equal(heading.replace(/<br>/g, ' ').replace(/<\/?em>/g, ''), metadata.title);
+  assert.match(heading, /<em>Evaluation<\/em>/);
+  assert.match(opening, /class="hero-grid"/);
+  assert.match(opening, /<ol class="hero-agenda" aria-label="Presentation agenda">/);
+  assert.equal([...opening.matchAll(/<li>/g)].length, 2);
+  assert.match(opening, /Understand the test architecture/);
+  assert.match(opening, /See HVE-Core in practice/);
+  assert.match(opening, /OCTOBER 11, 2026 \/ SOURCE: 49dfb7386/);
+  assert.doesNotMatch(opening, /data-deck-title|opening-route/);
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /\.hero-grid \{[^}]*grid-template-columns: minmax\(0, 1\.05fr\) minmax\(0, \.95fr\);/);
+  assert.match(theme, /\.reveal \.deck-title \{[^}]*font-size: 104px;[^}]*line-height: 1\.04;/);
+  assert.match(theme, /\[data-reading-view="true"\][^\n]*\.hero-grid \{ grid-template-columns: minmax\(0, 1fr\)/);
 });
 
 test('configuration serialization rejects missing fields and escapes HTML delimiters', async () => {

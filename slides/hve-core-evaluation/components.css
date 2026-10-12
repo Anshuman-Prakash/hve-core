@@ -2,8 +2,7 @@
 .example-caption { color: var(--muted); font-size: 23px; margin-bottom: 14px; }
 .code-surface { background: var(--editor); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
 .file-header { padding: 13px 20px; background: var(--chrome); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 23px; }
-.reveal .code-surface pre { width: auto; margin: 0; padding: 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 26px/1.38 var(--font-mono); color: var(--editor-text); }
-.reveal .schema-split .code-surface pre { font-size: 24px; line-height: 1.25; }
+.reveal .code-surface pre { width: auto; margin: 0; padding: 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 27px/1.5 var(--font-mono); color: var(--editor-text); }
 .reveal .code-surface code { max-height: none; padding: 0; background: transparent; white-space: pre-wrap; font: inherit; }
 .copilot-composer { background: #24262b; border: 1px solid #606978; border-radius: 12px; padding: 22px; }
 .context-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }

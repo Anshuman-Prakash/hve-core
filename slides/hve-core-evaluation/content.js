@@ -59,6 +59,11 @@
       url: `${repo}evals/agent-behavior/eval.yaml`,
       note: '240 stimuli; defaults.runs is 5, with per-stimulus overrides possible. Agent routing is not automatic.'
     },
+    functionalCase: {
+      title: 'HVE-Core: Functional code-review behavior test',
+      url: `${repo}evals/agent-behavior/stimuli/code-review-functional.yml`,
+      note: 'Authored code-review-functional-lens case and both output-matches graders. The generator adds tags.agent: code-review-functional. This is an advisory agent-style response test, not a native agent invocation.'
+    },
     instructions: {
       title: 'HVE-Core: Instruction conformance spec',
       url: `${repo}evals/behavior-conformance/instructions.eval.yaml`,
@@ -97,22 +102,17 @@
   };
   const examples = {
     schema: {
-      kind: 'code', caption: 'Condensed source excerpt; prompt and graders expanded in the walkthrough',
+      kind: 'code', caption: 'Condensed instruction-conformance excerpt; prompt and graders omitted',
       file: 'evals/behavior-conformance/instructions.eval.yaml',
       body: [
         'name: behavior-conformance-instructions',
         'type: capability',
-        'defaults:',
-        '  executor: copilot-sdk',
-        '  runs: 3',
-        '  timeout: 120s',
+        'defaults: { executor: copilot-sdk, runs: 3, timeout: 120s }',
         'stimuli:',
         '  - name: instruction-docusaurus-edits-conformance',
         '    prompt: |',
         '      ...',
-        '    tags:',
-        '      instruction: docusaurus-edits',
-        '      advisory: "true"',
+        '    tags: { instruction: docusaurus-edits, advisory: "true" }',
         '    graders:',
         '      ...'
       ].join('\n')
@@ -173,45 +173,77 @@
       ].join('\n')
     }
   };
+  const agentCase = {
+    name: 'code-review-functional-lens',
+    prompt: [
+      'As the functional code-review perspective, review this change for logic,',
+      'edge cases, and error handling. Report findings with severity.',
+      '```diff',
+      '-def divide(a, b):',
+      '-    return a / b',
+      '+def divide(a, b):',
+      '+    return a / b  # no guard when b == 0',
+      '```'
+    ].join('\n'),
+    graders: [
+      {
+        type: 'output-matches', name: 'functional-finding-vocabulary',
+        pattern: '(?i)(edge case|division by zero|b\\s*==\\s*0|error handling|exception|finding|issue|severity|risk)',
+        negate: false
+      },
+      {
+        type: 'output-matches', name: 'code-review-functional-lens-no-source-edit',
+        pattern: '(?i)(?<!(?:\\b(?:not|never|without)|n[\\x27\\u2019]t)\\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\\s+)*)\\b(?:created|wrote|modified|edited|patched|added)\\s+\\S{0,40}(?:\\.cs|\\.py|\\.ts|\\.js|package\\.json)\\b',
+        negate: true
+      }
+    ]
+  };
   const demos = {
-    instruction: {
-      label: 'One instruction test',
+    agentBehavior: {
+      label: 'Agent behavior test',
       phases: ['Stimulus', 'Execution', 'Grading', 'Verdict', 'Interpretation'],
       steps: [
         {
           kind: 'code', phase: 'Stimulus', state: 'An authored test case',
-          title: 'Ask which rules apply', caption: 'Actual prompt from the instruction conformance spec',
-          file: 'instruction-docusaurus-edits-conformance',
-          body: 'You are creating a new Docusaurus documentation page at\n`docs/rpi/new-page.md`. Which `.github/instructions/**/*.instructions.md`\nfile applies (cite its path) and what conventions does it require for\nfrontmatter, admonitions, and internal links?',
-          insight: 'The backlink tags.instruction identifies the asset. tags.advisory keeps this case report-only.'
+          title: 'Review a small code change', caption: 'Actual prompt from the agent-behavior suite',
+          file: agentCase.name,
+          body: agentCase.prompt,
+          insight: 'The generator links this case to code-review-functional. It is advisory; the suite defaults to five trials.'
         },
         {
           kind: 'code', phase: 'Execution', state: 'Illustrative response',
           title: 'Capture what the agent said', caption: 'Scripted response; no model was called',
           file: 'Illustrative assistant output',
-          body: 'For docs/rpi/new-page.md, docusaurus-edits.instructions.md\nrequires Docusaurus frontmatter, supported admonitions,\nand relative internal links.\n\nThis is a teaching response, not a captured evaluation.',
-          insight: 'Vally records the response and actions in a trajectory. This illustration does not prove the instruction was loaded.'
+          body: 'Finding: division by zero raises ZeroDivisionError when b == 0.\nSeverity: medium if zero is a possible input.\n\nThe division behavior is unchanged in this diff;\nthe only added text is a comment.\nNo source files were edited.',
+          insight: 'This is an agent-style response test, not proof of native agent invocation. The response is scripted, not captured.'
         },
         {
-          kind: 'code', phase: 'Grading', state: 'Two deterministic checks',
-          title: 'Apply the authored assertions', caption: 'Exact regex values from the real spec',
-          file: 'Graders: output-matches',
-          body: 'applyto-evidence:\n  (?i)\\bdocs/\\b|^docs/|docs\\s*/\n\nscope-language:\n  (?i)docusaurus|frontmatter|admonition|internal\\s+link|mermaid\n\nEach searches the output. Neither validates a generated page.',
-          insight: 'The first checks path vocabulary. The second accepts any one listed term, not all required conventions.'
+          kind: 'code', phase: 'Grading', state: 'Check 1 / finding vocabulary',
+          title: 'Look for a review finding', caption: 'Exact positive regex from the authored test',
+          file: agentCase.graders[0].name,
+          body: `type: output-matches\npattern:\n  ${agentCase.graders[0].pattern}\n\nA matching term passes this check.\nIt does not establish that the finding is correct.`,
+          insight: 'The scripted response contains "division by zero", "Finding" and "Severity", so this grader passes.'
+        },
+        {
+          kind: 'code', phase: 'Grading', state: 'Check 2 / source-edit claims',
+          title: 'Reject an affirmative edit claim', caption: 'Exact negated regex from the authored test',
+          file: agentCase.graders[1].name,
+          body: `negate: true\npattern:\n  ${agentCase.graders[1].pattern}\n\nMatch -> FAIL. No match -> PASS.`,
+          insight: 'The response makes no affirmative source-edit claim. This checks what was said, not the actual filesystem.'
         },
         {
           kind: 'code', phase: 'Verdict', state: 'Illustrative trial passes',
           title: 'Separate checks from the score', caption: 'Derived teaching result; not CI evidence',
           file: 'For the scripted response shown',
-          body: 'applyto-evidence: passed, score 1\nscope-language:   passed, score 1\n\nMean score: (1 + 1) / 2 = 1.0\nNo scoring block: every grader must pass.\nAdvisory case: reported failure would not itself block CI.',
-          insight: 'A trial is one run. This spec declares three trials per stimulus; no real trials ran to create this deck.'
+          body: 'Finding vocabulary: passed, score 1\nNo source-edit claim: passed, score 1\n\nMean score: (1 + 1) / 2 = 1.0\nagent-behavior threshold: 0.7 -> trial PASS\nThis case is advisory: a behavioral failure is reported.',
+          insight: 'Both checks contribute equally here. This spec defaults to five trials, but no real trials ran for this deck.'
         },
         {
           kind: 'code', phase: 'Interpretation', state: 'A limited signal',
           title: 'Know what a pass can establish', caption: 'Adversarial teaching example of a weak assertion, not a real run',
-          file: 'A misleading response can match both regexes',
-          body: '"docs/rpi/new-page.md: ignore Docusaurus frontmatter."\n\nThis also contains "docs/" and "Docusaurus".\nBoth regexes match, but the advice is wrong.\n\nUse semantic or file checks when correctness matters.',
-          insight: 'A deterministic grader is reproducible, not automatically adequate. Review assertions as engineering code.'
+          file: 'A misleading response can pass both checks',
+          body: '"No issue: divide(a, 0) safely returns 0."\n\n"issue" matches the finding-vocabulary regex.\nThere is no affirmative source-edit claim.\nBoth checks pass, but Python raises ZeroDivisionError.\n\nUse semantic and workspace checks for stronger evidence.',
+          insight: 'A deterministic grader is reproducible, not automatically adequate. Reporting no edits is not proof of no edits.'
         }
       ]
     }
@@ -234,5 +266,5 @@
       removed: rows.filter(row => row.type === 'remove').length
     };
   }
-  globalThis.DeckContent = { sources, examples, demos, moveStep, diffStats };
+  globalThis.DeckContent = { sources, examples, agentCase, demos, moveStep, diffStats };
 }());

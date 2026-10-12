@@ -62,7 +62,19 @@ code, pre, kbd { font-family: var(--font-mono); }
 .story-flow li:not(:last-child)::after { content: ""; position: absolute; left: 100%; top: 50%; width: 24px; height: 2px; background: var(--line); }
 .story-flow strong { display: block; font-size: 30px; }
 .story-flow span { display: block; margin-top: 12px; font-size: 25px; }
-.opening-route { display: flex; align-items: center; flex-wrap: wrap; gap: 25px; margin-top: 60px; color: var(--cyan); font-size: 32px; }
+#opening::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 100% 0%, #24324a40, transparent 55%); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 56px; align-items: center; margin-top: 110px; }
+.hero-grid > * { min-width: 0; }
+.reveal .deck-title { margin: 26px 0 0; font-size: 104px; line-height: 1.04; letter-spacing: -3.5px; font-weight: 580; }
+.reveal .deck-title em { font-style: normal; color: var(--cyan); }
+.reveal .hero-grid .lead { color: var(--muted); font-size: 34px; line-height: 1.4; margin: 26px 0 0; }
+.eyebrow .separator { color: var(--muted); margin: 0 12px; }
+.date-pill { display: inline-block; margin-top: 40px; padding: 10px 18px; border: 1px solid var(--line); border-radius: 999px; font: 19px/1.4 var(--font-mono); letter-spacing: 1px; color: var(--muted); }
+.reveal .hero-agenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 30px; }
+.hero-agenda li { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: baseline; gap: 18px; padding: 24px 0; border-bottom: 1px solid var(--line); }
+.hero-agenda .num { font: 600 22px var(--font-mono); color: var(--cyan); }
+.hero-agenda strong { font-size: 32px; font-weight: 600; }
+.reveal .hero-agenda p { font-size: 28px; margin-top: 12px; color: var(--muted); }
 .architecture { margin: 0; }
 .architecture-row { display: grid; grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr); align-items: center; }
 .arch-node { padding: 28px; background: var(--editor); border: 1px solid var(--line); border-radius: 10px; }
@@ -107,15 +119,16 @@ code, pre, kbd { font-family: var(--font-mono); }
 .suite-members > div { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.25fr); align-items: baseline; gap: 20px; }
 .suite-members dt { font: 25px/1.35 var(--font-mono); color: var(--cyan); }
 .suite-members dd { margin: 0; font-size: 27px; line-height: 1.35; }
-.result-contract { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
-.result-contract code { padding: 12px 16px; background: #1b2b40; border: 1px solid var(--line); border-radius: 6px; font-size: 27px; color: var(--cyan); }
-.equation { margin-top: 30px; font: 30px/1.7 var(--font-mono); }
-.equation strong { font-family: inherit; font-weight: 550; }
-.trial-strip { display: flex; gap: 22px; margin: 0 0 32px; }
-.trial-strip > span { flex: 1; padding: 22px 32px; background: #1d2922; border: 1px solid var(--lime); border-radius: 8px; font-size: 30px; line-height: 1.6; }
+.score-example { margin: 26px 0; font: 27px/1.6 var(--font-mono); color: var(--cyan); }
+.score-verdicts { margin: 0; }
+.score-verdicts > div { display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: start; gap: 20px; padding: 20px 0; border-top: 1px solid var(--line); font-size: 29px; line-height: 1.45; }
+.score-verdicts dt { color: var(--muted); }
+.score-verdicts dd { margin: 0; }
+.trial-strip { display: flex; gap: 12px; margin: 0 0 26px; }
+.trial-strip > span { flex: 1; min-width: 0; padding: 16px 12px; background: #1d2922; border: 1px solid var(--lime); border-radius: 8px; font-size: 26px; line-height: 1.6; }
 .trial-strip .trial-fail { border-style: dashed; border-color: var(--muted); background: #342528; }
 .metric-list { display: grid; gap: 20px; margin: 0; }
-.metric-list > div { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 30px; }
+.metric-list > div { display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: 20px; }
 .metric-list dt { font: 30px/1.45 var(--font-mono); color: var(--cyan); }
 .metric-list dd { margin: 0; font-size: 30px; line-height: 1.45; }
 .reveal .paragraph-gap { margin-top: 22px; }
@@ -221,6 +234,10 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
 [data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
 [data-reading-view="true"] .reveal .slides section :is(.two-up, .story-split, .story-flow, .demo, .implementation-scene) { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+[data-reading-view="true"] #opening::before { display: none; }
+[data-reading-view="true"] .reveal .slides section .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+[data-reading-view="true"] .reveal .slides section .hero-agenda li { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+[data-reading-view="true"] .reveal .slides section .hero-grid .lead { font-size: inherit; }
 [data-reading-view="true"] .reveal .slides section :is(.demo-header, .demo-controls, .composer-toolbar, .diff-summary) { flex-wrap: wrap; }
 [data-reading-view="true"] .reveal .slides section .demo { height: auto; }
 [data-reading-view="true"] .reveal .slides section :is(.demo-main, .demo-body, .demo-sidebar) { height: auto; min-height: 0; overflow: visible; }
@@ -228,6 +245,7 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section .slide-bottom { position: static; margin-top: 20px; flex-wrap: wrap; gap: 8px; }
 [data-reading-view="true"] .story-flow li::after { display: none; }
 [data-reading-view="true"] .reveal .slides section :is(.architecture-row, .asset-list > div, .metric-list > div, .pipeline, .authoring-steps li) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+[data-reading-view="true"] .reveal .slides section .score-verdicts > div { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 [data-reading-view="true"] .reveal .slides section :is(.architecture-return, .quality-stack article, .trial-strip, .backlink) { flex-direction: column; align-items: stretch; }
 [data-reading-view="true"] .reveal .slides section :is(.connector, .layer-number, .layer-tag) { flex-basis: auto; }
 [data-reading-view="true"] .reveal .slides section .layer-tag { margin: 0; padding: 12px 0 0; border-left: 0; border-top: 1px solid var(--line); }
@@ -263,6 +281,7 @@ dialog { overflow-wrap: anywhere; }
   /* Forced colors repaint every phase border, so the current phase keeps a distinct outline. */
   .demo-phases li[aria-current="step"] { outline: 3px solid Highlight; outline-offset: 2px; }
   :focus-visible { outline-color: Highlight !important; }
+  #opening::before { display: none; }
 }
 
 </style>
@@ -271,8 +290,7 @@ dialog { overflow-wrap: anywhere; }
 .example-caption { color: var(--muted); font-size: 23px; margin-bottom: 14px; }
 .code-surface { background: var(--editor); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
 .file-header { padding: 13px 20px; background: var(--chrome); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 23px; }
-.reveal .code-surface pre { width: auto; margin: 0; padding: 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 26px/1.38 var(--font-mono); color: var(--editor-text); }
-.reveal .schema-split .code-surface pre { font-size: 24px; line-height: 1.25; }
+.reveal .code-surface pre { width: auto; margin: 0; padding: 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 27px/1.5 var(--font-mono); color: var(--editor-text); }
 .reveal .code-surface code { max-height: none; padding: 0; background: transparent; white-space: pre-wrap; font: inherit; }
 .copilot-composer { background: #24262b; border: 1px solid #606978; border-radius: 12px; padding: 22px; }
 .context-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -316,13 +334,20 @@ dialog { overflow-wrap: anywhere; }
   <div class="reveal">
     <main class="slides" tabindex="0" aria-label="Presentation">
       <section id="opening" data-title="AI assets are engineering assets" data-chapter="Why evaluate" data-sources="overview,ci,pin">
-        <div class="eyebrow">HVE-Core / ENGINEERING AI BEHAVIOR</div>
-        <h1 data-deck-title>HVE-Core Evaluation</h1>
-        <p class="lead">An AI asset changes how an assistant works.<br>Its behavior needs a contract, tests and evidence.</p>
-        <div class="opening-route"><span>Architecture</span><span aria-hidden="true">&#8594;</span><span>Vally fundamentals</span><span aria-hidden="true">&#8594;</span><span>HVE-Core in practice</span></div>
-        <p class="footnote">For a general audience. No knowledge of Copilot, YAML or evaluation tools assumed.</p>
-        <div class="slide-bottom"><span>microsoft/hve-core / sources checked 2026-10-11</span><span>Source-backed talk / scripted walkthrough</span></div>
-        <aside class="notes">HVE-Core is the reusable asset repository for Hyper Velocity Engineering. HVE-Core contains reusable instructions, agents and skills that guide AI-assisted work. A small wording change can alter routing, decisions or produced files. The repository therefore treats these assets as versioned engineering inputs, with tests beside their contracts. This is a roughly 25-minute introduction. We will explain the architecture first, introduce the vocabulary, then examine actual evaluation specifications. We did not execute model-backed evaluation suites to make this presentation, and this talk makes no current pass-rate claim.</aside>
+        <div class="eyebrow">MICROSOFT / HVE-Core <span class="separator">/</span> ENGINEERING AI BEHAVIOR</div>
+        <div class="hero-grid">
+          <div>
+            <h1 class="deck-title">HVE-Core<br><em>Evaluation</em></h1>
+            <p class="lead">AI assets need contracts, tests and evidence.</p>
+            <div class="date-pill">OCTOBER 11, 2026 / SOURCE: 49dfb7386</div>
+          </div>
+          <ol class="hero-agenda" aria-label="Presentation agenda">
+            <li><span class="num" aria-hidden="true">01</span><div><strong>Understand the test architecture</strong><p>Define AI assets and follow Vally's evaluation pipeline.</p></div></li>
+            <li><span class="num" aria-hidden="true">02</span><div><strong>See HVE-Core in practice</strong><p>Explore test suites, grading and CI evidence.</p></div></li>
+          </ol>
+        </div>
+        <div class="slide-bottom"><span>microsoft/hve-core</span><span>Source-backed talk / scripted walkthrough</span></div>
+        <aside class="notes">HVE-Core is the reusable asset repository for Hyper Velocity Engineering. HVE-Core contains reusable instructions, agents and skills that guide AI-assisted work. A small wording change can alter routing, decisions or produced files. The repository therefore treats these assets as versioned engineering inputs, with tests beside their contracts. This is a roughly 25-minute introduction for a general audience; no knowledge of Copilot, YAML or evaluation tools is assumed. We will explain the architecture first, introduce the vocabulary, then examine actual evaluation specifications. Sources were checked on October 11, 2026 against main commit 49dfb7386. We did not execute model-backed evaluation suites to make this presentation, and this talk makes no current pass-rate claim.</aside>
       </section>
 
       <section id="system-map" data-title="Two systems, one quality loop" data-chapter="Architecture" data-sources="vally,overview,ci">
@@ -383,7 +408,7 @@ dialog { overflow-wrap: anywhere; }
       <section id="eval-schema" data-title="Read an eval specification" data-chapter="Vally fundamentals" data-sources="schema,instructions,config">
         <div class="eyebrow">YAML = HUMAN-READABLE CONFIGURATION</div>
         <h2>The test specification is an asset too</h2>
-        <div class="story-split schema-split">
+        <div class="story-split">
           <div class="story-note"><dl class="compact-definitions"><dt>defaults</dt><dd>Shared executor, run count and time limit.</dd><dt>stimuli</dt><dd>Named cases with inputs and graders.</dd><dt>tags</dt><dd>Selection and HVE-Core asset backlinks.</dd><dt>scoring</dt><dd>Optional weights and pass threshold.</dd></dl></div>
           <div data-example="schema"></div>
         </div>
@@ -422,25 +447,31 @@ dialog { overflow-wrap: anywhere; }
         <aside class="notes">A grader is an assertion or evaluator. A rubric is a written definition of the desired behavior used by a model judge. Prefer a deterministic check when it can credibly decide the requirement, such as a named file with a required field. Use a semantic judge when the requirement is about meaning, but calibrate it and inspect disagreements. A deterministic grader will repeat the same verdict for the same input; this does not guarantee that its assertion is adequate. Taxonomy helps choose checks for the local loop, CI or a more expensive scheduled run. HVE-Core primarily extends coverage through specifications, fixtures and orchestration; this deck does not claim a shipped custom-grader plugin.</aside>
       </section>
 
-      <section id="scoring" data-title="A passing score can hide a failed check" data-chapter="Vally fundamentals" data-sources="scoring,runner">
-        <div class="eyebrow">RESULT SCHEMA</div>
-        <h2>Keep <code>passed</code> and <code>score</code> distinct</h2>
-        <div class="result-contract"><code>name</code><code>kind</code><code>passed: boolean</code><code>score: 0..1</code><code>evidence</code></div>
+      <section id="scoring" data-title="Score one trial, then test consistency" data-chapter="Vally fundamentals" data-sources="scoring,runner,skill,agentSpec,planner">
+        <div class="eyebrow">SCORING AND REPEATABILITY</div>
+        <h2>Score a trial. Then test consistency.</h2>
         <div class="two-up">
-          <article class="panel"><h3>No threshold</h3><p>Every grader must pass.</p><div class="equation">1, 1, 0 &#8594; score 0.667<br><strong>Trial FAIL</strong></div></article>
-          <article class="panel"><h3>Threshold = 0.6</h3><p>The aggregate score decides.</p><div class="equation">1, 1, 0 &#8594; score 0.667<br><strong>Trial PASS / one failed check</strong></div></article>
+          <article class="panel" aria-labelledby="trial-verdict-title">
+            <h3 id="trial-verdict-title">1. Decide one trial</h3>
+            <p><code>passed</code> and <code>score</code> can differ.</p>
+            <div class="score-example">Scores: 1, 1, 0<br>Mean = (1 + 1 + 0) / 3 = 0.667</div>
+            <dl class="score-verdicts">
+              <div><dt>No threshold</dt><dd><strong>FAIL</strong><br>Every check must pass.</dd></div>
+              <div><dt>Threshold 0.6</dt><dd><strong>PASS</strong><br>One check still failed.</dd></div>
+            </dl>
+          </article>
+          <article class="panel" aria-labelledby="trial-consistency-title">
+            <h3 id="trial-consistency-title">2. Repeat the same stimulus</h3>
+            <div class="trial-strip" aria-label="Illustrative repeated trials"><span>Trial 1<br><strong>PASS</strong></span><span>Trial 2<br><strong>PASS</strong></span><span class="trial-fail">Trial 3<br><strong>FAIL</strong></span></div>
+            <dl class="metric-list">
+              <div><dt>pass@k</dt><dd>At least one success in k trials.</dd></div>
+              <div><dt>pass^k</dt><dd>All k trials succeed.</dd></div>
+              <div><dt>Flakiness</dt><dd>Passing and failing trials coexist.</dd></div>
+            </dl>
+          </article>
         </div>
-        <p class="footnote">Illustrative equal-weight scores. Type weights average graders of the same type first; an eval-level mean can also carry a weak stimulus.</p>
-        <aside class="notes">The grader result contract includes a name, kind, binary passed flag, numeric score and evidence. Some results include nested details. A score and a binary result need not agree. With no scoring threshold, Vally requires every grader to pass. With a threshold, the trial score determines the verdict, so a failed check can be carried by others. Explicit weights operate by grader type, not by each grader name. Execution errors still fail the eval; a permissive threshold does not turn an unexecuted case into success. The numeric example assumes each check gives one for pass and zero for fail. HVE-Core diagnostics preserve thresholdPassed and allGradersPassed separately to make this distinction visible.</aside>
-      </section>
-
-      <section id="repeatability" data-title="Repeat trials and interpret variation" data-chapter="Vally fundamentals" data-sources="scoring,skill,agentSpec,planner">
-        <div class="eyebrow">AI OUTPUT VARIES</div>
-        <h2>One good answer is a weak reliability claim</h2>
-        <div class="trial-strip" aria-label="Illustrative repeated trials"><span>Trial 1<br><strong>PASS</strong></span><span>Trial 2<br><strong>PASS</strong></span><span class="trial-fail">Trial 3<br><strong>FAIL</strong></span></div>
-        <dl class="metric-list"><div><dt>pass@k</dt><dd>Chance of at least one success among k trials.</dd></div><div><dt>pass^k</dt><dd>Chance that all k trials succeed.</dd></div><div><dt>Flakiness</dt><dd>A stimulus has both passing and failing trials.</dd></div></dl>
-        <p class="footnote">HVE-Core defaults vary: skill quality 3 trials; agent behavior 5; planner conformance 1. These are configured budgets, not statistical certification.</p>
-        <aside class="notes">The three boxes are fictional trials, not HVE-Core results. Repeated runs help reveal variation caused by the agent or judge. pass@k rewards getting at least one success; pass^k asks about consistent success. Vally's pass@k estimate uses a combinatorial estimator, while pass^k derives from the observed success probability raised to k. Neither metric repairs a weak grader or an unrepresentative test set. HVE-Core's YAML declares different run budgets, and individual stimuli may override defaults. Although the general contribution guide recommends multiple model-backed trials, the current planner-conformance specs default to one. Report the actual configuration instead of implying every suite repeats all cases.</aside>
+        <p class="footnote">Illustrative results, not HVE-Core measurements. A passing score or repeated successes cannot repair a weak grader.</p>
+        <aside class="notes">Start with the left panel: a verdict for one trial. The grader result contract includes a name, kind, binary passed flag, numeric score from 0 to 1 and evidence; some results include nested details. A score and a binary result need not agree. With no scoring threshold, Vally requires every grader to pass. With a threshold, the trial score determines the verdict, so a failed check can be carried by others. The displayed equal-weight scores give one for pass and zero for fail: (1 + 1 + 0) / 3 is approximately 0.667. This fails without a threshold, but passes at 0.6 despite one failed check. Explicit weights operate by grader type, averaging graders of the same type first, not by each grader name. An eval-level mean can also carry a weak stimulus. Execution errors still fail the eval; a permissive threshold does not turn an unexecuted case into success. HVE-Core diagnostics preserve thresholdPassed and allGradersPassed separately. Then move to the right panel: repeated executions of the same stimulus. The three boxes are fictional trials, not HVE-Core results. Repeated runs help reveal variation caused by the agent or judge. pass@k estimates the chance of at least one success among k trials using a combinatorial estimator. pass^k estimates the chance that all k trials succeed from the observed success probability raised to k. Flakiness means a stimulus has both passing and failing trials. Neither metric repairs a weak grader or an unrepresentative test set. HVE-Core defaults vary: skill quality uses 3 trials, agent behavior 5, and planner conformance 1, with per-stimulus overrides possible. These are configured budgets, not statistical certification. Although general contribution guidance recommends multiple model-backed trials, the current planner-conformance specs default to one. Report the actual configuration rather than implying every suite repeats all cases.</aside>
       </section>
 
       <section id="suite-map" data-title="HVE-Core test suites by purpose" data-chapter="HVE-Core test suites" data-sources="overview,skill,agentSpec,scripts,instructions,behavior,planner,baseline">
@@ -491,11 +522,11 @@ dialog { overflow-wrap: anywhere; }
         <aside class="notes">The generated agent-behavior spec explains that ordinary agent-style prompts are not automatic native agent routing. A generic prompt can get a plausible response from the base model without exercising the agent's own instructions. The README distinguishes class-recipe vocabulary smoke tests from selected isolated functional cases. Some functional cases stage an agent contract as .github/copilot-instructions.md, which places it into workspace context. Planner-conformance cases use the explicit launch pattern. These test styles have different evidential strength. Source files for agent behavior live under stimuli, and the builder assembles eval.yaml with injected agent backlinks. Do not edit that generated file by hand.</aside>
       </section>
 
-      <section id="instruction-walkthrough" class="demo-slide" data-title="A real instruction case, step by step" data-chapter="A test in detail" data-sources="instructions,scoring">
-        <div class="eyebrow">ACTUAL TEST / SCRIPTED RESPONSE</div>
-        <h2>Follow one case from prompt to interpretation</h2>
-        <div class="demo" data-demo="instruction"></div>
-        <aside class="notes">Advance with Next step, keeping slide navigation separate. Step one is the actual Docusaurus instruction stimulus. Step two is a deliberately authored response, not output from a live model. Step three shows both exact regex values. The first finds docs path vocabulary; the second accepts any one of several domain terms. Step four derives the passing example and explains advisory behavior. Step five shows wrong advice that still matches both expressions. The lesson is that repeatable checks are engineering assets too: their adequacy needs review. This test asks about conventions and does not prove that a real documentation page was authored correctly or that the underlying instruction was loaded.</aside>
+      <section id="agent-walkthrough" class="demo-slide" data-title="A real agent-behavior case, step by step" data-chapter="A test in detail" data-sources="functionalCase,agentSpec,agents,scoring">
+        <div class="eyebrow">AGENT-BEHAVIOR / ACTUAL TEST / SCRIPTED RESPONSE</div>
+        <h2>Follow a real agent-behavior test</h2>
+        <div class="demo" data-demo="agentBehavior"></div>
+        <aside class="notes">Use Next step to follow code-review-functional-lens from evals/agent-behavior/stimuli/code-review-functional.yml. This partial is the authored source; the generated eval.yaml adds tags.agent: code-review-functional. The case has tags.advisory: true and inherits runs: 5, timeout: 300s, executor: copilot-sdk and threshold: 0.7. It uses an agent-style prompt, not native agent routing. Step one shows the exact prompt. Its diff does not introduce division by zero; the behavior was already present and only a comment changes. Step two is a scripted response, not captured output. Step three shows the exact positive finding-vocabulary regex. Step four shows the exact negate: true source-edit-claim regex; a matching affirmative claim fails that check. Step five derives a score of 1.0 from the scripted response and explains the threshold and advisory policy. Step six shows wrong advice that still passes both text checks. These graders check response vocabulary and affirmative edit claims, not semantic correctness or filesystem effects. No agent execution ran to produce these examples.</aside>
       </section>
 
       <section id="file-effects" data-title="Extend coverage to observable file effects" data-chapter="A test in detail" data-sources="instructions,schema">
@@ -733,6 +764,11 @@ globalThis.DeckConfig = {"title":"HVE-Core Evaluation","description":"How HVE-Co
       url: `${repo}evals/agent-behavior/eval.yaml`,
       note: '240 stimuli; defaults.runs is 5, with per-stimulus overrides possible. Agent routing is not automatic.'
     },
+    functionalCase: {
+      title: 'HVE-Core: Functional code-review behavior test',
+      url: `${repo}evals/agent-behavior/stimuli/code-review-functional.yml`,
+      note: 'Authored code-review-functional-lens case and both output-matches graders. The generator adds tags.agent: code-review-functional. This is an advisory agent-style response test, not a native agent invocation.'
+    },
     instructions: {
       title: 'HVE-Core: Instruction conformance spec',
       url: `${repo}evals/behavior-conformance/instructions.eval.yaml`,
@@ -771,22 +807,17 @@ globalThis.DeckConfig = {"title":"HVE-Core Evaluation","description":"How HVE-Co
   };
   const examples = {
     schema: {
-      kind: 'code', caption: 'Condensed source excerpt; prompt and graders expanded in the walkthrough',
+      kind: 'code', caption: 'Condensed instruction-conformance excerpt; prompt and graders omitted',
       file: 'evals/behavior-conformance/instructions.eval.yaml',
       body: [
         'name: behavior-conformance-instructions',
         'type: capability',
-        'defaults:',
-        '  executor: copilot-sdk',
-        '  runs: 3',
-        '  timeout: 120s',
+        'defaults: { executor: copilot-sdk, runs: 3, timeout: 120s }',
         'stimuli:',
         '  - name: instruction-docusaurus-edits-conformance',
         '    prompt: |',
         '      ...',
-        '    tags:',
-        '      instruction: docusaurus-edits',
-        '      advisory: "true"',
+        '    tags: { instruction: docusaurus-edits, advisory: "true" }',
         '    graders:',
         '      ...'
       ].join('\n')
@@ -847,45 +878,77 @@ globalThis.DeckConfig = {"title":"HVE-Core Evaluation","description":"How HVE-Co
       ].join('\n')
     }
   };
+  const agentCase = {
+    name: 'code-review-functional-lens',
+    prompt: [
+      'As the functional code-review perspective, review this change for logic,',
+      'edge cases, and error handling. Report findings with severity.',
+      '```diff',
+      '-def divide(a, b):',
+      '-    return a / b',
+      '+def divide(a, b):',
+      '+    return a / b  # no guard when b == 0',
+      '```'
+    ].join('\n'),
+    graders: [
+      {
+        type: 'output-matches', name: 'functional-finding-vocabulary',
+        pattern: '(?i)(edge case|division by zero|b\\s*==\\s*0|error handling|exception|finding|issue|severity|risk)',
+        negate: false
+      },
+      {
+        type: 'output-matches', name: 'code-review-functional-lens-no-source-edit',
+        pattern: '(?i)(?<!(?:\\b(?:not|never|without)|n[\\x27\\u2019]t)\\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\\s+)*)\\b(?:created|wrote|modified|edited|patched|added)\\s+\\S{0,40}(?:\\.cs|\\.py|\\.ts|\\.js|package\\.json)\\b',
+        negate: true
+      }
+    ]
+  };
   const demos = {
-    instruction: {
-      label: 'One instruction test',
+    agentBehavior: {
+      label: 'Agent behavior test',
       phases: ['Stimulus', 'Execution', 'Grading', 'Verdict', 'Interpretation'],
       steps: [
         {
           kind: 'code', phase: 'Stimulus', state: 'An authored test case',
-          title: 'Ask which rules apply', caption: 'Actual prompt from the instruction conformance spec',
-          file: 'instruction-docusaurus-edits-conformance',
-          body: 'You are creating a new Docusaurus documentation page at\n`docs/rpi/new-page.md`. Which `.github/instructions/**/*.instructions.md`\nfile applies (cite its path) and what conventions does it require for\nfrontmatter, admonitions, and internal links?',
-          insight: 'The backlink tags.instruction identifies the asset. tags.advisory keeps this case report-only.'
+          title: 'Review a small code change', caption: 'Actual prompt from the agent-behavior suite',
+          file: agentCase.name,
+          body: agentCase.prompt,
+          insight: 'The generator links this case to code-review-functional. It is advisory; the suite defaults to five trials.'
         },
         {
           kind: 'code', phase: 'Execution', state: 'Illustrative response',
           title: 'Capture what the agent said', caption: 'Scripted response; no model was called',
           file: 'Illustrative assistant output',
-          body: 'For docs/rpi/new-page.md, docusaurus-edits.instructions.md\nrequires Docusaurus frontmatter, supported admonitions,\nand relative internal links.\n\nThis is a teaching response, not a captured evaluation.',
-          insight: 'Vally records the response and actions in a trajectory. This illustration does not prove the instruction was loaded.'
+          body: 'Finding: division by zero raises ZeroDivisionError when b == 0.\nSeverity: medium if zero is a possible input.\n\nThe division behavior is unchanged in this diff;\nthe only added text is a comment.\nNo source files were edited.',
+          insight: 'This is an agent-style response test, not proof of native agent invocation. The response is scripted, not captured.'
         },
         {
-          kind: 'code', phase: 'Grading', state: 'Two deterministic checks',
-          title: 'Apply the authored assertions', caption: 'Exact regex values from the real spec',
-          file: 'Graders: output-matches',
-          body: 'applyto-evidence:\n  (?i)\\bdocs/\\b|^docs/|docs\\s*/\n\nscope-language:\n  (?i)docusaurus|frontmatter|admonition|internal\\s+link|mermaid\n\nEach searches the output. Neither validates a generated page.',
-          insight: 'The first checks path vocabulary. The second accepts any one listed term, not all required conventions.'
+          kind: 'code', phase: 'Grading', state: 'Check 1 / finding vocabulary',
+          title: 'Look for a review finding', caption: 'Exact positive regex from the authored test',
+          file: agentCase.graders[0].name,
+          body: `type: output-matches\npattern:\n  ${agentCase.graders[0].pattern}\n\nA matching term passes this check.\nIt does not establish that the finding is correct.`,
+          insight: 'The scripted response contains "division by zero", "Finding" and "Severity", so this grader passes.'
+        },
+        {
+          kind: 'code', phase: 'Grading', state: 'Check 2 / source-edit claims',
+          title: 'Reject an affirmative edit claim', caption: 'Exact negated regex from the authored test',
+          file: agentCase.graders[1].name,
+          body: `negate: true\npattern:\n  ${agentCase.graders[1].pattern}\n\nMatch -> FAIL. No match -> PASS.`,
+          insight: 'The response makes no affirmative source-edit claim. This checks what was said, not the actual filesystem.'
         },
         {
           kind: 'code', phase: 'Verdict', state: 'Illustrative trial passes',
           title: 'Separate checks from the score', caption: 'Derived teaching result; not CI evidence',
           file: 'For the scripted response shown',
-          body: 'applyto-evidence: passed, score 1\nscope-language:   passed, score 1\n\nMean score: (1 + 1) / 2 = 1.0\nNo scoring block: every grader must pass.\nAdvisory case: reported failure would not itself block CI.',
-          insight: 'A trial is one run. This spec declares three trials per stimulus; no real trials ran to create this deck.'
+          body: 'Finding vocabulary: passed, score 1\nNo source-edit claim: passed, score 1\n\nMean score: (1 + 1) / 2 = 1.0\nagent-behavior threshold: 0.7 -> trial PASS\nThis case is advisory: a behavioral failure is reported.',
+          insight: 'Both checks contribute equally here. This spec defaults to five trials, but no real trials ran for this deck.'
         },
         {
           kind: 'code', phase: 'Interpretation', state: 'A limited signal',
           title: 'Know what a pass can establish', caption: 'Adversarial teaching example of a weak assertion, not a real run',
-          file: 'A misleading response can match both regexes',
-          body: '"docs/rpi/new-page.md: ignore Docusaurus frontmatter."\n\nThis also contains "docs/" and "Docusaurus".\nBoth regexes match, but the advice is wrong.\n\nUse semantic or file checks when correctness matters.',
-          insight: 'A deterministic grader is reproducible, not automatically adequate. Review assertions as engineering code.'
+          file: 'A misleading response can pass both checks',
+          body: '"No issue: divide(a, 0) safely returns 0."\n\n"issue" matches the finding-vocabulary regex.\nThere is no affirmative source-edit claim.\nBoth checks pass, but Python raises ZeroDivisionError.\n\nUse semantic and workspace checks for stronger evidence.',
+          insight: 'A deterministic grader is reproducible, not automatically adequate. Reporting no edits is not proof of no edits.'
         }
       ]
     }
@@ -908,7 +971,7 @@ globalThis.DeckConfig = {"title":"HVE-Core Evaluation","description":"How HVE-Co
       removed: rows.filter(row => row.type === 'remove').length
     };
   }
-  globalThis.DeckContent = { sources, examples, demos, moveStep, diffStats };
+  globalThis.DeckContent = { sources, examples, agentCase, demos, moveStep, diffStats };
 }());
 
 </script>

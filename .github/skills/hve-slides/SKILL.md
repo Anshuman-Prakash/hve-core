@@ -1,4 +1,4 @@
----
+ m---
 name: hve-slides
 description: 'Create, update or review presentation-first HTML slide decks about HVE Core under slides/. Use for slide content research, deck styling, VS Code-style walkthroughs, presenter controls, or single-file HTML sharing in this repository.'
 argument-hint: '[deck=slides/<name>] [mode=create|update|review] [topic=...]'

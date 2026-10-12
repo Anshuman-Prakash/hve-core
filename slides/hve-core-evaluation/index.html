@@ -22,13 +22,20 @@
   <div class="reveal">
     <main class="slides" tabindex="0" aria-label="Presentation">
       <section id="opening" data-title="AI assets are engineering assets" data-chapter="Why evaluate" data-sources="overview,ci,pin">
-        <div class="eyebrow">HVE-Core / ENGINEERING AI BEHAVIOR</div>
-        <h1 data-deck-title>HVE-Core Evaluation</h1>
-        <p class="lead">An AI asset changes how an assistant works.<br>Its behavior needs a contract, tests and evidence.</p>
-        <div class="opening-route"><span>Architecture</span><span aria-hidden="true">&#8594;</span><span>Vally fundamentals</span><span aria-hidden="true">&#8594;</span><span>HVE-Core in practice</span></div>
-        <p class="footnote">For a general audience. No knowledge of Copilot, YAML or evaluation tools assumed.</p>
-        <div class="slide-bottom"><span>microsoft/hve-core / sources checked 2026-10-11</span><span>Source-backed talk / scripted walkthrough</span></div>
-        <aside class="notes">HVE-Core is the reusable asset repository for Hyper Velocity Engineering. HVE-Core contains reusable instructions, agents and skills that guide AI-assisted work. A small wording change can alter routing, decisions or produced files. The repository therefore treats these assets as versioned engineering inputs, with tests beside their contracts. This is a roughly 25-minute introduction. We will explain the architecture first, introduce the vocabulary, then examine actual evaluation specifications. We did not execute model-backed evaluation suites to make this presentation, and this talk makes no current pass-rate claim.</aside>
+        <div class="eyebrow">MICROSOFT / HVE-Core <span class="separator">/</span> ENGINEERING AI BEHAVIOR</div>
+        <div class="hero-grid">
+          <div>
+            <h1 class="deck-title">HVE-Core<br><em>Evaluation</em></h1>
+            <p class="lead">AI assets need contracts, tests and evidence.</p>
+            <div class="date-pill">OCTOBER 11, 2026 / SOURCE: 49dfb7386</div>
+          </div>
+          <ol class="hero-agenda" aria-label="Presentation agenda">
+            <li><span class="num" aria-hidden="true">01</span><div><strong>Understand the test architecture</strong><p>Define AI assets and follow Vally's evaluation pipeline.</p></div></li>
+            <li><span class="num" aria-hidden="true">02</span><div><strong>See HVE-Core in practice</strong><p>Explore test suites, grading and CI evidence.</p></div></li>
+          </ol>
+        </div>
+        <div class="slide-bottom"><span>microsoft/hve-core</span><span>Source-backed talk / scripted walkthrough</span></div>
+        <aside class="notes">HVE-Core is the reusable asset repository for Hyper Velocity Engineering. HVE-Core contains reusable instructions, agents and skills that guide AI-assisted work. A small wording change can alter routing, decisions or produced files. The repository therefore treats these assets as versioned engineering inputs, with tests beside their contracts. This is a roughly 25-minute introduction for a general audience; no knowledge of Copilot, YAML or evaluation tools is assumed. We will explain the architecture first, introduce the vocabulary, then examine actual evaluation specifications. Sources were checked on October 11, 2026 against main commit 49dfb7386. We did not execute model-backed evaluation suites to make this presentation, and this talk makes no current pass-rate claim.</aside>
       </section>
 
       <section id="system-map" data-title="Two systems, one quality loop" data-chapter="Architecture" data-sources="vally,overview,ci">
@@ -89,7 +96,7 @@
       <section id="eval-schema" data-title="Read an eval specification" data-chapter="Vally fundamentals" data-sources="schema,instructions,config">
         <div class="eyebrow">YAML = HUMAN-READABLE CONFIGURATION</div>
         <h2>The test specification is an asset too</h2>
-        <div class="story-split schema-split">
+        <div class="story-split">
           <div class="story-note"><dl class="compact-definitions"><dt>defaults</dt><dd>Shared executor, run count and time limit.</dd><dt>stimuli</dt><dd>Named cases with inputs and graders.</dd><dt>tags</dt><dd>Selection and HVE-Core asset backlinks.</dd><dt>scoring</dt><dd>Optional weights and pass threshold.</dd></dl></div>
           <div data-example="schema"></div>
         </div>
@@ -128,25 +135,31 @@
         <aside class="notes">A grader is an assertion or evaluator. A rubric is a written definition of the desired behavior used by a model judge. Prefer a deterministic check when it can credibly decide the requirement, such as a named file with a required field. Use a semantic judge when the requirement is about meaning, but calibrate it and inspect disagreements. A deterministic grader will repeat the same verdict for the same input; this does not guarantee that its assertion is adequate. Taxonomy helps choose checks for the local loop, CI or a more expensive scheduled run. HVE-Core primarily extends coverage through specifications, fixtures and orchestration; this deck does not claim a shipped custom-grader plugin.</aside>
       </section>
 
-      <section id="scoring" data-title="A passing score can hide a failed check" data-chapter="Vally fundamentals" data-sources="scoring,runner">
-        <div class="eyebrow">RESULT SCHEMA</div>
-        <h2>Keep <code>passed</code> and <code>score</code> distinct</h2>
-        <div class="result-contract"><code>name</code><code>kind</code><code>passed: boolean</code><code>score: 0..1</code><code>evidence</code></div>
+      <section id="scoring" data-title="Score one trial, then test consistency" data-chapter="Vally fundamentals" data-sources="scoring,runner,skill,agentSpec,planner">
+        <div class="eyebrow">SCORING AND REPEATABILITY</div>
+        <h2>Score a trial. Then test consistency.</h2>
         <div class="two-up">
-          <article class="panel"><h3>No threshold</h3><p>Every grader must pass.</p><div class="equation">1, 1, 0 &#8594; score 0.667<br><strong>Trial FAIL</strong></div></article>
-          <article class="panel"><h3>Threshold = 0.6</h3><p>The aggregate score decides.</p><div class="equation">1, 1, 0 &#8594; score 0.667<br><strong>Trial PASS / one failed check</strong></div></article>
+          <article class="panel" aria-labelledby="trial-verdict-title">
+            <h3 id="trial-verdict-title">1. Decide one trial</h3>
+            <p><code>passed</code> and <code>score</code> can differ.</p>
+            <div class="score-example">Scores: 1, 1, 0<br>Mean = (1 + 1 + 0) / 3 = 0.667</div>
+            <dl class="score-verdicts">
+              <div><dt>No threshold</dt><dd><strong>FAIL</strong><br>Every check must pass.</dd></div>
+              <div><dt>Threshold 0.6</dt><dd><strong>PASS</strong><br>One check still failed.</dd></div>
+            </dl>
+          </article>
+          <article class="panel" aria-labelledby="trial-consistency-title">
+            <h3 id="trial-consistency-title">2. Repeat the same stimulus</h3>
+            <div class="trial-strip" aria-label="Illustrative repeated trials"><span>Trial 1<br><strong>PASS</strong></span><span>Trial 2<br><strong>PASS</strong></span><span class="trial-fail">Trial 3<br><strong>FAIL</strong></span></div>
+            <dl class="metric-list">
+              <div><dt>pass@k</dt><dd>At least one success in k trials.</dd></div>
+              <div><dt>pass^k</dt><dd>All k trials succeed.</dd></div>
+              <div><dt>Flakiness</dt><dd>Passing and failing trials coexist.</dd></div>
+            </dl>
+          </article>
         </div>
-        <p class="footnote">Illustrative equal-weight scores. Type weights average graders of the same type first; an eval-level mean can also carry a weak stimulus.</p>
-        <aside class="notes">The grader result contract includes a name, kind, binary passed flag, numeric score and evidence. Some results include nested details. A score and a binary result need not agree. With no scoring threshold, Vally requires every grader to pass. With a threshold, the trial score determines the verdict, so a failed check can be carried by others. Explicit weights operate by grader type, not by each grader name. Execution errors still fail the eval; a permissive threshold does not turn an unexecuted case into success. The numeric example assumes each check gives one for pass and zero for fail. HVE-Core diagnostics preserve thresholdPassed and allGradersPassed separately to make this distinction visible.</aside>
-      </section>
-
-      <section id="repeatability" data-title="Repeat trials and interpret variation" data-chapter="Vally fundamentals" data-sources="scoring,skill,agentSpec,planner">
-        <div class="eyebrow">AI OUTPUT VARIES</div>
-        <h2>One good answer is a weak reliability claim</h2>
-        <div class="trial-strip" aria-label="Illustrative repeated trials"><span>Trial 1<br><strong>PASS</strong></span><span>Trial 2<br><strong>PASS</strong></span><span class="trial-fail">Trial 3<br><strong>FAIL</strong></span></div>
-        <dl class="metric-list"><div><dt>pass@k</dt><dd>Chance of at least one success among k trials.</dd></div><div><dt>pass^k</dt><dd>Chance that all k trials succeed.</dd></div><div><dt>Flakiness</dt><dd>A stimulus has both passing and failing trials.</dd></div></dl>
-        <p class="footnote">HVE-Core defaults vary: skill quality 3 trials; agent behavior 5; planner conformance 1. These are configured budgets, not statistical certification.</p>
-        <aside class="notes">The three boxes are fictional trials, not HVE-Core results. Repeated runs help reveal variation caused by the agent or judge. pass@k rewards getting at least one success; pass^k asks about consistent success. Vally's pass@k estimate uses a combinatorial estimator, while pass^k derives from the observed success probability raised to k. Neither metric repairs a weak grader or an unrepresentative test set. HVE-Core's YAML declares different run budgets, and individual stimuli may override defaults. Although the general contribution guide recommends multiple model-backed trials, the current planner-conformance specs default to one. Report the actual configuration instead of implying every suite repeats all cases.</aside>
+        <p class="footnote">Illustrative results, not HVE-Core measurements. A passing score or repeated successes cannot repair a weak grader.</p>
+        <aside class="notes">Start with the left panel: a verdict for one trial. The grader result contract includes a name, kind, binary passed flag, numeric score from 0 to 1 and evidence; some results include nested details. A score and a binary result need not agree. With no scoring threshold, Vally requires every grader to pass. With a threshold, the trial score determines the verdict, so a failed check can be carried by others. The displayed equal-weight scores give one for pass and zero for fail: (1 + 1 + 0) / 3 is approximately 0.667. This fails without a threshold, but passes at 0.6 despite one failed check. Explicit weights operate by grader type, averaging graders of the same type first, not by each grader name. An eval-level mean can also carry a weak stimulus. Execution errors still fail the eval; a permissive threshold does not turn an unexecuted case into success. HVE-Core diagnostics preserve thresholdPassed and allGradersPassed separately. Then move to the right panel: repeated executions of the same stimulus. The three boxes are fictional trials, not HVE-Core results. Repeated runs help reveal variation caused by the agent or judge. pass@k estimates the chance of at least one success among k trials using a combinatorial estimator. pass^k estimates the chance that all k trials succeed from the observed success probability raised to k. Flakiness means a stimulus has both passing and failing trials. Neither metric repairs a weak grader or an unrepresentative test set. HVE-Core defaults vary: skill quality uses 3 trials, agent behavior 5, and planner conformance 1, with per-stimulus overrides possible. These are configured budgets, not statistical certification. Although general contribution guidance recommends multiple model-backed trials, the current planner-conformance specs default to one. Report the actual configuration rather than implying every suite repeats all cases.</aside>
       </section>
 
       <section id="suite-map" data-title="HVE-Core test suites by purpose" data-chapter="HVE-Core test suites" data-sources="overview,skill,agentSpec,scripts,instructions,behavior,planner,baseline">
@@ -197,11 +210,11 @@
         <aside class="notes">The generated agent-behavior spec explains that ordinary agent-style prompts are not automatic native agent routing. A generic prompt can get a plausible response from the base model without exercising the agent's own instructions. The README distinguishes class-recipe vocabulary smoke tests from selected isolated functional cases. Some functional cases stage an agent contract as .github/copilot-instructions.md, which places it into workspace context. Planner-conformance cases use the explicit launch pattern. These test styles have different evidential strength. Source files for agent behavior live under stimuli, and the builder assembles eval.yaml with injected agent backlinks. Do not edit that generated file by hand.</aside>
       </section>
 
-      <section id="instruction-walkthrough" class="demo-slide" data-title="A real instruction case, step by step" data-chapter="A test in detail" data-sources="instructions,scoring">
-        <div class="eyebrow">ACTUAL TEST / SCRIPTED RESPONSE</div>
-        <h2>Follow one case from prompt to interpretation</h2>
-        <div class="demo" data-demo="instruction"></div>
-        <aside class="notes">Advance with Next step, keeping slide navigation separate. Step one is the actual Docusaurus instruction stimulus. Step two is a deliberately authored response, not output from a live model. Step three shows both exact regex values. The first finds docs path vocabulary; the second accepts any one of several domain terms. Step four derives the passing example and explains advisory behavior. Step five shows wrong advice that still matches both expressions. The lesson is that repeatable checks are engineering assets too: their adequacy needs review. This test asks about conventions and does not prove that a real documentation page was authored correctly or that the underlying instruction was loaded.</aside>
+      <section id="agent-walkthrough" class="demo-slide" data-title="A real agent-behavior case, step by step" data-chapter="A test in detail" data-sources="functionalCase,agentSpec,agents,scoring">
+        <div class="eyebrow">AGENT-BEHAVIOR / ACTUAL TEST / SCRIPTED RESPONSE</div>
+        <h2>Follow a real agent-behavior test</h2>
+        <div class="demo" data-demo="agentBehavior"></div>
+        <aside class="notes">Use Next step to follow code-review-functional-lens from evals/agent-behavior/stimuli/code-review-functional.yml. This partial is the authored source; the generated eval.yaml adds tags.agent: code-review-functional. The case has tags.advisory: true and inherits runs: 5, timeout: 300s, executor: copilot-sdk and threshold: 0.7. It uses an agent-style prompt, not native agent routing. Step one shows the exact prompt. Its diff does not introduce division by zero; the behavior was already present and only a comment changes. Step two is a scripted response, not captured output. Step three shows the exact positive finding-vocabulary regex. Step four shows the exact negate: true source-edit-claim regex; a matching affirmative claim fails that check. Step five derives a score of 1.0 from the scripted response and explains the threshold and advisory policy. Step six shows wrong advice that still passes both text checks. These graders check response vocabulary and affirmative edit claims, not semantic correctness or filesystem effects. No agent execution ran to produce these examples.</aside>
       </section>
 
       <section id="file-effects" data-title="Extend coverage to observable file effects" data-chapter="A test in detail" data-sources="instructions,schema">
