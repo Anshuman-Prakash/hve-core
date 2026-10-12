@@ -36,7 +36,7 @@
         <h2>HVE defines the behavior.<br>Vally measures a run.</h2>
         <figure class="architecture" aria-label="HVE Core and Vally evaluation architecture">
           <div class="architecture-row">
-            <div class="arch-node"><span class="node-label">HVE CORE</span><h3>Versioned AI assets</h3><p>Instructions, prompts,<br>agents and skills</p></div>
+            <div class="arch-node"><span class="node-label">HVE CORE</span><h3>Versioned AI assets</h3><p>Instructions,<br>agents and skills</p></div>
             <span class="connector" aria-label="and">+</span>
             <div class="arch-node"><span class="node-label">HVE CORE</span><h3>Evaluation specs</h3><p>Cases, fixtures,<br>assertions and limits</p></div>
             <span class="connector" aria-label="feed">&#8594;</span>
@@ -53,12 +53,11 @@
         <h2>Markdown can carry executable intent</h2>
         <dl class="asset-list">
           <div><dt>Instruction</dt><dd>A rule for a working context: how to write a documentation page.</dd></div>
-          <div><dt>Prompt</dt><dd>A reusable request: start a bounded task with consistent inputs.</dd></div>
           <div><dt>Agent</dt><dd>A role and workflow: plan, review, coach or coordinate.</dd></div>
           <div><dt>Skill</dt><dd>Task knowledge, references and sometimes scripts: a reusable capability.</dd></div>
         </dl>
         <p class="takeaway">A behavior contract says what should happen, when it applies and where the assistant must stop.</p>
-        <aside class="notes">An AI asset is not the underlying model. It is the customization around the model: rules, a reusable request, a role, or a capability package. A contract can require an output format, a decision gate, a particular artifact, or a refusal to cross a write boundary. The asset is stored in source control and reviewed like code because its text affects behavior. Not every agent test literally invokes a native agent. We will return to that distinction when we examine coverage. These definitions are beginner-oriented summaries, not an exhaustive client-specific schema.</aside>
+        <aside class="notes">An AI asset is not the underlying model. This talk covers three customization categories: instructions, agents and skills. A contract can require an output format, a decision gate, a particular artifact, or a refusal to cross a write boundary. The asset is stored in source control and reviewed like code because its text affects behavior. Not every agent test literally invokes a native agent. We will return to that distinction when we examine coverage. These definitions are beginner-oriented summaries, not an exhaustive client-specific schema. The word prompt elsewhere means an evaluation input or Vally grader type, not a separate asset category.</aside>
       </section>
 
       <section id="test-layers" data-title="Quality needs several kinds of evidence" data-chapter="AI asset contracts" data-sources="overview,scripts,agents,ci">
@@ -162,7 +161,7 @@
           <tr><th scope="row">agent-conformance</th><td>Does a planner respond to a two-turn case?</td><td>6 planners / 85 stimuli / 1 default trial</td></tr>
           <tr><th scope="row">baseline-equivalence</th><td>Does customization preserve nominal behavior?</td><td>Paired baseline / customized RPI Agent</td></tr>
         </tbody></table>
-        <p class="footnote">Counts from YAML at checkout 7ab725b, checked 2026-10-11. Counts describe authored coverage, not passing runs.</p>
+        <p class="footnote">Counts from YAML at main commit 49dfb7386, checked 2026-10-11. Counts describe authored coverage, not passing runs.</p>
         <aside class="notes">This map shows distinct questions rather than a single headline coverage number. Skill hygiene invokes Vally lint and has no eval.yaml. Skill quality is a small focused set. Agent behavior is larger and includes both broad smoke coverage and selected deeper cases. Script validation checks the model's interpretation of rules. Behavior conformance is advisory by default; the instruction-spec count includes some skill-tagged cases and should not be read as 80 distinct instructions. Six planner suites have 85 stimuli in total. Baseline equivalence currently has a subject-specific boundary around RPI Agent. YAML counts were measured from this checkout because some README inventory tables are older. No run outcomes were inferred from case counts.</aside>
       </section>
 
@@ -263,7 +262,7 @@
         <div class="eyebrow">TAKE THIS BACK TO YOUR TEAM</div>
         <h2>Version the behavior.<br>Test the contract.<br>Keep the evidence.</h2>
         <p class="lead">Vally supplies execution, trajectories and grading.<br>HVE Core supplies asset-linked scenarios, orchestration and evidence gates.</p>
-        <div class="closing-links"><a href="https://microsoft.github.io/vally/concepts/how-it-works/" target="_blank" rel="noopener noreferrer">Explore Vally's pipeline</a><a href="https://github.com/microsoft/hve-core/tree/7ab725b98bb71786400d227e9b5edd17b1e1f9ac/evals" target="_blank" rel="noopener noreferrer">Explore the HVE Core evals</a></div>
+        <div class="closing-links"><a href="https://microsoft.github.io/vally/concepts/how-it-works/" target="_blank" rel="noopener noreferrer">Explore Vally's pipeline</a><a href="https://github.com/microsoft/hve-core/tree/49dfb73866f8c5f81bf734d6ca808dac25a2a330/evals" target="_blank" rel="noopener noreferrer">Explore the HVE Core evals</a></div>
         <div class="slide-bottom"><span>Source links and presenter notes: use the bottom bar</span><span>No live model evaluations ran for this deck</span></div>
         <aside class="notes">Close by connecting the parts. The AI customization is the engineering asset; the eval spec is its test contract; the trajectory and grader results are the observations; HVE's CI policy decides what evidence is complete and which findings block a change. Vally makes it possible to record and grade runs, while HVE ties those runs to changed assets and maintained suites. Invite the audience to inspect one asset and one corresponding stimulus, then ask whether the assertion is strong enough to decide the stated requirement. The links open public sources; the deck itself does not call models or require a service. Its examples are explicitly source excerpts or teaching illustrations.</aside>
       </section>

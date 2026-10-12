@@ -171,6 +171,12 @@ test('evaluation story includes architecture, schema, suites, integration and li
   }
   assert.match(html, /No live model evaluations ran for this deck/);
   assert.match(html, /Counts describe authored coverage, not passing runs/);
+  const assetSlide = html.match(/<section id="assets"[^>]*>([\s\S]*?)<\/section>/)[1];
+  const categories = [...assetSlide.matchAll(/<dt>([^<]+)<\/dt>/g)].map(match => match[1]);
+  assert.deepEqual(categories, ['Instruction', 'Agent', 'Skill']);
+  const architectureSlide = html.match(/<section id="system-map"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.doesNotMatch(architectureSlide, /\bprompts?\b/i);
+  assert.match(html, /<code>prompt<\/code>/);
 });
 
 test('instruction walkthrough demonstrates both a true match and a semantic false positive', () => {

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
 (function () {
   'use strict';
-  const checkout = '7ab725b98bb71786400d227e9b5edd17b1e1f9ac';
+  const checkout = '49dfb73866f8c5f81bf734d6ca808dac25a2a330';
   const repo = `https://github.com/microsoft/hve-core/blob/${checkout}/`;
   const sources = {
     vally: {
