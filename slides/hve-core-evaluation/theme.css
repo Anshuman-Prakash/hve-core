@@ -84,10 +84,16 @@ code, pre, kbd { font-family: var(--font-mono); }
 .deck-table thead th { color: var(--cyan); font-weight: 600; }
 .deck-table tbody th { width: 29%; font-weight: 550; }
 .deck-table tbody td { width: 35.5%; }
-.reveal .suite-table { font-size: 27px; }
-.suite-table th, .suite-table td { padding: 8px 20px; }
-.suite-table tbody th { width: 27%; }
-.suite-table tbody td { width: 36.5%; }
+.suite-lanes { display: grid; gap: 16px; }
+.suite-lane { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.6fr); align-items: center; gap: 28px; padding: 20px 26px; background: #1b2028; border: 1px solid var(--line); border-radius: 8px; }
+.suite-question { display: flex; align-items: flex-start; gap: 20px; }
+.suite-number { flex: 0 0 auto; white-space: nowrap; padding-top: 3px; font: 28px/1.25 var(--font-mono); color: var(--cyan); }
+.reveal .suite-question h3 { font-size: 31px; margin-bottom: 9px; line-height: 1.25; }
+.reveal .suite-question p { font-size: 26px; color: var(--muted); }
+.suite-members { display: grid; gap: 12px; margin: 0; padding-left: 28px; border-left: 1px solid var(--line); }
+.suite-members > div { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.25fr); align-items: baseline; gap: 20px; }
+.suite-members dt { font: 25px/1.35 var(--font-mono); color: var(--cyan); }
+.suite-members dd { margin: 0; font-size: 27px; line-height: 1.35; }
 .result-contract { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
 .result-contract code { padding: 12px 16px; background: #1b2b40; border: 1px solid var(--line); border-radius: 6px; font-size: 27px; color: var(--cyan); }
 .equation { margin-top: 30px; font: 30px/1.7 var(--font-mono); }
@@ -219,6 +225,8 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .deck-table tbody th { padding: 20px 16px 8px; color: var(--cyan); border-bottom: 0; }
 [data-reading-view="true"] .deck-table tbody td { padding: 8px 16px; }
 [data-reading-view="true"] .deck-table tbody td:not(:last-child) { border-bottom: 0; }
+[data-reading-view="true"] .reveal .slides section :is(.suite-lane, .suite-members > div) { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+[data-reading-view="true"] .reveal .slides section .suite-members { padding: 16px 0 0; border-left: 0; border-top: 1px solid var(--line); gap: 20px; }
 [data-reading-view="true"] #presenter-controls { top: 0; bottom: auto; height: auto; min-height: var(--presenter-height); flex-wrap: wrap; padding: 10px; }
 /* On short viewports, such as 400% zoom, a fixed bar would cover most of the content. It follows the slide instead; the skip link reaches it. */
 @media (max-height: 520px) {

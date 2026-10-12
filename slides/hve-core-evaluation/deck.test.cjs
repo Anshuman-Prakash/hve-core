@@ -196,6 +196,41 @@ test('instruction walkthrough demonstrates both a true match and a semantic fals
   assert.match(steps[3].body, /Mean score: \(1 \+ 1\) \/ 2 = 1\.0/);
 });
 
+test('suite map groups all seven suites by the question they answer', () => {
+  const map = html.match(/<section id="suite-map"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.doesNotMatch(map, /<table\b/);
+  const groups = [...map.matchAll(/<article\b[^>]*data-suite-group="([^"]+)"[^>]*>([\s\S]*?)<\/article>/g)];
+  assert.deepEqual(groups.map(match => match[1]), ['structure', 'guidance', 'contracts', 'equivalence']);
+  const expected = {
+    structure: ['skill-hygiene'],
+    guidance: ['skill-quality', 'script-validation'],
+    contracts: ['agent-behavior', 'behavior-conformance', 'agent-conformance'],
+    equivalence: ['baseline-equivalence']
+  };
+  for (const [article, group, body] of groups) {
+    const members = [...body.matchAll(/<dt><code>([^<]+)<\/code><\/dt>/g)].map(match => match[1]);
+    assert.deepEqual(members, expected[group]);
+    assert.match(body, /<h3 id="suite-[^"]+-title">[^<]+\?<\/h3>/);
+    const labelledBy = article.match(/aria-labelledby="([^"]+)"/)?.[1];
+    assert.equal(labelledBy, `suite-${group}-title`);
+    assert.ok(body.includes(`id="${labelledBy}"`));
+  }
+  assert.match(map, /Case counts and trial defaults are in Notes/);
+  assert.match(map, /240 stimuli with 5 default trials/);
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /\[data-reading-view="true"\][^\n]*\.suite-lane, \.suite-members > div[^\n]*grid-template-columns: minmax\(0, 1fr\)/);
+});
+
+test('product naming distinguishes HVE-Core from the engineering methodology', () => {
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, 'deck.json'), 'utf8'));
+  assert.equal(metadata.title, 'HVE-Core Evaluation');
+  assert.match(metadata.description, /HVE-Core/);
+  assert.match(html, /HVE-Core is the reusable asset repository for Hyper Velocity Engineering/);
+  for (const text of [html, JSON.stringify(metadata), ...Object.values(sources).map(source => source.title)]) {
+    assert.doesNotMatch(text, /\bHVE\b(?!-Core|-CORE)/);
+  }
+});
+
 test('source excerpts and illustrated responses retain their fidelity labels', () => {
   for (const example of Object.values(examples)) {
     assert.equal(example.kind, 'code');

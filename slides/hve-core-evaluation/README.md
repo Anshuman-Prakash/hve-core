@@ -1,6 +1,6 @@
 ---
-title: HVE Core Evaluation
-description: A beginner-friendly HTML presentation about engineering AI assets with Vally and HVE Core evaluation suites.
+title: HVE-Core Evaluation
+description: A beginner-friendly HTML presentation about engineering AI assets with Vally and HVE-Core evaluation suites.
 author: Microsoft
 ms.date: 2026-10-11
 ms.topic: overview
@@ -9,11 +9,13 @@ ms.topic: overview
 ## Audience and story
 
 A 22-slide, approximately 25-minute introduction for an audience with no prior
-knowledge of HVE Core, Copilot, YAML or Vally.
+knowledge of HVE-Core, Copilot, YAML or Vally.
 
 The deck starts with the architecture and AI asset definitions, explains the
-Vally pipeline and data contracts, then maps them to the maintained HVE Core
-evaluation suites. It includes original architecture diagrams, actual spec
+Vally pipeline and data contracts, then maps them to the maintained HVE-Core
+evaluation suites. The suite map groups tests around structure, useful guidance,
+contract conformance and baseline preservation, with inventory counts in presenter
+notes rather than a dense table. It includes original architecture diagrams, actual spec
 excerpts, a five-step instruction-test walkthrough, file-effect checks,
 multi-turn planner judging, baseline comparisons and CI evidence integrity.
 
@@ -21,7 +23,7 @@ The AI asset categories covered are instructions, agents and skills.
 The word "prompt" refers only to evaluation inputs or Vally's model-judge type,
 not a separate AI asset category.
 
-Sources were checked on 2026-10-11 against HVE Core `main` commit
+Sources were checked on 2026-10-11 against HVE-Core `main` commit
 `49dfb73866f8c5f81bf734d6ca808dac25a2a330` and the repository's Vally CLI
 `0.17.0` pin. Public Vally documentation is a living reference.
 Suite counts were measured from the checkout's YAML, not older README tables.
@@ -104,7 +106,7 @@ checks; automated results are not an accessibility certification.
 
 Checked on 2026-10-11:
 
-* `npm test --prefix slides\hve-core-evaluation`: all 23 tests passed.
+* `npm test --prefix slides\hve-core-evaluation`: all 25 tests passed.
 * `npm run bundle --prefix slides\hve-core-evaluation`: passed, including bundler
   resource/security checks and library notices.
 * The scoped `checkBundle()` command above passed source-to-bundle parity.

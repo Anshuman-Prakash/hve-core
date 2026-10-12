@@ -25,72 +25,72 @@
       note: 'Determinism, cost, reference needs, scope and scoring method. Checked 2026-10-11.'
     },
     overview: {
-      title: 'HVE Core: Evaluation architecture',
+      title: 'HVE-Core: Evaluation architecture',
       url: `${repo}evals/README.md`,
       note: 'Suite purposes and diagnostic evidence contract. Inventory figures in this deck were counted from YAML, not copied from older README tables.'
     },
     config: {
-      title: 'HVE Core: Suite selection',
+      title: 'HVE-Core: Suite selection',
       url: `${repo}.vally.yaml`,
       note: 'Category filters select named ordinary and planner-conformance suites.'
     },
     pin: {
-      title: 'HVE Core: Package scripts and Vally pin',
+      title: 'HVE-Core: Package scripts and Vally pin',
       url: `${repo}package.json`,
       note: 'Pins @microsoft/vally-cli 0.17.0. CI-owned commands are teaching examples, not commands executed to make this deck.'
     },
     skill: {
-      title: 'HVE Core: Skill quality spec',
+      title: 'HVE-Core: Skill quality spec',
       url: `${repo}evals/skill-quality/eval.yaml`,
       note: '4 stimuli; 3 declared trials each; 120s default timeout; threshold 0.7.'
     },
     scripts: {
-      title: 'HVE Core: Script validation spec',
+      title: 'HVE-Core: Script validation spec',
       url: `${repo}evals/script-validation/eval.yaml`,
       note: '3 stimuli test agent reasoning about structures. This is not execution of the actual validator.'
     },
     agents: {
-      title: 'HVE Core: Agent behavior coverage',
+      title: 'HVE-Core: Agent behavior coverage',
       url: `${repo}evals/agent-behavior/README.md`,
       note: 'Generated spec ownership, class-recipe smoke tests, staged instructions and selected direct functional tests.'
     },
     agentSpec: {
-      title: 'HVE Core: Generated agent behavior spec',
+      title: 'HVE-Core: Generated agent behavior spec',
       url: `${repo}evals/agent-behavior/eval.yaml`,
       note: '240 stimuli; defaults.runs is 5, with per-stimulus overrides possible. Agent routing is not automatic.'
     },
     instructions: {
-      title: 'HVE Core: Instruction conformance spec',
+      title: 'HVE-Core: Instruction conformance spec',
       url: `${repo}evals/behavior-conformance/instructions.eval.yaml`,
       note: '80 stimuli in this checkout. Includes instruction-docusaurus-edits-conformance and contained telemetry file-effect scenarios.'
     },
     behavior: {
-      title: 'HVE Core: Skill behavior conformance spec',
+      title: 'HVE-Core: Skill behavior conformance spec',
       url: `${repo}evals/behavior-conformance/skill-behavior.eval.yaml`,
       note: '303 stimuli; 3 default trials; 600s timeout; threshold 0.6. Knowledge, tool-trigger and bleed-detection shapes.'
     },
     graduation: {
-      title: 'HVE Core: Advisory graduation policy',
+      title: 'HVE-Core: Advisory graduation policy',
       url: `${repo}evals/behavior-conformance/README.md`,
       note: 'At least 30 advisory CI runs, at most 5% rolling 7-day false positives, CODEOWNERS approval and rollback rules.'
     },
     planner: {
-      title: 'HVE Core: RAI Planner conformance',
+      title: 'HVE-Core: RAI Planner conformance',
       url: `${repo}evals/agent-conformance/rai-planner/eval.yaml`,
       note: 'Staged dependencies; two-turn stimulus; rubric judge on turn 1. Six planner suites total 85 stimuli, each with one default trial.'
     },
     baseline: {
-      title: 'HVE Core: Baseline equivalence',
+      title: 'HVE-Core: Baseline equivalence',
       url: `${repo}evals/baseline-equivalence/README.md`,
       note: 'Identical probes, baseline/treatment environments, explicit tie rubric, provisional 3-trial budget and current rpi-agent-only subject boundary.'
     },
     ci: {
-      title: 'HVE Core: Evals in CI',
+      title: 'HVE-Core: Evals in CI',
       url: `${repo}docs/contributing/evals-ci.md`,
       note: 'Backlink coverage, bounded selection, authoritative fan-in, credential eligibility and published summary boundary.'
     },
     runner: {
-      title: 'HVE Core: Vally runner and evidence validation',
+      title: 'HVE-Core: Vally runner and evidence validation',
       url: `${repo}scripts/evals/Modules/VallyRunner.psm1`,
       note: 'Validates trial population, configured graders, scores, attempt selection and evidence integrity.'
     }
