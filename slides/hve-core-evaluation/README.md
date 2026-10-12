@@ -8,16 +8,23 @@ ms.topic: overview
 
 ## Audience and story
 
-A 21-slide, approximately 25-minute introduction for an audience with no prior
+A 19-slide, approximately 25-minute introduction for an audience with no prior
 knowledge of HVE-Core, Copilot, YAML or Vally.
 
 The deck starts with the architecture and AI asset definitions, explains the
 Vally pipeline and data contracts, then maps them to the maintained HVE-Core
-evaluation suites. The suite map groups tests around structure, useful guidance,
+evaluation suites. The architecture diagram separates Vally's runner from a
+labelled HVE-Core CI lane: select tests, run Vally, check evidence and report results.
+The suite map groups tests around structure, useful guidance,
 contract conformance and baseline preservation, with inventory counts in presenter
 notes rather than a dense table. It includes original architecture diagrams, actual spec
-excerpts, a six-step agent-behavior walkthrough, file-effect checks,
-multi-turn planner judging, baseline comparisons and CI evidence integrity.
+excerpts, a six-step agent-behavior walkthrough and CI evidence integrity.
+The fundamentals explain the test recipe, prepared workspace and recorded
+behavior in plain language. Slides use concrete examples and visible takeaways;
+YAML fields, staging paths and trajectory event names remain in presenter notes.
+File checks, planner judgments and baseline comparisons share one plain-language
+overview with one question and example per method; technical details and
+evidence limits remain in presenter notes.
 Scoring and repeatability share one slide: a single-trial verdict on the left,
 consistency across repeated trials on the right. Detailed scoring fields,
 estimators and suite trial budgets remain in presenter notes.
@@ -36,8 +43,9 @@ No model-backed evals ran to produce it.
 ## Template alignment
 
 The shared layout, presenter bar, walkthrough frame, navigation and bundler follow
-the local HTML starter. Code panels use its 27px monospace type and 1.5 line height;
-the schema excerpt uses compact YAML mappings instead of a smaller-font override.
+the local HTML starter. Walkthrough code panels use its 27px monospace type and
+1.5 line height. The fundamentals use plain-language examples rather than dense
+schema or path excerpts.
 Evaluation-specific layouts, HVE-Core naming and the question-led suite map are
 preserved.
 
@@ -126,12 +134,12 @@ checks; automated results are not an accessibility certification.
 
 Checked on 2026-10-11:
 
-* `npm test --prefix slides\hve-core-evaluation`: all 28 tests passed.
+* `npm test --prefix slides\hve-core-evaluation`: all 31 tests passed.
 * `npm run bundle --prefix slides\hve-core-evaluation`: passed, including bundler
   resource/security checks and library notices.
 * The scoped `checkBundle()` command above passed source-to-bundle parity.
 * `npm run lint:public-dependency-feeds`: passed.
-* All 21 slides and six walkthrough states were checked in system Chrome at
+* All 19 slides and six walkthrough states were checked in system Chrome at
   1600x900 and 1280x720. No measured content clipping or walkthrough scrolling
   remained; main text met 18px and code met 16px rendered-size targets.
 * Reading layouts were checked at 320px and 390px, plus increased text spacing.

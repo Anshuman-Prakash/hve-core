@@ -159,10 +159,10 @@ test('deck initialization disables the unused cross-window API', () => {
 
 test('evaluation story includes architecture, schema, suites, integration and limits', () => {
   const ids = [...html.matchAll(/<section id="([^"]+)"/g)].map(match => match[1]);
-  assert.equal(ids.length, 21);
+  assert.equal(ids.length, 19);
   for (const id of ['system-map', 'assets', 'vally-flow', 'eval-schema', 'environment', 'trajectory',
     'graders', 'scoring', 'suite-map', 'agent-walkthrough', 'file-effects',
-    'planner-conformance', 'baseline', 'ci-extension', 'evidence-integrity', 'authoring', 'limits']) {
+    'ci-extension', 'evidence-integrity', 'authoring', 'limits']) {
     assert.ok(ids.includes(id), id);
   }
   for (const suite of ['skill-hygiene', 'skill-quality', 'agent-behavior', 'script-validation',
@@ -226,6 +226,68 @@ test('scoring and repeatability share one slide without conflating their verdict
   assert.match(attributes, /data-sources="scoring,runner,skill,agentSpec,planner"/);
 });
 
+test('file, judgment and comparison checks share a plain-language overview', () => {
+  const overview = html.match(/<section id="file-effects"[^>]*>([\s\S]*?)<\/section>/)[1];
+  const notes = overview.match(/<aside class="notes">([\s\S]*?)<\/aside>/)[1];
+  const visible = overview.replace(/<aside class="notes">[\s\S]*?<\/aside>/, '');
+  assert.equal([...visible.matchAll(/<article>/g)].length, 3);
+  for (const question of ['Did it produce the right artifact?', 'Did it make the right judgment?',
+    'Did customization change ordinary answers?']) assert.ok(visible.includes(question));
+  for (const method of ['File checks', 'Model judge', 'Paired comparison']) assert.ok(visible.includes(method));
+  assert.doesNotMatch(visible, /<code>|<pre>|data-example|0\.7|Turn 0|Turn 1/);
+  assert.match(visible, /No single check proves all behavior is correct/);
+  for (const detail of ['file-matches', 'dt-telemetry-evidence-ceiling', 'Turn 0', 'Turn 1',
+    'threshold 0.7', 'default to one trial', 'RPI Agent only', 'provisional budget']) {
+    assert.ok(notes.toLowerCase().includes(detail.toLowerCase()), detail);
+  }
+  assert.doesNotMatch(html, /<section id="(?:planner-conformance|baseline)"/);
+  const attributes = html.match(/<section id="file-effects"([^>]*)>/)[1];
+  assert.match(attributes, /data-sources="instructions,schema,planner,overview,scoring,baseline"/);
+  assert.equal(examples.fileEffect, undefined);
+  assert.equal(examples.planner, undefined);
+});
+
+test('architecture diagram gives CI a labelled and ordered workflow', () => {
+  const architecture = html.match(/<section id="system-map"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.match(architecture, /class="ci-lane" role="group" aria-labelledby="ci-lane-title"/);
+  assert.match(architecture, /<h3 id="ci-lane-title">HVE-Core CI<\/h3>/);
+  assert.match(architecture, /Automated checks for a change/);
+  const steps = architecture.match(/<ol class="ci-steps"[^>]*>([\s\S]*?)<\/ol>/)[1];
+  const titles = [...steps.matchAll(/<strong>([^<]+)<\/strong>/g)].map(match => match[1]);
+  assert.deepEqual(titles, ['1. Select tests', '2. Run Vally', '3. Check evidence', '4. Report results']);
+  assert.equal([...steps.matchAll(/<p>/g)].length, 4);
+  assert.match(architecture, /Selection happens before execution/);
+  assert.doesNotMatch(architecture, /architecture-return|Report \/ gate \/ revise/);
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /\.reveal \.ci-steps \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(theme, /\[data-reading-view="true"\][^\n]*\.ci-steps \{ grid-template-columns: minmax\(0, 1fr\)/);
+});
+
+test('fundamentals state their lessons visibly and retain technical detail in notes', () => {
+  const expected = {
+    'eval-schema': ['A test defines the task and the checks', 'Task', 'Checks', 'Run budget',
+      'Five trials, up to five minutes each.', 'task = stimulus; checks = graders; run budget = defaults.'],
+    environment: ['Give the agent what the test requires', 'temporary workspace', 'Why this matters',
+      'full repository is not automatically copied', 'does not prove the agent read it'],
+    trajectory: ['The answer is only part of the evidence', 'What the agent says', 'What the run record shows',
+      'Messages', 'Actions', 'Outcomes', 'Usage', 'Trajectory = the recorded behavior of one trial.',
+      'Illustrative response, not captured model output.']
+  };
+  for (const [id, lessons] of Object.entries(expected)) {
+    const slide = html.match(new RegExp(`<section id="${id}"[^>]*>([\\s\\S]*?)<\\/section>`))[1];
+    const notes = slide.match(/<aside class="notes">([\s\S]*?)<\/aside>/)[1];
+    const visible = slide.replace(/<aside class="notes">[\s\S]*?<\/aside>/, '');
+    for (const lesson of lessons) assert.ok(visible.includes(lesson), `${id}: ${lesson}`);
+    assert.doesNotMatch(visible, /data-example|<pre>|<code>/);
+    assert.match(visible, /class="takeaway"/);
+    assert.ok(notes.length > 400);
+  }
+  assert.match(html, /defaults\.timeout: 300s/);
+  assert.match(html, /grading_environment/);
+  assert.match(html, /tool_call, tool_result, skill_activation/);
+  assert.equal(Object.keys(examples).length, 0);
+});
+
 test('suite map groups all seven suites by the question they answer', () => {
   const map = html.match(/<section id="suite-map"[^>]*>([\s\S]*?)<\/section>/)[1];
   assert.doesNotMatch(map, /<table\b/);
@@ -273,12 +335,10 @@ test('source excerpts and illustrated responses retain their fidelity labels', (
     assert.equal(typeof source.note, 'string');
     assert.ok(!source.url.includes('main/'), 'Repository evidence must be commit-pinned');
   }
-  assert.match(examples.fileEffect.body, /type: file-matches/);
-  assert.match(examples.planner.body, /turn: 1/);
   assert.throws(() => diffStats([{ type: 'invalid', text: '' }]), /Invalid/);
 });
 
-test('code panels retain starter typography without a compact schema override', () => {
+test('walkthrough code panels retain starter typography without compact overrides', () => {
   const styles = fs.readFileSync(path.join(__dirname, 'components.css'), 'utf8');
   const rule = styles.match(/^\.reveal \.code-surface pre \{([^}]+)\}/m)?.[1];
   assert.ok(rule);
@@ -287,9 +347,6 @@ test('code panels retain starter typography without a compact schema override', 
   assert.match(rule, /white-space: pre-wrap;/);
   assert.doesNotMatch(styles, /schema-split/);
   assert.doesNotMatch(html, /schema-split/);
-  assert.ok(examples.schema.body.split('\n').length <= 10);
-  assert.match(examples.schema.body, /defaults: \{ executor: copilot-sdk, runs: 3, timeout: 120s \}/);
-  assert.match(examples.schema.body, /tags: \{ instruction: docusaurus-edits, advisory: "true" \}/);
 });
 
 test('opening uses the RAI Planner hero style without changing the deck title', () => {

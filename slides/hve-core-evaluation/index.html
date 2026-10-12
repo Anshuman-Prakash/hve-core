@@ -49,10 +49,18 @@
             <span class="connector" aria-label="feed">&#8594;</span>
             <div class="arch-node accent"><span class="node-label">VALLY + COPILOT SDK</span><h3>Run and grade</h3><p>Agent execution,<br>trajectory and scores</p></div>
           </div>
-          <div class="architecture-return"><span>HVE-Core CI: select relevant tests</span><span aria-hidden="true">&#8594;</span><span>Validate evidence</span><span aria-hidden="true">&#8594;</span><span>Report / gate / revise</span></div>
-          <figcaption>Assets and test specs feed Vally. HVE-Core's continuous integration (CI) selects runs, checks their evidence and sends findings back to the next asset revision.</figcaption>
+          <div class="ci-lane" role="group" aria-labelledby="ci-lane-title">
+            <div class="ci-heading"><h3 id="ci-lane-title">HVE-Core CI</h3><p>Automated checks for a change</p></div>
+            <ol class="ci-steps" aria-label="HVE-Core CI evaluation workflow">
+              <li><strong>1. Select tests</strong><p>Link changes to test cases.</p></li>
+              <li><strong>2. Run Vally</strong><p>Capture agent runs.</p></li>
+              <li><strong>3. Check evidence</strong><p>Require complete results.</p></li>
+              <li><strong>4. Report results</strong><p>Show findings; apply policy.</p></li>
+            </ol>
+          </div>
+          <figcaption>Assets and test specs feed Vally; CI selects runs, verifies results and reports findings.</figcaption>
         </figure>
-        <aside class="notes">Separate the product we test from the framework that tests it. HVE-Core assets tell the assistant what to do. HVE-Core evaluation specs describe situations and the evidence that should count. Vally executes those specs, using the Copilot software development kit, or SDK, as an agent runtime. The runtime connects the model to tools and a workspace. CI means automated checks associated with a code change. HVE-Core's CI wrappers connect changed assets to relevant cases and validate the returned evidence. This is an original conceptual diagram, not a deployment diagram or a claim that every check invokes a model.</aside>
+        <aside class="notes">Separate the product we test from the framework that tests it. HVE-Core assets tell the assistant what to do. HVE-Core evaluation specs describe situations and the evidence that should count. Vally executes those specs, using the Copilot software development kit, or SDK, as an agent runtime. The runtime connects the model to tools and a workspace. The lower lane explains HVE-Core continuous integration (CI): automated checks associated with a code change. First, its wrappers select cases linked to changed assets. Then Vally runs those selected cases and captures trial evidence. HVE-Core verifies that the expected results are complete before reporting findings and applying advisory or blocking policy. Selection happens before execution; evidence validation and reporting happen afterward. Findings inform the next asset revision rather than automatically rewriting it. This is an original conceptual diagram, not a deployment diagram or a claim that every check invokes a model.</aside>
       </section>
 
       <section id="assets" data-title="What is an AI asset?" data-chapter="AI asset contracts" data-sources="ci,agents,overview">
@@ -93,33 +101,43 @@
         <aside class="notes">A stimulus is a test case, not merely an isolated question. It may also specify files, skills, resource limits and graders. An executor manages the run. The Copilot SDK executor is the maintained behavior-testing path in HVE-Core. A trajectory records the response and tool activity rather than only the last sentence. Each grader looks for a particular property and supplies evidence. Vally aggregates grader scores and determines a verdict according to the spec. Repeating a stimulus produces multiple trials. Static lint checks can inspect assets directly, without this agent-execution path.</aside>
       </section>
 
-      <section id="eval-schema" data-title="Read an eval specification" data-chapter="Vally fundamentals" data-sources="schema,instructions,config">
-        <div class="eyebrow">YAML = HUMAN-READABLE CONFIGURATION</div>
-        <h2>The test specification is an asset too</h2>
-        <div class="story-split">
-          <div class="story-note"><dl class="compact-definitions"><dt>defaults</dt><dd>Shared executor, run count and time limit.</dd><dt>stimuli</dt><dd>Named cases with inputs and graders.</dd><dt>tags</dt><dd>Selection and HVE-Core asset backlinks.</dd><dt>scoring</dt><dd>Optional weights and pass threshold.</dd></dl></div>
-          <div data-example="schema"></div>
-        </div>
-        <aside class="notes">YAML expresses structured data using indentation. Name identifies the eval; type distinguishes capability assessment from regression intent. Defaults apply unless a case overrides them. Runs means trials per stimulus, and timeout limits a trial. The excerpt comes from the actual instruction-conformance file; the dots indicate omitted fields, so this is not a copy-and-run spec. HVE-Core uses category tags for named suite selection and a kind-to-slug tag such as instruction: docusaurus-edits to link a test to an asset. Advisory is an HVE-Core policy consumed by its wrapper, not a universal Vally grader rule. This particular spec has no scoring block and therefore uses all-grader trial verdicts.</aside>
+      <section id="eval-schema" data-title="A test defines the task and the checks" data-chapter="Vally fundamentals" data-sources="schema,functionalCase,agentSpec,config">
+        <div class="eyebrow">BEFORE THE RUN / DEFINE THE TEST</div>
+        <h2>A test defines the task and the checks</h2>
+        <p class="lesson-context">Real example: the functional code-review test</p>
+        <dl class="asset-list">
+          <div><dt>Task</dt><dd>Review a code change for logic, errors and severity.</dd></div>
+          <div><dt>Checks</dt><dd>Look for findings; reject claims that source files were edited.</dd></div>
+          <div><dt>Run budget</dt><dd>Five trials, up to five minutes each.</dd></div>
+        </dl>
+        <p class="takeaway">Define what counts as success before asking the agent to act.</p>
+        <p class="footnote">Vally terms: task = stimulus; checks = graders; run budget = defaults.</p>
+        <aside class="notes">A test specification is a reviewable engineering asset: it defines what to ask, what evidence to check and how to bound the run. The visible example summarizes code-review-functional-lens from the agent-behavior suite. Its prompt asks for review of logic, edge cases and error handling with severity; its two output-matches graders check finding vocabulary and negate affirmative source-edit claims. These checks are limited: vocabulary does not prove correctness and an edit claim is not a filesystem observation. The case inherits defaults.runs: 5, defaults.timeout: 300s and executor: copilot-sdk, so the displayed budget is five trials of up to five minutes, not measured execution. YAML is human-readable structured configuration. In eval.yaml, name identifies the eval and type distinguishes capability assessment from regression intent. stimuli contains named cases with prompt or turns and graders. defaults supplies shared executor, run count and timeout unless a case overrides them. tags selects cases and links them to assets; the generator adds agent: code-review-functional to this case. scoring configures optional type weights and a threshold; agent-behavior uses threshold 0.7. This case carries advisory: true, an HVE-Core wrapper policy, not a universal Vally grader rule. The later walkthrough shows the exact authored prompt and grader patterns. No evaluation ran to create this summary.</aside>
       </section>
 
-      <section id="environment" data-title="Stage the asset before measuring it" data-chapter="Vally fundamentals" data-sources="schema,planner,agents">
-        <div class="eyebrow">THE ENVIRONMENT IS PART OF THE TEST</div>
-        <h2>A model cannot follow a missing asset</h2>
-        <div class="story-split">
-          <div class="story-note"><p>Each trial gets a temporary workspace.</p><ul class="plain-list"><li>Stage the target and its dependencies.</li><li>Load declared skills.</li><li>Use synthetic fixtures, not customer data.</li></ul></div>
-          <div data-example="environment"></div>
+      <section id="environment" data-title="Give the agent what the test requires" data-chapter="Vally fundamentals" data-sources="schema,planner,agents">
+        <div class="eyebrow">BEFORE THE RUN / PREPARE THE INPUTS</div>
+        <h2>Give the agent what the test requires</h2>
+        <p class="lesson-context">Test environment = a temporary workspace prepared for one trial</p>
+        <div class="two-up">
+          <article class="panel"><h3>Example: a planner test</h3><ul class="plain-list"><li>The planner's instructions.</li><li>Its skills and reference material.</li><li>The scenario or prepared sample files.</li></ul></article>
+          <article class="panel"><h3>Why this matters</h3><p>If required instructions are missing, you may test general model knowledge instead of the HVE-Core asset.</p></article>
         </div>
-        <p class="footnote"><code>src</code> resolves from the spec directory; <code>dest</code> names the path inside the trial. Grader-only files can be staged separately.</p>
-        <aside class="notes">A fixture is a prepared test input, such as a synthetic state file or sample document. Vally trials do not automatically contain the repository tree. The RAI Planner conformance spec stages the agent, shared instructions and its delegated skills. The seven-line excerpt shows part of that configuration, not all its dependencies. Current Vally uses agent_environment; environment remains a deprecated alias found in some HVE-Core specs. grading_environment can introduce grader-only files after the agent has finished. A file being present is not the same as the model having read it. HVE-Core's direct functional agent cases sometimes stage the agent as workspace instructions; planner conformance uses an explicit launch turn.</aside>
+        <p class="takeaway">The full repository is not automatically copied into every trial.</p>
+        <p class="footnote">A file being present does not prove the agent read it. Check the run record.</p>
+        <aside class="notes">The test environment controls which assets the agent can use. A fixture is a prepared test input, such as a synthetic state file or sample document; it is not customer data. The RAI Planner conformance spec stages its agent, shared instructions and delegated skills. Its source list includes rai-planner and rai-standards skills plus the agent and shared instruction files. src resolves relative to the eval-spec directory; dest names the path inside the temporary trial workspace. Current Vally calls this agent_environment; environment is a deprecated alias still found in some HVE-Core specs. grading_environment can stage grader-only files after the agent finishes, keeping hidden checks out of the agent's workspace during execution. Do not infer that every spec uses hidden grading files. HVE-Core's selected direct functional cases sometimes stage the agent as .github/copilot-instructions.md so its contract enters workspace context. Planner conformance uses an explicit launch turn. Merely copying an .agent.md file to its normal path does not establish that it entered model context; a present file also does not prove it was read. The following slide explains the trajectory evidence used to inspect observed actions.</aside>
       </section>
 
-      <section id="trajectory" data-title="What an evaluation run records" data-chapter="Vally fundamentals" data-sources="vally,ci">
-        <div class="eyebrow">BEHAVIOR LEAVES A TRACE</div>
-        <h2>Inspect the journey, not only the answer</h2>
-        <div class="story-split"><div class="story-note"><p>Two agents can give the same answer while taking different actions.</p><ul class="plain-list"><li>Did a tool fail?</li><li>Was a skill activated?</li><li>Did it write a file?</li><li>How long did the trial take?</li></ul></div><div data-example="trajectory"></div></div>
-        <p class="footnote">A trajectory is diagnostic evidence. HVE-Core public CI artifacts publish safe summaries, not raw transcripts.</p>
-        <aside class="notes">Trajectory events include messages, tool calls and results, skill activations, token usage, errors and turn boundaries. Metrics aggregate those observations. Token usage describes model input and output volume, not correctness. The displayed field map is illustrative and deliberately excludes fabricated timings or token counts. A trajectory can include sensitive output and tool arguments. HVE-Core's public CI policy withholds raw trajectories and judge console logs while publishing bounded summaries. Do not confuse observability with proof: a tool call can establish that an action was attempted, while a result or file assertion is needed to establish its effect.</aside>
+      <section id="trajectory" data-title="The answer is only part of the evidence" data-chapter="Vally fundamentals" data-sources="vally,ci,functionalCase">
+        <div class="eyebrow">AFTER THE RUN / INSPECT THE RECORD</div>
+        <h2>The answer is only part of the evidence</h2>
+        <div class="two-up">
+          <article class="panel"><h3>What the agent says</h3><blockquote class="illustrative-answer">"The division can fail when b is zero."</blockquote><p class="example-caption">Illustrative response, not captured model output.</p></article>
+          <article class="panel"><h3>What the run record shows</h3><dl class="run-record"><div><dt>Messages</dt><dd>What was asked and answered.</dd></div><div><dt>Actions</dt><dd>Tools and skills observed.</dd></div><div><dt>Outcomes</dt><dd>Tool results and errors.</dd></div><div><dt>Usage</dt><dd>Time taken and text processed.</dd></div></dl></article>
+        </div>
+        <p class="takeaway">Trajectory = the recorded behavior of one trial.</p>
+        <p class="footnote">HVE-Core publishes bounded summaries, not raw transcripts.</p>
+        <aside class="notes">A trajectory records the agent's behavior during one trial rather than only its final answer. The left-hand response is an authored illustration grounded in the division-function test; it is not a live model response. The right-hand categories describe record fields, not a claim that particular tools or skills ran. Vally trajectory events include user_message, assistant_message, tool_call, tool_result, skill_activation, token_usage, error and turn_start/turn_end. Computed metrics include tokenUsage, toolCallCount, skillActivationCount, turnCount, wallTimeMs and errorCount; finalOutput is the final agent response. Token counts describe usage, not correctness. We show no fabricated timing or token measurements. Two identical final answers can have different action histories, failures and resource usage. A tool call establishes an attempted action; inspect its result or use a workspace assertion to establish its effect. Sensitive output and tool arguments may appear in trajectories. HVE-Core public CI withholds raw trajectories and judge console logs, publishing bounded diagnostic summaries instead. Observability is evidence, not proof of every behavioral claim.</aside>
       </section>
 
       <section id="graders" data-title="Choose an adequate grader" data-chapter="Vally fundamentals" data-sources="taxonomy,instructions,planner,behavior">
@@ -217,33 +235,16 @@
         <aside class="notes">Use Next step to follow code-review-functional-lens from evals/agent-behavior/stimuli/code-review-functional.yml. This partial is the authored source; the generated eval.yaml adds tags.agent: code-review-functional. The case has tags.advisory: true and inherits runs: 5, timeout: 300s, executor: copilot-sdk and threshold: 0.7. It uses an agent-style prompt, not native agent routing. Step one shows the exact prompt. Its diff does not introduce division by zero; the behavior was already present and only a comment changes. Step two is a scripted response, not captured output. Step three shows the exact positive finding-vocabulary regex. Step four shows the exact negate: true source-edit-claim regex; a matching affirmative claim fails that check. Step five derives a score of 1.0 from the scripted response and explains the threshold and advisory policy. Step six shows wrong advice that still passes both text checks. These graders check response vocabulary and affirmative edit claims, not semantic correctness or filesystem effects. No agent execution ran to produce these examples.</aside>
       </section>
 
-      <section id="file-effects" data-title="Extend coverage to observable file effects" data-chapter="A test in detail" data-sources="instructions,schema">
+      <section id="file-effects" data-title="Testing beyond words in chat" data-chapter="A test in detail" data-sources="instructions,schema,planner,overview,scoring,baseline">
         <div class="eyebrow">BEYOND WORDS IN CHAT</div>
-        <h2>Check the artifact the skill produces</h2>
-        <div class="story-split"><div class="story-note"><p>The telemetry case stages synthetic input and asks for a decision file.</p><ul class="plain-list"><li>Check the output path and contents.</li><li>Check privacy and signal decisions.</li><li>Require an explicit evidence ceiling.</li></ul></div><div data-example="fileEffect"></div></div>
-        <p class="takeaway">Contained file effects are stronger evidence than saying a file was written. They still do not prove production telemetry was emitted.</p>
-        <aside class="notes">The real dt-coach-telemetry instruction case stages an instruction and an observable synthetic input, loads declared skills, and asks the assistant to write a decision file. Several file-matches graders inspect signal shapes, privacy and cardinality decisions, and the evidence ceiling. We show the ceiling grader rather than the whole spec. It looks for synthetic context and language that limits claims about emitted telemetry or production evidence. This is a meaningful extension beyond response vocabulary, but the regex can still accept semantically weak text. Neither a file assertion nor the word synthetic proves a production control works. The case is advisory in the current instruction suite.</aside>
-      </section>
-
-      <section id="planner-conformance" data-title="Judge a multi-turn planner contract" data-chapter="A test in detail" data-sources="planner,overview,scoring">
-        <div class="eyebrow">REGRESSION / SEMANTIC RUBRIC</div>
-        <h2>Two turns establish the planner context</h2>
-        <div class="story-split"><div class="story-note"><p>Turn 0: launch the staged RAI Planner.</p><p class="paragraph-gap">Turn 1: present an unreviewed loan-decision scenario.</p><div class="rubric"><h3>What the rubric asks</h3><p>Recognize consequential risk to people rather than treating it as routine automation.</p></div></div><div data-example="planner"></div></div>
-        <p class="footnote">The <code>prompt</code> judge grades turn 1. Its weight is 0.7; the threshold is 0.7. Budget checks alone cannot carry the case.</p>
-        <aside class="notes">RAI means Responsible AI. The RAI Planner spec stages its agent and dependencies, then sends a launch directive followed by the case. The judge evaluates the second turn against the rubric, rather than merely looking for a keyword. A wall-time check limits the completion budget. The declared type weights are prompt 0.7, wall-time 0.15 and output-contains 0.15, with threshold 0.7. This particular stimulus has a prompt and wall-time grader, and Vally renormalizes weights over types that actually ran. Therefore do not describe it as an unconditional binary judge veto: its score and present check types still matter. These planner suites run through the scheduled agent-conformance workflow, not the PR changed-artifact lane. Their current default is one trial.</aside>
-      </section>
-
-      <section id="baseline" data-title="Compare customized and baseline behavior" data-chapter="HVE-Core test suites" data-sources="baseline">
-        <div class="eyebrow">A / B REGRESSION QUESTION</div>
-        <h2>Does the customization change ordinary answers?</h2>
-        <figure class="comparison-diagram" aria-label="Paired baseline and customized evaluation">
-          <div class="shared-input">Same prompts / same execution model</div>
-          <div class="two-up"><div class="arch-node"><h3>Baseline</h3><p>Plain environment<br>No agent launch</p></div><div class="arch-node accent"><h3>Customized</h3><p>Materialized RPI Agent<br>Explicit launch turn</p></div></div>
-          <div class="comparison-output"><h3>Explicit equivalence rubric</h3><p>Compare behavioral agreement, not wording preference.</p></div>
-          <figcaption>Both variants feed a comparison judge. An explicit tie contract distinguishes equivalent behavior from whichever prose the judge prefers.</figcaption>
-        </figure>
-        <p class="footnote">Current subject: RPI Agent. Three trials are a provisional budget. Comparison evidence is report-only under the current calibrated-policy boundary.</p>
-        <aside class="notes">A/B testing changes one factor while keeping the question and execution model consistent. HVE-Core's baseline-equivalence suite compares the base environment with a materialized RPI Agent. RPI stands for Research, Plan and Implement; the agent also coordinates review. The comparison contract tells the judge to call a tie when both answers satisfy the behavioral requirement. Otherwise a preference judge may reward wording rather than actual sameness. The present corpus and scope guards are specific to RPI Agent; materializing another agent does not make the corpus valid for that subject. The devloop tier is advisory; calibration and ci tiers keep comparison reporting distinct from authoritative structural and deterministic evidence. Do not claim statistical certification from the provisional three-trial budget.</aside>
+        <h2>Test more than words in chat</h2>
+        <div class="quality-stack">
+          <article><span class="layer-number" aria-hidden="true">01</span><div><h3>Did it produce the right artifact?</h3><p>Inspect the generated decision document.</p></div><span class="layer-tag">File checks</span></article>
+          <article><span class="layer-number" aria-hidden="true">02</span><div><h3>Did it make the right judgment?</h3><p>Judge how the planner handles unreviewed loan decisions.</p></div><span class="layer-tag">Model judge</span></article>
+          <article><span class="layer-number" aria-hidden="true">03</span><div><h3>Did customization change ordinary answers?</h3><p>Compare the same questions with and without RPI Agent.</p></div><span class="layer-tag">Paired comparison</span></article>
+        </div>
+        <p class="footnote">These are different kinds of evidence, not live results. No single check proves all behavior is correct.</p>
+        <aside class="notes">These three questions summarize separate maintained test designs, not an execution sequence. File checks: the real dt-coach-telemetry instruction case stages an instruction and an observable synthetic input, loads declared skills and asks for a telemetry-decision.md document. Several file-matches graders inspect signal shapes, privacy and cardinality decisions, and the evidence ceiling. The dt-telemetry-evidence-ceiling grader checks for synthetic context and language that limits claims about emitted telemetry or production evidence. Checking the actual document is stronger evidence than the assistant saying it wrote one, but a regex can still accept semantically weak text. Neither a file assertion nor the word synthetic proves production telemetry was emitted or a production control works. The case is advisory in the current instruction suite. Model judging: RAI means Responsible AI. The RAI Planner conformance spec stages its agent and dependencies. Turn 0 launches the staged agent; turn 1 presents an automated loan-decision scenario without human review. The prompt grader evaluates that response against a rubric requiring recognition of consequential risk to people, rather than looking only for keywords. A wall-time check limits the completion budget. Declared type weights are prompt 0.7, wall-time 0.15 and output-contains 0.15, with threshold 0.7. This stimulus has prompt and wall-time graders, and Vally renormalizes weights over types that actually ran. Budget checks alone cannot carry the case, but the judge is not an unconditional binary veto: its score and present check types matter. These suites run through the scheduled agent-conformance workflow, not the PR changed-artifact lane, and currently default to one trial. A model judge can be mistaken. Paired comparisons: HVE-Core's baseline-equivalence suite holds the prompts and execution model consistent, comparing an empty baseline environment with a materialized RPI Agent and explicit launch turn. RPI stands for Research, Plan and Implement; the agent also coordinates review. The explicit equivalence rubric calls a tie when both answers satisfy the behavioral requirement, avoiding a preference for wording. The present corpus and scope guards apply to RPI Agent only; materializing another agent does not make this corpus valid for that subject. Three trials are a provisional budget, not statistical certification. The devloop tier is advisory; calibration and ci tiers keep comparison reporting distinct from authoritative structural and deterministic evidence. These checks provide different evidence and do not establish correctness outside their scenarios.</aside>
       </section>
 
       <section id="ci-extension" data-title="How HVE-Core extends Vally in CI" data-chapter="HVE-Core integration" data-sources="ci,runner,config">
