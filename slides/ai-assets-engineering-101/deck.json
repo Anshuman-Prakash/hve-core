@@ -1,0 +1,5 @@
+{
+  "title": "The AI Assets Themselves Need Engineering",
+  "description": "A 101 introduction to defining, trying, checking and improving reusable AI guidance. Start here before HVE-Core Evaluation.",
+  "sourceNote": "Sources checked 2026-10-12. HVE-Core evidence is pinned to commit 9cddbf2. Meeting notes, responses and walkthrough outcomes are fictional teaching examples, not live agent runs. This deck introduces engineering habits; the evaluation companion covers Vally and test-suite mechanics."
+}

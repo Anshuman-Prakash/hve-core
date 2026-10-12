@@ -1,0 +1,172 @@
+<!doctype html>
+<!-- Copyright (c) Microsoft Corporation. Licensed under the MIT License. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>The AI Assets Themselves Need Engineering</title>
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="components.css">
+  <script defer src="vendor/reveal.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="content.js"></script>
+  <script defer src="components.js"></script>
+  <script defer src="deck.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#presenter-controls">Skip to presentation controls</a>
+  <div id="startup" role="status">Loading the presentation. Run npm ci and npm run build in the deck directory, then open dist/index.html.</div>
+  <noscript>Enable JavaScript for the presentation controls. This deck does not run a live agent.</noscript>
+  <div class="reveal">
+    <main class="slides" tabindex="0" aria-label="Presentation">
+      <section id="opening" data-title="The AI assets themselves need engineering" data-chapter="Start here" data-sources="customization,builder,companion">
+        <div class="eyebrow">MICROSOFT / HVE-Core / 101</div>
+        <div class="hero-grid">
+          <div><h1 class="deck-title">The AI assets<br>themselves need<br><em>engineering</em></h1><p class="lead">Reusable guidance needs the same care as the work it helps produce.</p><div class="date-pill">101 / OCTOBER 12, 2026</div></div>
+          <ol class="hero-agenda" aria-label="Two learning goals"><li><span class="num" aria-hidden="true">01</span><div><strong>Make the idea concrete</strong><p>Follow one meeting-summary helper.</p></div></li><li><span class="num" aria-hidden="true">02</span><div><strong>Leave with a habit</strong><p>Define. Try. Check. Improve.</p></div></li></ol>
+        </div>
+        <div class="slide-bottom"><span>Start here before HVE-Core Evaluation</span><span>Fictional example / no live agent</span></div>
+        <aside class="notes">This is the 101 companion, intended for about 15 to 18 minutes including discussion. No knowledge of evaluation tools, coding or HVE-Core is required. AI assets means the reusable guidance around an assistant: instructions, agents and skills. The point is not to memorize those categories. It is to notice that the guidance can affect many pieces of work and therefore deserves its own engineering care. We will use a fictional meeting-summary helper, not real customer data. Every response is authored for teaching; none is captured from a model. The technical evaluation deck is the next lesson, not a prerequisite.</aside>
+      </section>
+
+      <section id="two-things" data-title="Engineer the guidance as well as the output" data-chapter="Why this matters" data-sources="customization,authority">
+        <div class="eyebrow">THE CENTRAL IDEA</div>
+        <h2>There are two things to care for</h2>
+        <div class="two-up"><article class="panel"><h3>The work produced</h3><p>Code, plans, summaries and decisions need review.</p></article><article class="panel"><h3>The guidance reused</h3><p>The rules shaping that work also need review.</p></article></div>
+        <figure class="influence-map" aria-label="Reusable guidance influences an assistant and its work"><div class="map-node">AI assets<br><span>Reusable guidance</span></div><span class="map-arrow" aria-hidden="true">&#8594;</span><div class="map-node">Assistant + tools<br><span>Do the task</span></div><span class="map-arrow" aria-hidden="true">&#8594;</span><div class="map-node">Work products<br><span>Need checking</span></div><figcaption>Changing the guidance can change the work, even when application code stays the same.</figcaption></figure>
+        <aside class="notes">A useful mental model is that we engineer both the work product and the reusable guidance influencing it. The model and runtime are still part of the system; the asset is not a replacement for them. This original conceptual diagram shows influence, not a deterministic guarantee or a deployment. An assistant can misunderstand or ignore a rule. Application code and output review remain necessary. The additional lesson is that a reviewed output does not automatically validate the guidance used to produce it, and well-written guidance does not automatically validate all future outputs.</aside>
+      </section>
+
+      <section id="asset-basics" data-title="What counts as an AI asset?" data-chapter="The basics" data-sources="customization">
+        <div class="eyebrow">THREE FAMILIAR RESPONSIBILITIES</div>
+        <h2>An AI asset is reusable guidance</h2>
+        <dl class="concept-rows"><div><dt>Instruction</dt><dd>A rule: "Do not invent an owner."</dd></div><div><dt>Agent</dt><dd>A role: "Act as a careful meeting assistant."</dd></div><div><dt>Skill</dt><dd>A repeatable method: "Extract decisions and actions."</dd></div></dl>
+        <p class="takeaway">The asset guides the model. It is not the model itself.</p>
+        <aside class="notes">These are short summaries of responsibilities, not complete artifact schemas. Instructions state rules and context. Custom agents define a focused role and may configure tools. Skills package reusable knowledge and procedures, sometimes with scripts and references. The exact loading mechanism depends on the host. The example sentences are fictional and are not deployed HVE-Core assets. We intentionally focus on instructions, agents and skills rather than surveying every customization type. You do not need to learn file suffixes to understand the engineering obligation.</aside>
+      </section>
+
+      <section id="reuse" data-title="A small rule can affect repeated work" data-chapter="Why this matters" data-sources="customization,builder">
+        <div class="eyebrow">REUSE INCREASES THE REACH OF A MISTAKE</div>
+        <h2>A small rule can shape many answers</h2>
+        <blockquote class="big-quote">"Turn meeting notes into useful summaries."</blockquote>
+        <div class="two-up"><article class="panel"><h3>Helpful intention</h3><p>Make each meeting easier to follow.</p></article><article class="panel"><h3>Unanswered question</h3><p>What should happen when the notes are incomplete?</p></article></div>
+        <p class="takeaway">Repeated use makes unclear expectations worth fixing.</p>
+        <aside class="notes">This is a proposed instruction, not observed production behavior. Ask the audience what useful means: short, complete, accurate, actionable? People can reasonably interpret it differently. A model may also respond differently between runs. The ambiguity is the design problem. Reuse makes it important because a missing rule can recur across tasks. Do not claim that this sentence always causes a particular failure. The next slide gives one fictional example of the risk.</aside>
+      </section>
+
+      <section id="missing-owner" data-title="A polished answer can contain an invented fact" data-chapter="One simple example" data-sources="coverage">
+        <div class="eyebrow">FICTIONAL MEETING / TWO LINES OF NOTES</div>
+        <h2>Looks complete. Is it supported?</h2>
+        <div class="two-up"><article class="panel"><h3>Meeting notes</h3><p class="example-text">Pilot planned for Friday.<br>No owner was assigned.</p></article><article class="panel"><h3>A weak summary</h3><p class="example-text">Decision: pilot on Friday.<br>Owner: Morgan.</p><p class="verdict">Unsupported owner</p></article></div>
+        <p class="takeaway">The answer added a fact the input did not contain.</p>
+        <aside class="notes">Pause before naming the issue and ask: where did Morgan come from? Morgan is a fictional name invented in the teaching response. There is no evidence for that owner in the two-line input. We do not need a technical tool to spot this mismatch. The output looks organized and useful, but its completion came at the cost of an unsupported fact. This is the reason to check the input and answer together. This slide makes no claim about actual model performance or pass rates.</aside>
+      </section>
+
+      <section id="contract" data-title="Describe the behavior you expect" data-chapter="Define" data-sources="builder,authority">
+        <div class="eyebrow">HABIT 1 / DEFINE</div>
+        <h2>A contract makes "good" checkable</h2>
+        <ol class="rule-list"><li>Summarize decisions from the supplied notes.</li><li>Use only owners explicitly named in the notes.</li><li>If no owner is named, write <strong>"unknown"</strong>.</li></ol>
+        <p class="takeaway">Contract = the behavior you expect, including what to do when information is missing.</p>
+        <p class="footnote">A written rule guides behavior. It does not guarantee the agent will follow it.</p>
+        <aside class="notes">Contract is an engineering term for a shared expectation, not a legal document here. Compare this rule with useful summaries. It names the information source, a factual boundary and the handling of a missing value. A reader can now judge the owner field against the notes. This is still a fictional rule, not a deployed customization. Rules remain advisory prose interpreted by a model; higher-stakes boundaries may also need deterministic permission controls, validation and qualified review.</aside>
+      </section>
+
+      <section id="habits" data-title="Four habits for engineering AI assets" data-chapter="The habit loop" data-sources="builder">
+        <div class="eyebrow">A MEMORY AID, NOT A NEW TOOL</div>
+        <h2>Define. Try. Check. Improve.</h2>
+        <ol class="story-flow" aria-label="Engineering habit loop"><li><strong>1. Define</strong><span>What should happen?</span></li><li><strong>2. Try</strong><span>Use a concrete case.</span></li><li><strong>3. Check</strong><span>Compare with the contract.</span></li><li><strong>4. Improve</strong><span>Revise and check again.</span></li></ol>
+        <p class="takeaway">Keep the case so the same mistake can be caught after the next change.</p>
+        <aside class="notes">These four words are an original teaching mnemonic, not the formal HVE Builder phase names or a required universal workflow. They summarize the habits of requirements, trial, evidence review and revision. An improvement is not proven by changing text; it needs another check. Preserve a useful case as a regression test, meaning a check that catches the return of an old problem. We use the phrase first and teach the jargon only when necessary.</aside>
+      </section>
+
+      <section id="summary-walkthrough" class="demo-slide" data-title="Work through the missing-owner example" data-chapter="Try and check" data-sources="builder,coverage">
+        <div class="eyebrow">PRESENTER-STEPPED / FICTIONAL EXAMPLE</div>
+        <h2>Try the rule on one small case</h2>
+        <div class="demo" data-demo="summary"></div>
+        <aside class="notes">Use Next step, Back and Reset rather than advancing the whole deck. Step one recalls the contract. Step two puts the exact fictional notes beside a weak response that names Morgan. Pause and invite the audience to spot the mismatch. Step three makes the evidence-based judgment: the owner is unsupported. Step four adds a concrete missing-owner example to the guidance and shows the expected answer for a successful rerun. That answer is a target, not an observed result. No agent, file or customer system is changed. The presenter controls only this authored local sequence. Do not imply the revised wording guarantees a fix; actual testing would still be required.</aside>
+      </section>
+
+      <section id="case-set" data-title="Test a normal case and the difficult boundaries" data-chapter="Check more than once" data-sources="builder,coverage">
+        <div class="eyebrow">SAME CONTRACT / DIFFERENT INPUTS</div>
+        <h2>One good example is not enough</h2>
+        <dl class="case-rows"><div><dt>Owner supplied</dt><dd>Notes name Morgan.<br><span>Expect: owner is Morgan.</span></dd></div><div><dt>Owner missing</dt><dd>No owner is named.<br><span>Expect: owner is unknown.</span></dd></div><div><dt>No notes supplied</dt><dd>There is nothing to summarize.<br><span>Extend the contract: ask for notes; do not invent a meeting.</span></dd></div></dl>
+        <p class="footnote">Recommended starter cases, not a complete test set or recorded results.</p>
+        <aside class="notes">A case is a prepared input with an expected outcome. The first two cases apply the contract already introduced. The third reveals a gap: we also need a rule for absent notes. Explicitly add that requirement rather than claiming the original contract covered it. Start with normal use, a missing value and an absent input. Add cases when experience reveals more important boundaries. Try repeated runs when outputs vary. We do not specify statistical confidence or a required number of trials in this 101 deck; the companion explains those mechanisms.</aside>
+      </section>
+
+      <section id="evidence" data-title="Keep the input, output and judgment together" data-chapter="Evidence" data-sources="coverage,authority">
+        <div class="eyebrow">HABIT 3 / CHECK</div>
+        <h2>Confidence needs something to inspect</h2>
+        <div class="two-up"><article class="panel"><h3>A claim</h3><blockquote class="small-quote">"The summary follows the rules."</blockquote><p>Not enough on its own.</p></article><article class="panel"><h3>Evidence</h3><ul class="plain-list"><li>The supplied notes.</li><li>The resulting summary.</li><li>The check and why it passed or failed.</li></ul></article></div>
+        <p class="takeaway">A tidy answer and a passing check are different things.</p>
+        <aside class="notes">Evidence is the material someone can inspect to assess a claim. For the missing-owner rule, keep the notes, the summary and the check comparing the named owner with the source. A keyword such as owner may establish output shape but not whether the value is supported. This mirrors the HVE-Core coverage distinction between smoke checks and functional evidence. A model saying it complied does not settle the question. File effects and tool actions require appropriate observations when those are part of the contract. We are not teaching trajectory schemas or graders yet.</aside>
+      </section>
+
+      <section id="changes" data-title="Review and track changes to reusable guidance" data-chapter="Improve responsibly" data-sources="builder,presence">
+        <div class="eyebrow">HABIT 4 / IMPROVE</div>
+        <h2>A guidance change is an engineering change</h2>
+        <dl class="concept-rows"><div><dt>Explain it</dt><dd>Which behavior should change, and why?</dd></div><div><dt>Review it</dt><dd>Who owns the rule and can check the boundary?</dd></div><div><dt>Recheck it</dt><dd>Keep a version and rerun the relevant cases.</dd></div></dl>
+        <p class="takeaway">"We changed the words" is not the same as "we verified the behavior".</p>
+        <aside class="notes">Version means an identifiable revision of the asset, so a result can be associated with the text that produced it. Ownership means someone can explain the intent and approve the change according to the team's process. These are recommended engineering habits rather than a claim that every organization uses one process. In HVE-Core, the authoring workflow owns review and validation and CI links changed assets to cases. Rerun important cases after a change, and check whether previously correct behavior was lost. For a hard boundary, add appropriate controls instead of relying solely on instruction wording.</aside>
+      </section>
+
+      <section id="hve-core" data-title="How HVE-Core supports these habits" data-chapter="HVE-Core connection" data-sources="builder,presence,coverage,vally">
+        <div class="eyebrow">A BRIDGE TO THE REAL REPOSITORY</div>
+        <h2>HVE-Core makes these habits concrete</h2>
+        <dl class="concept-rows"><div><dt>Author and review</dt><dd>HVE Builder helps develop reusable AI assets.</dd></div><div><dt>Link a change to cases</dt><dd>Evaluation specs identify the assets they test.</dd></div><div><dt>Run and inspect</dt><dd>Vally runs configured cases and returns grading evidence.</dd></div></dl>
+        <p class="footnote">The evaluation companion explains how the cases, checks and results are wired together.</p>
+        <aside class="notes">HVE-Core is the reusable AI-asset repository supporting Hyper Velocity Engineering. HVE Builder has an authoring, review and validation contract. Changed AI assets must have evaluation backlinks in the repository's CI process. Vally is the framework used for model-backed case execution and grading, while some checks are static and need no model. These are implemented surfaces read at the pinned checkout, not results of a new run. The meeting-summary helper is not a deployed HVE-Core asset and the synthetic cases have not been added to evals. This slide maps the habits to actual capabilities without requiring tool syntax.</aside>
+      </section>
+
+      <section id="recall" data-title="A short check for understanding" data-chapter="Make it stick" data-sources="authority,coverage">
+        <div class="eyebrow">PAUSE / DISCUSS / RECALL</div>
+        <h2>Would you accept this answer?</h2>
+        <blockquote class="big-quote">"The format looks right, so the asset is ready."</blockquote>
+        <p class="lead">What evidence is still missing?</p>
+        <details class="recall-answer"><summary>Reveal the answer</summary><p>Check the facts against the input, try missing-input cases and identify the asset version tested. Correct formatting alone does not establish correct behavior.</p></details>
+        <aside class="notes">Give the audience time to answer before opening the local disclosure. This is a recall opportunity, not a live exam or evidence of comprehension. A good response names the input, actual output and expected behavior; stronger responses also ask about a missing owner and whether the tested revision is the one being shared. The disclosure is a native browser control, works with keyboard input and does not call any model. Reinforce that a rule can be clear yet still need evidence of observed behavior.</aside>
+      </section>
+
+      <section id="start-small" data-title="Start with one asset and one recurring problem" data-chapter="Your first step" data-sources="customization,builder">
+        <div class="eyebrow">A PRACTICAL START</div>
+        <h2>Choose one recurring task</h2>
+        <ol class="rule-list"><li>Write what good behavior means.</li><li>Save a normal case and a missing-input case.</li><li>Review the actual answers with an owner.</li><li>Change one thing, then check again.</li></ol>
+        <p class="takeaway">Start small enough that another person can inspect the whole example.</p>
+        <aside class="notes">Do not create a customization merely because a tool supports one. Start with an observed recurring problem. If the existing behavior already meets the need, a new asset may be unnecessary. Use permitted synthetic or privacy-reviewed examples rather than casually putting customer data into tests. The four actions are a recommended low-complexity starting point, not a substitute for governance or domain-specific review. For actions that could cause harm or change shared systems, stronger controls and approval may be required.</aside>
+      </section>
+
+      <section id="closing" data-title="The habit and the next lesson" data-chapter="Continue learning" data-sources="companion,builder">
+        <div class="eyebrow">THE AI ASSETS THEMSELVES NEED ENGINEERING / 101</div>
+        <h2>Define. Try. Check. Improve.</h2>
+        <p class="lead">A reusable rule needs a clear contract,<br>concrete cases and evidence tied to its version.</p>
+        <div class="next-lesson"><h3>Next: HVE-Core Evaluation</h3><p>Learn how Vally runs tests, how graders work and how HVE-Core uses the results.</p><a href="hve-core-evaluation.html">Open the evaluation companion</a></div>
+        <div class="slide-bottom"><span>101: build intuition / companion: learn the mechanics</span><span>No live agent tests ran for this talk</span></div>
+        <aside class="notes">Ask the audience to recall the four habits without reading them. The key idea is that reusable guidance needs care alongside the work it helps produce. The 101 is intentionally light: one example, visible definitions and a small next action. Continue with HVE-Core Evaluation for architecture, configuration, trajectories, graders, scoring, repeated trials and real suite examples. Both presentations can stand alone, but they are most useful in this order. The link opens the companion HTML beside this file. Share both files in the same folder to use the handoff offline; the 101 itself presents independently. The deck never sends a message to an agent or uploads data.</aside>
+      </section>
+    </main>
+  </div>
+  <nav id="presenter-controls" aria-label="Presentation controls">
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span> HVE-Core <span id="chapter-label">Start here</span></div>
+    <div class="utility-controls">
+      <button type="button" id="overview-button">Slides</button>
+      <button type="button" data-dialog="sources">Sources</button>
+      <button type="button" data-dialog="notes">Notes</button>
+      <button type="button" data-dialog="help">Keys</button>
+      <button type="button" id="motion-button" aria-pressed="false">Motion off</button>
+      <button type="button" id="fullscreen-button" aria-pressed="false">Full screen</button>
+    </div>
+    <div class="slide-controls">
+      <button type="button" id="previous-slide" aria-label="Previous slide">&#8592;</button>
+      <output id="slide-count" aria-label="Current slide"></output>
+      <button type="button" id="next-slide" aria-label="Next slide">&#8594;</button>
+    </div>
+  </nav>
+  <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog">Close <kbd>Esc</kbd></button></div>
+    <div id="dialog-content" tabindex="0"></div>
+  </dialog>
+</body>
+</html>
