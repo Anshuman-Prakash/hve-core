@@ -1,0 +1,5 @@
+{
+  "title": "HVE Core Evaluation",
+  "description": "How HVE Core tests AI assets as engineering assets with Vally.",
+  "sourceNote": "Sources checked 2026-10-11. HVE Core checkout 7ab725b; Vally CLI pin 0.17.0. Examples are source excerpts or labelled illustrations, not results from a live evaluation."
+}
