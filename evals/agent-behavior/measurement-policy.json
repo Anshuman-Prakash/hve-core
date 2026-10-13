@@ -1,0 +1,1501 @@
+{
+  "description": "Reviewed evidence classification for evals/agent-behavior. Validated by scripts/evals/Test-EvalSpec.ps1. Edit deliberately: authority, class and debt changes are reviewable policy changes.",
+  "schemaVersion": 1,
+  "rolloutState": "calibration",
+  "baselineRevision": "1e8a544f9",
+  "contextDebt": [
+    "accessibility-planner-class-recipe",
+    "accessibility-reviewer-class-recipe",
+    "accessibility-surface-inventory-config-emission",
+    "accessibility-surface-inventory-conservative-scope",
+    "adr-creation-class-recipe",
+    "agentic-workflows-class-recipe",
+    "backlog-grooming-assesses-large-inventory-advisory-only",
+    "backlog-grooming-keeps-stale-code-scanning-active",
+    "backlog-manager-performs-workflow-neutral-github-grooming",
+    "brd-builder-class-recipe",
+    "brd-builder-ordinary-request-no-proposal-extension",
+    "brd-quality-reviewer-mentions-quality-guidance",
+    "code-review-accessibility-lens",
+    "code-review-explainer-factual",
+    "code-review-functional-lens",
+    "code-review-orientation-stage",
+    "code-review-readiness-lens",
+    "code-review-security-lens",
+    "code-review-standards-lens",
+    "code-review-walkback-investigation",
+    "code-review-standards-merge-happy-no-conflict",
+    "code-review-standards-stacked-coverage",
+    "codebase-profiler-skill-mapping",
+    "council-arbiter-user-approved-reconciliation",
+    "council-arbiter-untrusted-proposal-confinement",
+    "council-critic-independent-evidence-review",
+    "council-critic-untrusted-path-confinement",
+    "cve-analyzer-assesses-single-cve-reachability",
+    "data-science-engineering-coach-initialize-and-select",
+    "data-science-engineering-coach-transition-detour",
+    "data-science-engineering-coach-pause-complete-resume",
+    "data-science-engineering-coach-continuous-restore",
+    "data-science-engineering-coach-reconstruct-state",
+    "data-science-engineering-coach-problem-framing-missing-outcome",
+    "data-science-engineering-coach-problem-framing-unresolved-axis",
+    "data-science-engineering-coach-durable-write-scan",
+    "data-science-engineering-coach-analysis-skill-primary",
+    "data-science-engineering-coach-evaluation-job-routing",
+    "data-science-engineering-coach-evaluation-job-persists",
+    "data-science-engineering-coach-refuses-embedded-gate-waiver",
+    "data-science-engineering-coach-transition-plain-language",
+    "data-science-engineering-coach-blocked-write-recovery",
+    "dependency-reviewer-class-recipe",
+    "documentation-audit-class-recipe",
+    "documentation-drift-class-recipe",
+    "dt-learning-tutor-class-recipe",
+    "engagement-report-generator-separate-draft-approval",
+    "engagement-report-generator-ado-saved-query",
+    "engagement-report-reviewer-grounding-and-privacy",
+    "engagement-report-reviewer-untrusted-handoff-confinement",
+    "experiment-designer-class-recipe",
+    "finding-deep-verifier-verdict-blocks",
+    "finding-deep-verifier-no-new-findings",
+    "hve-builder-review-return-only-suggestions",
+    "hve-demo-material-class-recipe",
+    "issue-triage-class-recipe",
+    "meeting-analyst-class-recipe",
+    "network-isa95-planner-class-recipe",
+    "outlook-drafter-approved-html-create",
+    "outlook-drafter-ambiguous-create-attempt",
+    "outlook-drafter-table-conversion-failure",
+    "outlook-drafter-path-traversal-unapproved-handoff",
+    "pptx-subagent-task-and-paths",
+    "pptx-subagent-partial-rebuild-flags",
+    "pptx-class-recipe",
+    "prd-builder-class-recipe",
+    "prd-builder-ordinary-request-no-proposal-extension",
+    "prd-quality-reviewer-mentions-quality-guidance",
+    "privacy-planner-class-recipe",
+    "privacy-reviewer-class-recipe",
+    "rai-planner-class-recipe",
+    "rai-reviewer-class-recipe",
+    "rai-skill-assessor-reference-first-plan-mode",
+    "rpi-agent-class-recipe",
+    "rpi-agent-conformance-3eb62554",
+    "rpi-agent-task-recovery-class-recipe",
+    "rpi-researcher-return-only-suggestions",
+    "rpi-reviewer-return-only-suggestions",
+    "security-planner-class-recipe",
+    "security-reviewer-class-recipe",
+    "skill-assessor-audit-mode-format",
+    "skill-assessor-plan-mode-vocabulary",
+    "sssc-planner-class-recipe",
+    "supply-chain-skill-assessor-posture",
+    "system-architecture-reviewer-class-recipe",
+    "vally-test-author-safety-refusal"
+  ],
+  "stimuli": {
+    "accessibility-framework-assessor-structured-findings": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-framework-assessor-method-adequacy": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-framework-assessor-disclaimer-posture": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-framework-assessor-absent-runtime-evidence": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-framework-assessor-malformed-runtime-evidence": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-framework-assessor-mixed-method-evidence": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "accessibility-planner-malformed-state-and-blocked-research": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-planner-handoff-write-failure": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "accessibility-reviewer-required-probe-failure": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-reviewer-malformed-verifier-output": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-reviewer-report-generator-failure": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-surface-inventory-config-emission": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-surface-inventory-conservative-scope": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "accessibility-surface-inventory-rejects-unsafe-partial-config": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "ado-backlog-executor-frontmatter-name-and-description": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "ado-backlog-executor-user-invocable-flag": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "ado-backlog-executor-structural-template": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "ado-backlog-executor-tool-restriction-fit": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "adr-creation-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "agentic-workflows-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "backlog-grooming-assesses-large-inventory-advisory-only": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "backlog-grooming-keeps-stale-code-scanning-active": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "backlog-manager-frontmatter-name-and-description": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "backlog-manager-handoff-targets-and-labels": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "backlog-manager-tool-restriction-fit": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "backlog-manager-protocol-heading-consistency": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "backlog-manager-performs-workflow-neutral-github-grooming": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-ordinary-request-no-proposal-extension": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-rejects-invalid-proposal-continuation": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-research-receipt": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-research-blocked": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-executes-research-segment": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-reconciles-completed-research-segment": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-records-blocked-research-segment": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-records-skipped-research-segment": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-builder-ordinary-session-keeps-rpi-state-absent": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "brd-quality-reviewer-mentions-quality-guidance": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-accessibility-lens": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-explainer-factual": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-functional-lens": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-orientation-stage": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-readiness-lens": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-security-lens": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-lens": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-walkback-investigation": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-class-recipe": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-standards-merge-happy-no-conflict": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-merge-name-collision": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-merge-content-contradiction": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-user-tier-precedence": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-unknown-origin-dedup": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-standards-stacked-coverage": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "code-review-security-planning-drift-context": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-pull-request-standard-profile": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-branch-diff-standard-profile": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-decision-ready-dispatch-board": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-target-checkout-mismatch": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-orientation-retry-contract": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-perspective-no-output-retry": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-rejects-unsupported-finding": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-native-emission-sha-gate": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-resume-native-edit": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-resume-native-edit",
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/reviews/code-reviews/native-edit/metadata.json"
+          }
+        ]
+      }
+    },
+    "code-review-delegated-write-boundary": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-delegated-write-boundary",
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "codebase-profiler-skill-mapping": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "codebase-profiler-diff-mode": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "council-arbiter-user-approved-reconciliation": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "council-arbiter-untrusted-proposal-confinement": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "council-critic-independent-evidence-review": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "council-critic-untrusted-path-confinement": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "cve-analyzer-assesses-single-cve-reachability": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-initialize-and-select": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-transition-detour": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-pause-complete-resume": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-continuous-restore": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-reconstruct-state": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-problem-framing-missing-outcome": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-problem-framing-unresolved-axis": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-durable-write-scan": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-analysis-skill-primary": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-evaluation-job-routing": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-evaluation-job-persists": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-evaluator-research": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-evaluator-research-blocked": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-refuses-embedded-gate-waiver": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-transition-plain-language": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-blocked-write-recovery": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-produces-rpi-pipeline-delivery": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-reconciles-rpi-pipeline-results": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "dataops",
+        "adr-author"
+      ],
+      "assertions": [
+        "data-science-rpi-scanner-failure-observed-cand",
+        "data-science-rpi-blocked-state-preserves-job-cand",
+        "data-science-rpi-reports-no-write-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/ds/synthetic-pipeline/session-state.md"
+          }
+        ]
+      }
+    },
+    "data-science-engineering-coach-ev02-valid-resume": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-valid-resume",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "restored-active-and-paused-work"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "data-science-engineering-coach-ev02-slug-mismatch": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-slug-mismatch",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "identity-mismatch-stops"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "data-science-engineering-coach-ev02-registry-parity": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-registry-parity",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "missing-and-extra-jobs-reported"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "data-science-engineering-coach-ev02-corrupt-reconstruction": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-corrupt-reconstruction",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "reconstruction-needs-confirmation"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "data-science-engineering-coach-ev02-denied-transition": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-denied-transition",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "denied-transition-preserves-current-work"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "data-science-engineering-coach-ev02-embedded-waiver": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-ev02-high-scan-result": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-ev02-missing-scan-report": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "data-science-engineering-coach-ev02-interrupted-write-recovery": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-interrupted-write-recovery",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog"
+      ],
+      "assertions": [
+        "simulated-interruption-preserves-authority",
+        "existing-catalog-content-preserved"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "dependency-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "documentation-audit-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "documentation-drift-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-class-recipe": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-no-premature-deck-offer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-asset-ready-deck-offer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-method-5-deck-offer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-explicit-deck-request-anytime": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-method-5-first-decline-no-reoffer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-not-ready-no-offer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-lifecycle-continuity": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-denied-board-intent": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-denied-board-intent-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "dt-coach-denied-board-intent",
+      "agentSource": ".github/agents/design-thinking/dt-coach.agent.md",
+      "requiredSkills": [
+        "dt-coaching-foundation"
+      ],
+      "assertions": [
+        "denied-board-decision-respected-cand",
+        "no-destination-tool-call-cand",
+        "no-board-artifact-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "dt-coach-state-write-failure-recovery": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-state-write-failure-recovery-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "dt-coach-state-write-failure-recovery",
+      "agentSource": ".github/agents/design-thinking/dt-coach.agent.md",
+      "requiredSkills": [
+        "dt-coaching-foundation",
+        "dt-methods"
+      ],
+      "assertions": [
+        "coach-state-writer-failure-observed-cand",
+        "coach-failure-preserves-durable-state-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "dt-coach-mural-scope-upgrade-stops-seeding": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-coach-mural-declined-write-keeps-coaching": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "dt-learning-tutor-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "engagement-report-generator-separate-draft-approval": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "engagement-report-generator-ado-saved-query": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "engagement-report-reviewer-grounding-and-privacy": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "engagement-report-reviewer-untrusted-handoff-confinement": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "experiment-designer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-conditional-ml-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-supported-classification": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-ambiguous-classification": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-progressive-hypotheses": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-weak-evidence-rollback": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-backlog-consent": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-backlog-consent-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "experiment-designer-backlog-consent",
+      "agentSource": ".github/agents/experimental/experiment-designer.agent.md",
+      "requiredSkills": [
+        "experiment-design"
+      ],
+      "assertions": [
+        "expdes-consent-no-backlog-brief-cand",
+        "expdes-consent-no-tracker-tool-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "experiment-designer-failed-tracking-write": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-failed-tracking-write-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "experiment-designer-failed-tracking-write",
+      "agentSource": ".github/agents/experimental/experiment-designer.agent.md",
+      "requiredSkills": [
+        "experiment-design"
+      ],
+      "assertions": [
+        "expdes-failed-save-writer-error-observed-cand",
+        "expdes-failed-save-context-preserved-cand",
+        "expdes-failed-save-no-hypotheses-cand",
+        "expdes-failed-save-reports-failure-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "experiment-designer-research-preparation": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-research-unavailable": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-executes-convergence-research": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-reconciles-convergence-research": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-starts-explicit-challenge": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-plans-execution": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-critiques-execution-plan": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-produces-execution-rpi-artifacts": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-reviews-execution": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "experiment-designer-writes-post-execution-outcome": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "finding-deep-verifier-verdict-blocks": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "finding-deep-verifier-no-new-findings": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "functional-planner-frontmatter-name-and-description": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "functional-planner-handoff-target-and-label": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "functional-planner-terminal-grant-scope": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "functional-planner-jira-credential-loading-boundary": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "github-backlog-executor-frontmatter-name-and-description": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "github-backlog-executor-user-invocable-flag": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "github-backlog-executor-structural-template": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "github-backlog-executor-tool-restriction-fit": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "hve-builder-review-return-only-suggestions": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "hve-demo-material-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "issue-triage-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "issue-triage-code-scanning-alert": {
+      "class": "artifact-reference",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "issue-triage-dismissal-request": {
+      "class": "artifact-reference",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "jira-backlog-executor-frontmatter-name-and-description": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "jira-backlog-executor-user-invocable-flag": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "jira-backlog-executor-structural-template": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "jira-backlog-executor-tool-restriction-fit": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "meeting-analyst-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "network-isa95-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "outlook-drafter-approved-html-create": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "outlook-drafter-ambiguous-create-attempt": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "outlook-drafter-table-conversion-failure": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "outlook-drafter-path-traversal-unapproved-handoff": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "pptx-subagent-task-and-paths": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "pptx-subagent-partial-rebuild-flags": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "pptx-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-ordinary-request-no-proposal-extension": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-rejects-invalid-proposal-continuation": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-research-receipt": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-research-blocked": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-executes-approved-authoring-plan": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-builder-reconciles-completed-authoring-segment": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "prd-quality-reviewer-mentions-quality-guidance": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "privacy-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "privacy-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-disclaimer-startup": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-mural-setup-and-login-verdicts": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-mural-board-data-cannot-change-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-from-security-plan-no-plans": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rai-planner-cold-start-scoped-load": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-resume-phase-reload": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-phase2-mural-offer": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-planner-mural-accept-reads-reference": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-reviewer-audit-completion-contract": {
+      "class": "fixture-contract",
+      "fixture": "fixtures/rai-reviewer-audit-copilot-instructions.md",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "rai-skill-assessor-reference-first-plan-mode": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "report-generator-vuln-report": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "report-generator-plan-mode": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rpi-agent-class-recipe": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rpi-agent-conformance-3eb62554": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rpi-agent-task-recovery-class-recipe": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rpi-researcher-return-only-suggestions": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "rpi-reviewer-return-only-suggestions": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "security-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-disclaimer-null-state": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-disclaimer-shown-resume": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-disclaimer-user-redisplay": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-disclaimer-source-missing": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-phase6-no-drift-evidence": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-phase6-with-drift-evidence": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-planner-from-prd-no-artifacts": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "security-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-reviewer-plan-drift": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "security-reviewer-llm-agentic-preset": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "security-reviewer-web-fast-path": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "skill-assessor-audit-mode-format": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "skill-assessor-plan-mode-vocabulary": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "sssc-planner-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "sssc-planner-disclaimer-startup": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "sssc-planner-from-security-plan-selection": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "sssc-reviewer-class-recipe": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "sssc-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "sssc-reviewer-class-recipe",
+      "agentSource": ".github/agents/security/sssc-reviewer.agent.md",
+      "requiredSkills": [
+        "supply-chain-security",
+        "security-reviewer-formats"
+      ],
+      "assertions": [
+        "report-path-present-cand",
+        "supply-chain-scope-present-cand",
+        "review-completion-stated-cand",
+        "no-contradictory-findings-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/sssc-reviews/\\d{4}-\\d{2}-\\d{2}/sssc-review-\\d{3}\\.md$",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "sssc-reviewer-diff-fallback-retains-supply-chain-files": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "sssc-reviewer-vex-full-scan-shape": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "sssc-reviewer-vex-triage-from-report": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "supply-chain-skill-assessor-posture": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "system-architecture-reviewer-class-recipe": {
+      "class": "base-model",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "system-architecture-reviewer-research-gate": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "system-architecture-reviewer-research-unavailable": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "system-architecture-reviewer-produces-convergence-research": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "system-architecture-reviewer-writes-record-first-handoffs": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-problem-framing-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-critique-terminal-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-stakeholder-advocacy-terminal-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-artifact-mode-matrix": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-wireframe-route": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-figma-write-gate": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-unsupported-cohort-guardrail": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-human-review-gate": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-mural-publication-gate": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-accessibility-routing": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-mural-environment-verdicts": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-mural-explicit-routing-required": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "ux-ui-designer-mural-extractor-metadata-boundary": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "vally-test-author-advisory-and-routing": {
+      "class": "artifact-reference",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "vally-test-author-safety-refusal": {
+      "class": "base-model",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "vally-test-author-rejects-unmounted-wording": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    },
+    "vally-test-author-probes-order-sensitive-regex": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "legacy"
+    }
+  }
+}
