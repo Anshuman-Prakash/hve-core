@@ -28,4 +28,3 @@ jobs:
     uses: $/.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write # create, update, and comment on alert issues
-      actions: read # download the alert artifact

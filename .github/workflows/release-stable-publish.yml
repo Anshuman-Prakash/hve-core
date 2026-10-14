@@ -292,8 +292,7 @@ jobs:
     environment:
       name: release-governance
       deployment: false # use the environment's key and ref rules without deployment records
-    permissions:
-      contents: read
+    permissions: {}
     outputs:
       release-pr-branch: ${{ steps.release-pr.outputs.branch }}
     steps:

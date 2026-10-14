@@ -36,6 +36,8 @@ class DependencyViolation {
         - MissingVersionComment: Dependency is pinned but lacks a human-readable version comment
         - MissingPermissions: Workflow file lacks required permissions declarations
         - MissingJobPermissions: Workflow job lacks its own permissions declaration and inherits an implicit grant
+        - ExcessiveWorkflowPermissions: Workflow-level permissions grant more than 'contents: read'
+        - BroadPermissionsScalar: Workflow or job permissions use 'read-all' or 'write-all'
         - NonUbuntuRunner: Job's runs-on value is not a dated GitHub-hosted Ubuntu label
         - FloatingRunnerLabel: Job's runs-on value is a floating Ubuntu label such as ubuntu-latest
         - MissingRunner: Job has no resolvable runs-on value
@@ -50,7 +52,7 @@ class DependencyViolation {
     [string]$CurrentRef
     [ValidateSet('High', 'Medium', 'Low', 'Info')]
     [string]$Severity
-    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', 'MissingJobPermissions', 'NonUbuntuRunner', 'FloatingRunnerLabel', 'MissingRunner', '')]
+    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', 'MissingJobPermissions', 'ExcessiveWorkflowPermissions', 'BroadPermissionsScalar', 'NonUbuntuRunner', 'FloatingRunnerLabel', 'MissingRunner', '')]
     [string]$ViolationType
     [string]$Description
     [string]$Remediation

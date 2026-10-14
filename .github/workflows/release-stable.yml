@@ -495,8 +495,7 @@ jobs:
     environment:
       name: release-governance
       deployment: false # use the environment's key and ref rules without deployment records
-    permissions:
-      contents: read
+    permissions: {}
     steps:
       - name: Generate GitHub App Token
         id: app-token
