@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-14
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -196,7 +196,8 @@ Dependencies:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
-`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan by default; skip it with `critique=skip` or by asking.
+`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required.
+Every RPI phase uses subagents only when a dispatch tool is available and your direction allows them, and runs independent subagent work in parallel; pass `subagents=none` to any phase to work without them. `rpi-plan-critique` independently assesses the complete plan by default; skip it with `critique=skip` or by asking.
 
 ### Implement
 
@@ -256,7 +257,7 @@ Ready for review.
 3. `/rpi-review` creates or updates one review record:
 
    * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; a helper such as `RPI Reviewer` may take one context-heavy comparison and return candidate findings that the review verifies before recording
+   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; helpers such as `RPI Reviewer` may take context-heavy comparisons in parallel lanes and return candidate findings that the review verifies before recording
    * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
    * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
    * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route

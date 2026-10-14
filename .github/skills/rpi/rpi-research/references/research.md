@@ -212,7 +212,7 @@ Each executed cycle completes all three waves in order: Wider, Deeper, then Cont
 
 ## Optional Helpers
 
-Research runs in this context. A subagent is never required, and no phase gate depends on one.
+Research runs in this context. A subagent is never required, and no phase gate depends on one. Use subagents only when a dispatch tool is available and the user's direction allows them; follow the user's direction on subagent use, including using none, and otherwise gather the evidence yourself.
 
 Use a subagent when isolating a bounded gathering task would improve evidence quality or protect working context, for example collecting candidate sources for one question across a large corpus, or retrieving the exact signature, schema, or example a finding needs. Keep tightly coupled or low-volume investigation here.
 

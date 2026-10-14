@@ -3,7 +3,7 @@ title: rpi-plan
 description: Create or resume an evidence-based RPI implementation plan with an optional independent critique. Use when a task needs an implementation plan or an existing plan needs revision.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-13
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -42,7 +42,8 @@ implementation-ready. You can skip the critique; the planner records it as skipp
 failed. A follow-up critique after corrections is optional, and the planner runs one only when you
 ask or when the fix for a Critical or High finding changed requirements, scope, or architecture, at
 most once per plan unless you ask for another. Set `critique-effort=` to choose the reasoning effort
-of the critique's lens assessments; otherwise the critique picks it per lens. Confirmed user
+of the critique's lens assessments; otherwise the critique picks it per lens. Pass `subagents=none` to plan and critique
+without subagents. Confirmed user
 direction outranks critique advice.
 
 The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.

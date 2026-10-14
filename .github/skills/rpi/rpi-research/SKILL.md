@@ -1,7 +1,7 @@
 ---
 name: rpi-research
 description: Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
-argument-hint: "[topic=...] [posture={balanced|focused|expansive}] [effort={auto|low|medium|high|xhigh|max}] [chat]"
+argument-hint: "[topic=...] [posture={balanced|focused|expansive}] [effort={auto|low|medium|high|xhigh|max}] [subagents={auto|none}] [chat]"
 license: MIT
 user-invocable: true
 ---
@@ -47,7 +47,7 @@ When the invoking agent or the user's request names the Research task or its slu
       * Narrow to `focused` for a bounded internal task with named source targets and supplied failure evidence when adjacent discovery is unlikely to change the result. Widen to `expansive` when the caller or applicable codebase instructions select it, or when the brief is broad and the decision space is materially unknown.
    2. Record active caller direction controls, including additions, changes, narrowed scope, exclusions, discarded directions, selected posture and provenance, and explicit limits or deadline. When uncertainty would materially affect research, ask and persist the answer for `user-owned` or `user-retained`; for `agent-owned`, persist an evidence-supported decision or the smallest gap before continuing.
    3. Before substantive search, persist the canonical opening state in its owning sections, then send the opening update defined in Conversation guidance.
-   4. Research runs in this context. A subagent is optional; use one only when isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines lanes, each lane's reasoning effort, the request, and the return.
+   4. Research runs in this context. A subagent is optional and follows the user's direction, including using none; use one only when a dispatch tool is available and isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines lanes, each lane's reasoning effort, the request, and the return.
 6. Complete all three waves in order for each executed cycle. Do not stop the cycle after early evidence appears sufficient.
    1. Wider: investigate breadth for ideas, conjectures, hypotheses, claims, and questions, including relevant libraries, frameworks, APIs, schemas, contracts, standards, current resources, current decisions or documentation, and potential evidence.
    2. Deeper: prioritize the material from Wider, then investigate key details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code or visual style.
@@ -79,6 +79,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Scope, non-goals, criteria, constraints, and relevant workspace or external boundaries
 * Research posture: `balanced` by default; `focused` or `expansive` when the caller passes `posture=` or applicable codebase instructions select it, with provenance, plus any caller-provided or codebase-imposed limits or deadline
 * Helper lane reasoning effort: `auto` by default, which selects each lane's effort from how the lane finds its answer, or a level the user or caller sets for every lane or for lanes identified by kind or topic
+* Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
 * Trusted alternate evidence root and evidence-path date, when supplied
 * Existing artifacts, chat context, and known decisions to verify

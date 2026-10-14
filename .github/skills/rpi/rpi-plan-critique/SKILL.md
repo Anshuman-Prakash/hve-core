@@ -1,7 +1,7 @@
 ---
 name: rpi-plan-critique
 description: "Independently assess an RPI plan without editing it. Use when an implementation-ready plan needs a credibility check or a revised plan needs its earlier findings reconciled."
-argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}] [effort={auto|low|medium|high|xhigh|max}] [prior=...]"
+argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}] [effort={auto|low|medium|high|xhigh|max}] [subagents={auto|none}] [prior=...]"
 license: MIT
 user-invocable: true
 ---
@@ -16,7 +16,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 
 1. Confirm the task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, critique depth, and any lens reasoning effort supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation. Standalone use needs only these inputs; no planning parent is required.
 2. Read the plan's headings and its phase, task, and requirement IDs, plus the earlier critique when one is supplied. Do not read unsupplied artifacts, perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
-3. Without assessing the plan yourself, choose the lenses and their scope from those IDs, select each lens's reasoning effort, and dispatch every lens to `RPI Plan Critic` in one parallel batch, following [references/lens-assessment.md](references/lens-assessment.md). You own the effort choice: use the user's or caller's effort when one is set, otherwise select it from the lens's work. Agent frontmatter does not set it. Assess a single-phase plan, or any plan when no dispatch tool is available, yourself, one lens at a time.
+3. Without assessing the plan yourself, choose the lenses and their scope from those IDs, select each lens's reasoning effort, and dispatch every lens to `RPI Plan Critic` in one parallel batch, following [references/lens-assessment.md](references/lens-assessment.md). You own the effort choice: use the user's or caller's effort when one is set, otherwise select it from the lens's work. Agent frontmatter does not set it. Assess a single-phase plan, any plan when no dispatch tool is available, or any plan when the user directs no subagents, yourself, one lens at a time.
 4. Merge the lens results: verify each candidate by finding its quote at the cited location, checking the named evidence there when the concern depends on it, then merge duplicates and assign IDs and severities. Do not reassess what a lens covered; assess a gap a lens left yourself only when it is small. The merged set covers the full boundary across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns. For a follow-up critique, mark each earlier finding resolved, still open, or superseded against the current plan, and add new findings for gaps the revision introduced.
    * Assess coverage across the supplied plan and evidence as a whole. Do not require a task to repeat requirements already established elsewhere solely for restatement. A stated requirement alone does not prove implementation coverage; ground required changes in demonstrated omissions, contradictions, or material evidence gaps.
    * Treat missing detail in an abbreviated task or excerpt as a limitation of the supplied evidence, not proof that the full plan omits it. Identify the evidence needed to resolve a decision-critical uncertainty; do not turn the same uncertainty into a separate requirement-restatement finding.
@@ -36,12 +36,13 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * The earlier critique when this is a follow-up critique
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 * Lens reasoning effort: `auto` by default, which selects each lens's effort from its work, or a user- or caller-set level for every lens or for named lenses
+* Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
 * Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
-* A multi-phase plan is assessed through parallel lens assessments when a dispatch tool is available. Each lens's reasoning effort is set at dispatch, from the user or caller or selected by the critique, never by agent frontmatter, and is recorded with its source.
+* A multi-phase plan is assessed through parallel lens assessments when a dispatch tool is available and the user's direction allows subagents. Each lens's reasoning effort is set at dispatch, from the user or caller or selected by the critique, never by agent frontmatter, and is recorded with its source.
 * Standalone use works without a planning parent. A follow-up critique reconciles every earlier finding as resolved, still open, or superseded rather than repeating it.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.

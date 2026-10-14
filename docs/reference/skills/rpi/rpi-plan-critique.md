@@ -3,7 +3,7 @@ title: rpi-plan-critique
 description: Independently assess an RPI plan without editing it. Use when an implementation-ready plan needs a credibility check or a revised plan needs its earlier findings reconciled.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-13
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -42,8 +42,8 @@ The critique splits a multi-phase plan into coverage, evidence, executability, a
 runs them in parallel, each in an [RPI Plan Critic](../../agents/hve-core/subagents/rpi-plan-critic)
 subagent. It picks each lens's reasoning effort from the lens's work, starting at `low` or `medium`,
 and records the effort it used in the artifact. Set `effort=` to run every lens at one level, or
-name a level for specific lenses. A single-phase plan, or a host without subagents, gets the same
-lens questions in one pass. The critique parent then verifies every candidate itself, so the total
+name a level for specific lenses. A single-phase plan, a host without subagents, or `subagents=none` gets
+the same lens questions in one pass. The critique parent then verifies every candidate itself, so the total
 time also depends on the reasoning effort of the session that runs the critique.
 
 After corrections, a follow-up critique is optional. The planner runs one only when you ask, or

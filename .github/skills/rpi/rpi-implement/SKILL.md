@@ -1,7 +1,7 @@
 ---
 name: rpi-implement
 description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
-argument-hint: "[plan=...] [phase=...] [task=...]"
+argument-hint: "[plan=...] [phase=...] [task=...] [subagents={auto|none}]"
 license: MIT
 user-invocable: true
 ---
@@ -19,7 +19,7 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
     * An approved plan is an implementation-ready plan for the declared scope, not a human sign-off. A direct `/rpi-implement` request needs no additional plan-approval prompt. Agent self-checks are not human attestations; human review applies only when an instruction, domain artifact, or explicit user requirement names it for the affected action, and its checkboxes stay human-owned.
 2. Create or continue `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` using [templates/changes-log.md](templates/changes-log.md). Record each completed item under a descriptive heading tied to its plan marker, describing the behavior or functionality that changed rather than the edits made.
 3. Before substantive source edits, bring the plan checklist, changes record, and any related state tracking artifacts current, then send the implementation opening defined in [references/implementation.md](references/implementation.md).
-4. Start with the first unchecked dependency-ready plan item in declared scope and work through eligible items in plan order. When a task's `Requirements:` hold and its changes-record entry exists, check the `Pxx-Txx` marker immediately. Check a `Pxx` phase only when it is in scope and every task in it is checked. Do not check markers outside declared scope. Implementation needs no subagent; if you dispatch one, run it on `Claude Haiku 5.5 (copilot)` at `max` reasoning effort, passed as dispatch parameters when the tool accepts them, unless the user names another model or the subagent's frontmatter declares its own. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+4. Start with the first unchecked dependency-ready plan item in declared scope and work through eligible items in plan order. When a task's `Requirements:` hold and its changes-record entry exists, check the `Pxx-Txx` marker immediately. Check a `Pxx` phase only when it is in scope and every task in it is checked. Do not check markers outside declared scope. Implementation needs no subagent. Use subagents only when a dispatch tool is available and the user's direction allows them, including using none. When you use them, run dependency-ready tasks that change different files in one parallel batch, keep dependent or same-file work in sequence, and verify each result yourself before checking its marker. Run a subagent on `Claude Haiku 5.5 (copilot)` at `max` reasoning effort, passed as dispatch parameters when the tool accepts them, unless the user names another model or the subagent's frontmatter declares its own. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
 5. When new information comes to light, classify it using [references/implementation.md](references/implementation.md): ordinary local judgment, an implementation-only annotation, follow-up-only work outside the active plan, or a plan change that may need a user decision.
    * When completed work creates something a later task needs that the plan does not already name, such as a class, API, contract, utility, fixture, or path, add a `Guidance:` block immediately after that task's `Details:` with the concrete pointer. This needs no user decision.
    * Keep the Phase Checklist diagrams current when a plan update adds, merges, splits, or removes phases or tasks.
@@ -34,6 +34,7 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 * Approved plan path or task context
 * Optional declared scope: full plan, exact `Pxx` phase, or exact `Pxx-Txx` task
 * Task-local plan context, supplied evidence, latest critique disposition, and prior changes record when available
+* Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
 
 ## Success criteria
 

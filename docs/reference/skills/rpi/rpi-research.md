@@ -47,7 +47,7 @@ Reach for a different asset when:
 
 ## Example usage
 
-Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation, `posture=focused` or `posture=expansive` to change the default `balanced` depth, and `effort=` to set the reasoning effort of every helper lane.
+Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation, `posture=focused` or `posture=expansive` to change the default `balanced` depth, `effort=` to set the reasoning effort of every helper lane, and `subagents=none` to gather all evidence without helpers.
 
 ```text
 /rpi-research topic="Streaming uploads to Azure Blob Storage from the Python pipeline"
