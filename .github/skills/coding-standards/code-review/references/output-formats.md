@@ -1,7 +1,7 @@
 ---
 title: Code Review Output Formats
 description: Report structure, findings schema, and persistence rules for review orchestrators and skill-backed subagents.
-ms.date: 2026-10-10
+ms.date: 2026-10-13
 ---
 
 ## Output contract
@@ -73,16 +73,16 @@ Review findings should be expressed as structured data first, then rendered into
     "results": [
       {
         "source_id": "<document id>",
-        "kind": "drift|stale-source|source-gap",
+        "kind": "drift|stale-source|source-gap|possible-drift",
         "requirement_ids": ["<id>"],
         "stake": "MUST|SHOULD|COULD|WONT|untraced",
         "awareness": "unrecorded|developer-confirmed|owner-acknowledged",
         "owner_acknowledgment": "none|claimed-unverified|human-confirmed",
         "owner_acknowledgment_confirmed_by": "<reviewer who confirmed, or null>",
         "owner_acknowledgment_confirmed_at": "<ISO 8601 timestamp, or null>",
-        "severity": "Critical|High|Medium|Low|none",
+        "severity": "Critical|High|Medium|Low|null",
         "outcome_changed": true,
-        "finding_number": 0,
+        "finding_number": "<merged finding number or null>",
         "evidence": "<path and lines or reason>"
       }
     ],
@@ -96,7 +96,7 @@ Review findings should be expressed as structured data first, then rendered into
 }
 ```
 
-Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `business_alignment` field is present only when confirmed business-source context was compared through the `rpi-review` skill's alignment reference; an executed comparison is not added to `recommended_specialist_reviews`. In `business_alignment.results`, `stake: "untraced"` records a cited requirement with no goal link; rate it as SHOULD with a traceability gap, as the alignment reference defines. `kind` separates rubric-rated `drift` from the fixed-severity `stale-source` (Medium) and `source-gap` (Low) alerts; alerts set `stake` and `awareness` to `null`. `baseline` records how a source was compared: `base-ref` at the base branch; `diff` against the diff's removed (pre-change) lines when the base revision was unreadable; `head` at its current revision when the source is new in the change; or `unavailable` when some modified passage had no recoverable pre-change text, such as an added-only passage. `cited_as` keeps a superseded citation that a successor replaced. `owner_acknowledgment` is `claimed-unverified` when the change or its PR only claims approval, and `human-confirmed` only after the reviewer confirms the owner's acknowledgment, in which case `owner_acknowledgment_confirmed_by` and `owner_acknowledgment_confirmed_at` record who confirmed it and when; both are `null` otherwise. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
+Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `business_alignment` field is present only when confirmed business-source context was compared through the `rpi-review` skill's alignment reference; an executed comparison is not added to `recommended_specialist_reviews`. In `business_alignment.results`, `stake: "untraced"` records a cited requirement whose stake depends on a missing goal link; rate it as SHOULD with a traceability gap, as the alignment reference defines. A BRD business rule or non-negotiable constraint retains its explicit MUST stake when its goal link is missing, and its `evidence` also records that traceability gap. `kind` separates rubric-rated `drift` from the fixed-severity `stale-source` (Medium) and `source-gap` (Low) alerts and the unassessed `possible-drift` result. Alerts set `stake` and `awareness` to `null`. A `possible-drift` result uses `evidence` for the evidence-gap reason and omits or sets to `null` both `severity` and `finding_number`; it never affects severity counts or the verdict. `baseline` records how a source was compared: `base-ref` at the base branch; `diff` against the diff's removed (pre-change) lines when the base revision was unreadable; `head` at the current revision for a new source or for demonstrably unchanged metadata or passages read through the bounded unreadable-base fallback; or `unavailable` when some modified passage had no recoverable pre-change text, such as an added-only passage. `cited_as` keeps a superseded citation that a successor replaced. `owner_acknowledgment` is `claimed-unverified` when the change or its PR only claims approval, and `human-confirmed` only after the reviewer confirms the owner's acknowledgment, in which case `owner_acknowledgment_confirmed_by` and `owner_acknowledgment_confirmed_at` record who confirmed it and when; both are `null` otherwise. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
 
 ## Report skeleton
 
@@ -135,7 +135,7 @@ Render this section only when Code Review confirmed business-source context and 
 * List each source with its identifier, type, path, status, owner or deciders, and baseline, and name any superseded citation it replaced.
 * List each result with its requirement identifiers, business stake, owner awareness, severity, whether an outcome changed, and the merged finding number when the result produced a finding. Show an `untraced` stake as "No goal link (rated as SHOULD)" so readers see the missing traceability, not a bare SHOULD. Label a claimed acknowledgment "Owner acknowledgment claimed, not verified" and a confirmed one with who confirmed it.
 * Render alerts in plain words: "Stale document: <source> is <status>; compared against <successor>" or the update needed, and "Consider drafting or revising an ADR, BRD, or PRD: <source> does not cover <behavior>".
-* List unresolved citations and `possible drift` results that lacked evidence, with the reason.
+* List unresolved citations and `possible-drift` results that lacked evidence, with the reason and without a severity or finding number.
 * State whether an architecture review is recommended.
 * Carry the same data in `business_alignment`; do not require downstream consumers to parse the rendered prose.
 * Do not add the executed extension to `recommended_specialist_reviews`.

@@ -188,7 +188,7 @@ Use `vscode_askQuestions` when available with one finding per turn. Configure fr
 
 The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the tool is unavailable, show the same options in chat and wait.
 
-For an alignment finding routed as residual work, the suggested action also offers to draft a note to the source owner. `business-alignment.md` defines the action text, how the user keeps the follow-up without the note, and what an accepted note contains.
+For an alignment finding routed as residual work, offer to draft a note to the source owner only when the finding records meaningful drift or a confirmed divergence. Do not offer a note for a stale-source or source-gap alert without a separate demonstrated drift result. `business-alignment.md` defines the action text, how the user keeps the follow-up without the note, and what an accepted note contains.
 
 Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 

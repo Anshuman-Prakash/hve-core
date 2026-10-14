@@ -69,7 +69,7 @@ Owner awareness has three states:
 Two guards apply after the table:
 
 * Outcome-change guard: severity above Medium requires a changed outcome or acceptance criterion, business rule enforcement, constraint, KPI, or decision outcome. When only wording or implementation detail differs, cap the severity at Medium.
-* Untraced-requirement gap: a cited requirement with no link to a goal is treated as SHOULD, and the missing link is recorded as a traceability gap.
+* Untraced-requirement gap: when business stake depends on requirement-to-goal traceability, a cited requirement with no goal link is treated as SHOULD and the missing link is recorded as a traceability gap. Preserve stakes assigned independently of goal traceability, including BRD business rules and non-negotiable constraints that are explicitly MUST, and record their missing goal link separately.
 
 Flag MUST-level drift from a BRD as possible misalignment with business objectives, and say so plainly in the finding.
 
@@ -114,7 +114,7 @@ Could you <update the document through its owning workflow / confirm this diverg
 
 ## Business alignment (BRD)
 
-Business stake is the highest MoSCoW priority among the business goals the cited requirement traces to through the BRD's requirement-to-goal traceability. Business rules and non-negotiable constraints count as MUST, because the BRD treats them as enforced boundaries. A cited requirement with no goal link is SHOULD, with a recorded traceability gap.
+Business stake is the highest MoSCoW priority among the business goals the cited requirement traces to through the BRD's requirement-to-goal traceability. Business rules and non-negotiable constraints count as MUST, because the BRD treats them as enforced boundaries. A cited requirement with no goal link is SHOULD only when its stake depends on the missing requirement-to-goal relationship. Preserve an explicit MUST stake for a business rule or non-negotiable constraint and record its missing goal link as a separate traceability gap.
 
 ## Product alignment (PRD)
 
@@ -161,7 +161,7 @@ Add the architecture review follow-up from the shared core to every drift findin
 
 ### Note offer
 
-In a `user-owned` or `user-retained` walkthrough, present a residual source-update finding with this suggested action:
+In a `user-owned` or `user-retained` walkthrough, present a residual source-update finding with this suggested action only when the finding records meaningful drift or a confirmed divergence:
 
 `Use suggested action: create the <workflow> follow-up for <owner> and draft a note to them`
 
@@ -169,5 +169,7 @@ The user can reply to keep the follow-up and skip the note. Record the follow-up
 
 1. Write a `## Stakeholder Note Draft` section into the review record, using the template section and the shared note format, with one subsection per accepted note.
 2. Show the same note text in the closeout as a copy-ready block.
+
+Never offer a stakeholder note for a stale-source or source-gap alert unless a separate result demonstrates meaningful drift or confirmed divergence. Keep the alert's ordinary citation or document follow-up action.
 
 In a confirmed automatic review with `agent-owned` participation, do not draft a note. Add "offer a stakeholder note draft to the user" to the residual follow-up so the user can request it later.

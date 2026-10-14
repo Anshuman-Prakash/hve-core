@@ -3,7 +3,7 @@ title: Code Review
 description: "Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-13
 ms.topic: reference
 keywords:
   - agent
@@ -38,7 +38,10 @@ Use Code Review for a pull request, an explicit branch comparison, or local work
 4. Open and edit the draft before acting on it. External submission requires explicit confirmation and a fresh target-state check; required human-review checkboxes remain yours to complete.
 
 To check a change against business intent, supply BRD, PRD, or ADR identifiers or paths, or confirm the ones the agent finds in the PR description, linked issues, changed files, or a quick search of the repository's business documents.
-It always uses the latest copy of a document and compares against the version on the base branch, so editing the document in the same PR doesn't hide drift.
+For an existing modified source, it establishes BRD or PRD identity from the base revision and compares against the latest source resolved from that revision, so removing metadata or editing the document in the same PR does not hide drift.
+A genuinely new source has no base revision, so the agent uses its current revision.
+If an existing source's base revision is unreadable, the agent uses removed diff lines for modified passages, leaves added-only passages unassessed, and may read the current source once for metadata or passages that the diff demonstrates are unchanged.
+A successor or supersession link added in the PR is only a proposed source update and does not replace the comparison baseline.
 The agent uses the same severity rubric RPI Review uses and adds a Business Alignment section to the draft.
 Critical and High alignment findings request changes until the code is aligned or you confirm, in the pause before posting, that the source owner acknowledged the change; a PR's own claim of approval is shown as not verified.
 For each of those findings, the agent offers to draft a copy-ready note to the source owner; the note stays in your local draft and is never posted.

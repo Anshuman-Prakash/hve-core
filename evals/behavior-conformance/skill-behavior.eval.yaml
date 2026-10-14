@@ -6132,6 +6132,46 @@ stimuli:
         name: skill-rpi-review-stakeholder-note-in-record-not-sent
         config:
           pattern: '(?i)^\s*[`*''"]*review-record-section-not-sent[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-review-explicit-must-without-goal-link
+    prompt: |
+      Using rpi-review, cited BRD constraint CON-004 is explicitly non-negotiable
+      and therefore MUST, but it has no requirement-to-goal traceability link.
+      Choose the stake used for drift severity: MUST-with-traceability-gap,
+      SHOULD-with-traceability-gap, or unassessed. Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 159d730fa7cfd4d46453a08e8a03f3632b9a89a6452e97c441fade258f15b8ca
+    graders:
+      - type: output-matches
+        name: skill-rpi-review-explicit-must-preserved
+        config:
+          pattern: '(?i)^\s*[`*''"]*MUST-with-traceability-gap[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-review-alert-has-no-note-offer
+    prompt: |
+      Using rpi-review, a source-gap alert is routed to residual document
+      follow-up, but no meaningful drift or confirmed divergence was
+      demonstrated. Choose the action: offer-stakeholder-note or
+      ordinary-document-follow-up-without-note. Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: b13f54e40c1055ca8c31953011a999a0c9c525d9a31812a2c74cd97de03fe22d
+    graders:
+      - type: output-matches
+        name: skill-rpi-review-alert-excludes-note-offer
+        config:
+          pattern: '(?i)^\s*[`*''"]*ordinary-document-follow-up-without-note[`*''"]*[.!]?\s*$'
   - name: skill-rpi-plan-supplied-source-citation
     prompt: |
       Using rpi-plan, the user attaches docs/planning/brds/claims-brd.md and the task

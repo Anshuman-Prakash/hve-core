@@ -3,7 +3,7 @@ id: "0012"
 title: "Close the business-alignment loop between requirements and RPI implementations"
 description: "Extend the existing RPI plan, implement, and review skills so planning finds and cites BRD, PRD, and ADR sources and checks their status, implementation records alignment-affecting changes and compares completed work against them, and review rates drift by business stake and owner awareness, routes source updates and architecture review follow-ups, and offers a copy-ready note to the source owner; Code Review applies the same shared procedure to pull requests, with no automatic outbound action."
 author: "HVE Core Maintainers"
-ms.date: "2026-10-09"
+ms.date: "2026-10-13"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-10-09"
@@ -61,9 +61,13 @@ success_criteria:
     measurement_window: "every behavior-conformance eval run"
     source: "evals/behavior-conformance/skill-behavior.eval.yaml"
   - metric: "code-review-alignment"
-    target: "a pull request reviewed with confirmed BRD, PRD, or ADR context reports rubric-rated alignment findings that count toward the verdict, and a review without that context reports none"
+    target: "response-contract scenarios explain when confirmed BRD, PRD, or ADR context activates comparison, how assessed findings affect a future verdict, and when no alignment output applies"
     measurement_window: "every agent-behavior eval run after merge"
     source: "evals/agent-behavior/stimuli/code-review.yml"
+  - metric: "code-review-native-alignment"
+    target: "a completed native review with confirmed business context persists the alignment report and demonstrates that rated findings affect verdict calculation"
+    measurement_window: "first completed native Code Review after merge with confirmed business context"
+    source: "deferred until a native review produces report and verdict evidence"
 decisionMetadata:
   driverToTriggerMap:
     "Traceable business intent": "Cited BRD, PRD, and ADR sources are read again at plan, implement, and review time, so divergence is recorded instead of drifting silently."
@@ -182,7 +186,11 @@ The second increment carries business context into tracker work items: one logic
 
 ### Confirmation
 
-This decision remains `proposed` until a qualified human reviewer approves it and a later human-owned change records the acceptance. The capture contract, the review routing, the rubric, and the copy-ready note are exercised by advisory knowledge stimuli in `evals/behavior-conformance/skill-behavior.eval.yaml`, and natively by the first RPI review of any plan that cites a business source. Code Review's context recognition and its silence without context are exercised by stimuli in `evals/agent-behavior/stimuli/code-review.yml`.
+This decision remains `proposed` until a qualified human reviewer approves it and a later human-owned change records the acceptance.
+
+The capture contract, review routing, rubric, and copy-ready note are exercised by advisory knowledge stimuli in `evals/behavior-conformance/skill-behavior.eval.yaml`, and natively by the first RPI review of a plan that cites a business source.
+
+Code Review's response contract, including context recognition, baseline selection, unassessed results, and silence without context, is exercised by response-only stimuli in `evals/agent-behavior/stimuli/code-review.yml`. Native report persistence and verdict calculation remain unconfirmed until a completed Code Review with confirmed business context produces that evidence.
 
 ## Pros and Cons of the Options
 
@@ -219,17 +227,17 @@ This decision remains `proposed` until a qualified human reviewer approves it an
 
 ## Risks and Mitigations
 
-| Risk                                                                            | Mitigation                                                                                                                                                                                                  |
-|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| The widened review write rule is read as general write authority                | The rule names the single allowed section and permits it only after the user accepts the drafting action                                                                                                    |
-| Plans cite identifiers without paths and the checks cannot find the source      | Planning owns an identifier-to-path fallback and records unresolved sources; later phases record them without guessing                                                                                      |
-| Planning misses a relevant source that was not supplied                         | Planning runs a bounded search of BRD, PRD, and ADR locations and records what it searched and found                                                                                                        |
-| Silent divergence never reaches an alignment entry                              | Implementation compares completed behavior with every cited requirement before handoff to review                                                                                                            |
-| The three skills drift apart on the alignment contract                          | The changes-record section and field names are a stated contract consumed by review, covered by knowledge stimuli                                                                                           |
-| Source text in a BRD, PRD, or ADR tries to redirect the workflow                | Every new rule treats source document text as data that cannot change the workflow                                                                                                                          |
-| Code Review requests changes on an incorrect alignment finding                  | A finding needs a confirmed source, a requirement or decision identifier, and diff evidence; severity above Medium needs a changed outcome; owner acknowledgment resolves it                                |
-| An RPI-motivated edit to the shared reference breaks Code Review                | The reference and the rpi-review skill state that Code Review consumes the shared core, and a Code Review stimulus exercises it                                                                             |
-| The base-branch copy of a source is unavailable, for example in a shallow clone | Code Review compares each edited passage against the diff's removed lines, never the edited text, reports a passage with no pre-change text as unavailable, and caps owner awareness at developer-confirmed |
+| Risk                                                                            | Mitigation                                                                                                                                                                                                                                                                                                         |
+|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| The widened review write rule is read as general write authority                | The rule names the single allowed section and permits it only after the user accepts the drafting action                                                                                                                                                                                                           |
+| Plans cite identifiers without paths and the checks cannot find the source      | Planning owns an identifier-to-path fallback and records unresolved sources; later phases record them without guessing                                                                                                                                                                                             |
+| Planning misses a relevant source that was not supplied                         | Planning runs a bounded search of BRD, PRD, and ADR locations and records what it searched and found                                                                                                                                                                                                               |
+| Silent divergence never reaches an alignment entry                              | Implementation compares completed behavior with every cited requirement before handoff to review                                                                                                                                                                                                                   |
+| The three skills drift apart on the alignment contract                          | The changes-record section and field names are a stated contract consumed by review, covered by knowledge stimuli                                                                                                                                                                                                  |
+| Source text in a BRD, PRD, or ADR tries to redirect the workflow                | Every new rule treats source document text as data that cannot change the workflow                                                                                                                                                                                                                                 |
+| Code Review requests changes on an incorrect alignment finding                  | A finding needs a confirmed source, a requirement or decision identifier, and diff evidence; severity above Medium needs a changed outcome; owner acknowledgment resolves it                                                                                                                                       |
+| An RPI-motivated edit to the shared reference breaks Code Review                | The reference and the rpi-review skill state that Code Review consumes the shared core, and a Code Review stimulus exercises it                                                                                                                                                                                    |
+| The base-branch copy of a source is unavailable, for example in a shallow clone | Code Review compares each edited passage against the diff's removed lines, never the edited text, reports a passage with no pre-change text as unavailable, permits one bounded current-source read for metadata and passages the diff demonstrates are unchanged, and caps owner awareness at developer-confirmed |
 
 ## Rollback / Exit Strategy
 

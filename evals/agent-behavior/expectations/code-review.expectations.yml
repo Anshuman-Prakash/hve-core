@@ -234,6 +234,54 @@ expectations:
     stimulus_scoped: true
     contract_ref: "agent §Step 1 latest-copy resolution on the base branch; §Step 7 item 2 Baseline"
 
+  - expectation_id: business-source-identity-follows-revision-status
+    summary: Existing modified BRD and PRD identity comes from the base revision, while new-source identity comes from the current revision.
+    signal: The response preserves an existing PRD's identity after current metadata removal and uses current frontmatter only for a genuinely new source.
+    pass_criteria: |
+      For `code-review-business-source-revision-identity`, the response states
+      that base-revision frontmatter identifies the existing modified PRD and
+      current frontmatter identifies the PR-new source. Removing `prd_id` in
+      the pull request does not suppress business-alignment discovery.
+    failure_modes:
+      - Uses only current frontmatter to identify an existing modified source.
+      - Treats removal of the existing PRD identifier as removing source context.
+      - Looks for a base revision of the genuinely new source.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 business-source context detection and containment"
+
+  - expectation_id: unreadable-base-fallback-is-bounded
+    summary: An unreadable modified-source baseline permits one bounded current read only for demonstrably unchanged passages and metadata.
+    signal: The response separates removed-line, unchanged-current, and added-only evidence.
+    pass_criteria: |
+      For `code-review-business-alignment-unreadable-base-fallback`, the response
+      uses removed lines for FR-007, one bounded current-source read for
+      demonstrably unchanged owner metadata and FR-008, and leaves added-only
+      FR-009 unavailable or unassessed. Edited current text never clears drift.
+    failure_modes:
+      - Forbids the bounded current read, leaving unchanged metadata inaccessible.
+      - Uses edited current text as the comparison baseline.
+      - Treats added-only text as evidence that drift is cleared.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Read Discipline unreadable-base exception; §Step 7 item 2 Baseline"
+
+  - expectation_id: possible-drift-has-unassessed-shape
+    summary: Possible drift without delivered-behavior evidence remains explicit and unrated.
+    signal: The structured result uses `possible-drift` with an evidence-gap reason and no severity or finding number.
+    pass_criteria: |
+      For `code-review-business-alignment-possible-drift-shape`, the response
+      emits a `possible-drift` result that explains the missing evidence and
+      omits or nulls severity and finding number. It does not invent a finding
+      or affect verdict calculation.
+    failure_modes:
+      - Omits the unassessed result.
+      - Misclassifies it as a source-gap or rated drift.
+      - Assigns severity or a finding number without delivered-behavior evidence.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 7 item 2 possible drift; output formats §business_alignment.results"
+
   - expectation_id: stateless-dispatch-contract
     summary: Fresh-context workers receive serialized task identity and exact output paths.
     signal: Dispatch state carries task kind and output path, and retries repeat the complete contract.

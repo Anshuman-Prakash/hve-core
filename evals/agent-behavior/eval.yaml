@@ -2327,6 +2327,99 @@ stimuli:
     config:
       pattern: (?is)(?<!(?:\b(?:not|never|without|cannot|than|of)|n[\x27\u2019]t)\s+(?:(?:be|been|yet|ever|actually|automatically)\s+)*)\b(?:compares?|compared|comparing|uses|use|switch(?:es)? to|moves? to)\s+(?:the\s+comparison\s+)?(?:against|to|with|on)?\s*(?:the\s+)?(?:PR-added\s+|new\s+)?(?:successor\s+)?`?(?:docs/planning/prds/)?claims-prd-v2
       negate: true
+- name: code-review-business-source-revision-identity
+  prompt: |
+    This is a response-only review-contract scenario, not a live repository
+    review. Read the staged references as needed; do not run Git, resolve
+    provider data, write artifacts or invoke perspectives. The changed path
+    `docs/planning/prds/claims-prd.md` exists on the base revision, where its
+    frontmatter has `prd_id: PRD-CLAIMS`; the pull request removes that field.
+    A second changed path, `docs/planning/prds/new-prd.md`, does not exist on
+    the base revision and its current frontmatter has `prd_id: PRD-NEW`.
+    Explain which revision establishes each path's source identity and why
+    removing the existing PRD's current identifier does not suppress the
+    business-alignment extension. Do not claim discovery or comparison ran.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/coding-standards/code-review.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/coding-standards/code-review
+    - ../../.github/skills/rpi/rpi-review
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: existing-source-identity-uses-base-frontmatter
+    config:
+      pattern: (?is)(?=[\s\S]*(?:claims-prd|PRD-CLAIMS))(?=[\s\S]*base[- ]?(?:revision|branch|ref)[^.\r\n]{0,160}frontmatter|frontmatter[^.\r\n]{0,160}base[- ]?(?:revision|branch|ref))(?=[\s\S]*(?:remov\w*|missing)[^.\r\n]{0,160}(?:does not|doesn[\x27\u2019]t|cannot)[^.\r\n]{0,100}(?:suppress|erase|prevent|hide|remove).{0,80}(?:identity|alignment|source))
+  - type: output-matches
+    name: new-source-identity-uses-current-frontmatter
+    config:
+      pattern: (?is)(?=[\s\S]*(?:new-prd|PRD-NEW))(?=[\s\S]*(?:new|no base|does not exist)[^.\r\n]{0,180}(?:current|head)[- ]?(?:revision|copy)?[^.\r\n]{0,120}frontmatter|frontmatter[^.\r\n]{0,120}(?:current|head)[- ]?(?:revision|copy)?)
+- name: code-review-business-alignment-unreadable-base-fallback
+  prompt: |
+    This is a response-only review-contract scenario, not a live repository
+    review. Read the staged references as needed; do not run Git, resolve
+    provider data, write artifacts or invoke perspectives. A modified PRD's
+    base revision cannot be read. Its persisted diff has removed and added
+    lines for FR-007, while the owner metadata and FR-008 are outside every
+    changed hunk and are demonstrably unchanged. Another FR-009 passage exists
+    only in added lines. Explain the one current-source read the Step 7
+    fallback permits and the baseline treatment for FR-007, FR-008, and
+    FR-009. Do not claim the comparison ran.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/coding-standards/code-review.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/coding-standards/code-review
+    - ../../.github/skills/rpi/rpi-review
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: fallback-allows-one-bounded-unchanged-read
+    config:
+      pattern: (?is)(?=[\s\S]*(?:one|once)[^.\r\n]{0,100}bounded[^.\r\n]{0,160}(?:current|working[- ]tree)[- ]?(?:source|revision|copy|read))(?=[\s\S]*(?:owner|FR-008|metadata|unchanged)[^.\r\n]{0,180}(?:unchanged|outside (?:the )?diff|not (?:edited|changed)))
+  - type: output-matches
+    name: fallback-uses-removed-lines-for-modified-passage
+    config:
+      pattern: (?is)(?:FR-007|modified passage)[^.\r\n]{0,180}(?:removed|pre-change)[^.\r\n]{0,100}(?:line|text|baseline)|(?:removed|pre-change)[^.\r\n]{0,140}(?:line|text|baseline)[^.\r\n]{0,100}(?:FR-007|modified passage)
+  - type: output-matches
+    name: fallback-leaves-added-only-passage-unassessed
+    config:
+      pattern: (?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not|doesn[\x27\u2019]t)[^.\r\n]{0,120}(?:clear|prove|establish))?
+- name: code-review-business-alignment-possible-drift-shape
+  prompt: |
+    This is a response-only structured-output scenario, not a live repository
+    review. Read the staged references as needed; do not run Git, resolve
+    provider data, write artifacts or invoke perspectives. A confirmed PRD
+    source and FR-021 text are available, but no diff, untracked file, test,
+    or other delivered-behavior evidence establishes whether implementation
+    differs. Show the `business_alignment.results` representation this
+    evidence gap requires. Do not invent a finding or claim comparison ran.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/coding-standards/code-review.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/coding-standards/code-review
+    - ../../.github/skills/rpi/rpi-review
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: possible-drift-is-explicitly-unassessed
+    config:
+      pattern: (?is)(?=[\s\S]*(?:possible-drift|possible drift))(?=[\s\S]*(?:not assessed|unassessed|evidence[- ]gap|missing (?:delivered[- ]behavior )?evidence))
+  - type: output-matches
+    name: possible-drift-has-no-severity-or-finding-number
+    config:
+      pattern: (?is)(?=[\s\S]*severity[^.\r\n]{0,80}(?:null|omit|absent|none|no rated))(?=[\s\S]*(?:finding_number|finding number)[^.\r\n]{0,80}(?:null|omit|absent|none|no))
 - name: code-review-pull-request-standard-profile
   prompt: |
     This is a behavior-contract scenario, not a live review. Do not call tools
