@@ -2283,7 +2283,7 @@ stimuli:
   - type: output-matches
     name: stale-source-alert-is-medium
     config:
-      pattern: (?is)(?:stale|superseded)[^.\r\n]{0,200}\bMedium\b|\bMedium\b[^.\r\n]{0,200}(?:stale|superseded)
+      pattern: (?is)^(?=[\s\S]*(?:stale|superseded))(?=[\s\S]*\bMedium\b)
 - name: code-review-business-alignment-supersession-reroute
   prompt: |
     This is a response-only review-contract scenario, not a live repository
@@ -2353,11 +2353,11 @@ stimuli:
   - type: output-matches
     name: existing-source-identity-uses-base-frontmatter
     config:
-      pattern: (?is)(?=[\s\S]*(?:claims-prd|PRD-CLAIMS))(?=[\s\S]*base[- ]?(?:revision|branch|ref)[^.\r\n]{0,160}frontmatter|frontmatter[^.\r\n]{0,160}base[- ]?(?:revision|branch|ref))(?=[\s\S]*(?:remov\w*|missing)[^.\r\n]{0,160}(?:does not|doesn[\x27\u2019]t|cannot)[^.\r\n]{0,100}(?:suppress|erase|prevent|hide|remove).{0,80}(?:identity|alignment|source))
+      pattern: (?is)^(?=[\s\S]*(?:claims-prd|PRD-CLAIMS))(?=[\s\S]*base[- ]?(?:revision|branch|ref))(?=[\s\S]*frontmatter)(?=[\s\S]*(?:remov\w*|missing))(?=[\s\S]*(?:still|preserv\w*|retain\w*|recognize|recognizes|recognized|recognizing|identify|identifies|identified|identifying|cannot\s+(?:suppress|erase|prevent|hide|remove)|does not\s+(?:suppress|erase|prevent|hide|remove)))
   - type: output-matches
     name: new-source-identity-uses-current-frontmatter
     config:
-      pattern: (?is)(?=[\s\S]*(?:new-prd|PRD-NEW))(?=[\s\S]*(?:new|no base|does not exist)[^.\r\n]{0,180}(?:current|head)[- ]?(?:revision|copy)?[^.\r\n]{0,120}frontmatter|frontmatter[^.\r\n]{0,120}(?:current|head)[- ]?(?:revision|copy)?)
+      pattern: (?is)^(?=[\s\S]*(?:new-prd|PRD-NEW))(?=[\s\S]*(?:new|no base|does not exist))(?=[\s\S]*(?:current|head|working[- ]tree))(?=[\s\S]*frontmatter)
 - name: code-review-business-alignment-unreadable-base-fallback
   prompt: |
     This is a response-only review-contract scenario, not a live repository
@@ -2383,7 +2383,7 @@ stimuli:
   - type: output-matches
     name: fallback-allows-one-bounded-unchanged-read
     config:
-      pattern: (?is)(?=[\s\S]*(?:one|once)[^.\r\n]{0,100}bounded[^.\r\n]{0,160}(?:current|working[- ]tree)[- ]?(?:source|revision|copy|read))(?=[\s\S]*(?:owner|FR-008|metadata|unchanged)[^.\r\n]{0,180}(?:unchanged|outside (?:the )?diff|not (?:edited|changed)))
+      pattern: (?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))
   - type: output-matches
     name: fallback-uses-removed-lines-for-modified-passage
     config:
@@ -2391,7 +2391,7 @@ stimuli:
   - type: output-matches
     name: fallback-leaves-added-only-passage-unassessed
     config:
-      pattern: (?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not|doesn[\x27\u2019]t)[^.\r\n]{0,120}(?:clear|prove|establish))?
+      pattern: (?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not)[^.\r\n]{0,120}(?:clear|prove|establish))?
 - name: code-review-business-alignment-possible-drift-shape
   prompt: |
     This is a response-only structured-output scenario, not a live repository
