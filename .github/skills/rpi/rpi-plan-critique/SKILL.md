@@ -36,7 +36,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * The earlier critique when this is a follow-up critique
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 * Lens reasoning effort: `auto` by default, which selects each lens's effort from its work, or a user- or caller-set level for every lens or for named lenses
-* Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
+* Subagent use: `auto` by default, which splits a multi-phase plan into parallel lens assessments when a dispatch tool is available, or the user's direction, such as `none` or only named uses
 
 ## Success criteria
 

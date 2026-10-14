@@ -27,7 +27,7 @@ Resolve the walkthrough target before any review or explanation:
 Understand the target before narrating it so the explanation stays accurate and grounded. Keep review results in the active conversation.
 
 * Trace how the code, UI, UX, feature, or artifact actually works with the available search and read tools: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
-* A subagent is optional. Use one when isolating a large trace would protect the conversation context, give it the target and the questions to trace, and treat its return as leads to confirm by reading the target yourself.
+* A subagent is optional and follows the subagent-use rule in the skill's Flow. Use one when isolating a large trace would protect the conversation context, give it the target and the questions to trace, and treat its return as leads to confirm by reading the target yourself.
 * Activate `rpi-research` when the explanation depends on an external library, framework, standard, or anything that benefits from web or repository research with citations. Supply the walkthrough topic, purpose, audience, questions, evidence criteria, scope and non-goals, constraints, existing evidence, requested outputs, and analysis output mode, then read the completed primary research artifact before explaining.
 * Scale the review to `detail`: a focused single pass for `brief`, a normal pass for `normal`, and a thorough multi-pass review with cross-references for `deep`.
 
