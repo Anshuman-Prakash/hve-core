@@ -398,8 +398,8 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         )
         return EXIT_FAILURE
     try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None) or DEFAULT_PROFILE_NAME
+        profile_name = _resolve_active_profile(
+            None, os.environ, getattr(args, "profile", None)
         )
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
@@ -1304,6 +1304,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
     }
     backends_have_creds = keyring_populated or file_populated
     cred_keys = {
+        "credential_profile": cred_profile,
         "credential_file": str(cred_path),
         "credential_file_exists": cred_path.exists(),
         "backend": backend_name,

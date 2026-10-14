@@ -314,6 +314,22 @@ def _isolate_session_backends(
     return credential_path
 
 
+def _isolate_profile_session_backends(
+    monkeypatch: pytest.MonkeyPatch,
+    mural_module: Any,
+    tmp_path: pathlib.Path,
+) -> pathlib.Path:
+    """Route credential probes to profile-specific files under a temp root."""
+    monkeypatch.delenv(ENV_ENV_FILE, raising=False)
+    monkeypatch.setenv(mural_module.ENV_XDG_CONFIG_HOME, str(tmp_path / "xdg-config"))
+    monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "file")
+    monkeypatch.setenv("MURAL_REFRESH_TOKEN", "")
+    monkeypatch.setattr(
+        mural_module, "_probe_keyring_availability", lambda: (False, None, None)
+    )
+    return mural_module._resolve_credential_file("default")
+
+
 def _write_store(path: pathlib.Path, profiles: dict[str, dict[str, Any]]) -> None:
     path.write_text(json.dumps({"schema_version": 2, "profiles": profiles}))
 
@@ -514,6 +530,46 @@ def test_given_credential_file_refresh_token_when_auth_login_then_skips_oauth(
 
     # Assert
     assert rc == mural_module.EXIT_SUCCESS
+
+
+def test_given_work_profile_and_default_backend_session_when_login_then_targets_work(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+    tmp_path: pathlib.Path,
+) -> None:
+    """MURAL_PROFILE selects the login target instead of default credentials."""
+    # Arrange
+    default_credential_path = _isolate_profile_session_backends(
+        monkeypatch, mural_module, tmp_path
+    )
+    mural_module.FileBackend(default_credential_path).set(
+        "ignored", "MURAL_REFRESH_TOKEN", "default-refresh"
+    )
+    fake_token_store.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "active_profile": "work",
+                "profiles": {"work": _authenticated_record("")},
+            }
+        )
+    )
+    monkeypatch.setenv("MURAL_PROFILE", "work")
+    monkeypatch.setattr(
+        mural_module,
+        "_run_login",
+        lambda *, scopes, timeout_seconds: _authenticated_record("work-access"),
+    )
+
+    # Act
+    rc = mural_module.main(["auth", "login"])
+
+    # Assert
+    assert rc == mural_module.EXIT_SUCCESS
+    store = mural_module._load_token_store(fake_token_store)
+    assert mural_module._select_profile(store, "work")["access_token"] == "work-access"
+    assert not mural_module._profile_has_usable_session("default", store)
 
 
 @pytest.mark.parametrize(
@@ -781,6 +837,7 @@ def test_auth_status_no_store(
     assert out == {
         "authenticated": False,
         "token_store": str(missing),
+        "credential_profile": "default",
         "credential_file": str(cred_path),
         "credential_file_exists": False,
         "backend": "env-only",
@@ -841,6 +898,7 @@ def test_auth_status_with_store(
         "granted_scopes": ["murals:read", "murals:write"],
         "expires_at": 9999,
         "has_refresh_token": True,
+        "credential_profile": "default",
         "credential_file": str(cred_path),
         "credential_file_exists": False,
         "backend": "env-only",
@@ -860,6 +918,7 @@ AUTH_STATUS_UNAUTHENTICATED_KEYS = frozenset(
     {
         "authenticated",
         "token_store",
+        "credential_profile",
         "credential_file",
         "credential_file_exists",
         "backend",
@@ -1213,6 +1272,48 @@ def test_given_file_refresh_token_when_auth_status_then_flagged_not_authenticate
     assert rc == mural_module.EXIT_SUCCESS
     assert out["authenticated"] is False
     assert out["backend_refresh_token"] is True
+
+
+def test_given_work_selected_and_default_credentials_when_status_then_profiles_differ(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Status identifies the selected backend profile without leaking default state."""
+    # Arrange
+    default_credential_path = _isolate_profile_session_backends(
+        monkeypatch, mural_module, tmp_path
+    )
+    mural_module.FileBackend(default_credential_path).set(
+        "ignored", "MURAL_REFRESH_TOKEN", "default-refresh"
+    )
+    fake_token_store.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "active_profile": "work",
+                "profiles": {
+                    "work": {
+                        **_authenticated_record("work-access"),
+                        "refresh_token": "work-refresh",
+                    }
+                },
+            }
+        )
+    )
+    monkeypatch.setenv("MURAL_PROFILE", "work")
+
+    # Act
+    rc = mural_module.main(["auth", "status"])
+
+    # Assert
+    out = json.loads(capsys.readouterr().out)
+    assert rc == mural_module.EXIT_SUCCESS
+    assert out["profile"] == "work"
+    assert out["credential_profile"] == "work"
+    assert out["backend_refresh_token"] is False
 
 
 def test_given_keyring_refresh_token_when_auth_status_then_flagged_not_authenticated(

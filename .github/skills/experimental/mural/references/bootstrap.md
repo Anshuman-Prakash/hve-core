@@ -41,7 +41,7 @@ Mural is not configured for this workspace yet. Please run the documented setup 
 If `mural doctor` returns `needs_login`, pause and say:
 
 ```text
-Mural needs an authenticated session before I can continue. Please complete the login flow in your terminal or browser using the repository's Mural setup instructions, then ask me to retry. If the login command reports that the profile already has stored credentials, rerun it with --force.
+Mural needs an authenticated session before I can continue. Login selects `--profile`, then `MURAL_PROFILE`, then `default`; it does not use the profile selected by `mural auth use`. Please complete the login flow in your terminal or browser using the repository's Mural setup instructions, then ask me to retry. Pass `--profile NAME` when remediation must target a specific profile. If login reports that the targeted profile already has stored credentials, rerun the same command with `--force`.
 ```
 
 If `mural doctor` returns `needs_scope_upgrade`, pause and say:
