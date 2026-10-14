@@ -259,9 +259,8 @@ export async function stageGhAwHelpers(entries, contents, options, stagingRoot) 
       const [commit] = commits;
       const key = `${commit}/${name}`;
       if (!fetched.has(key)) {
-        const cacheFile = options.cacheDir ? join(options.cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', name) : null;
         const url = `https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/${name}`;
-        fetched.set(key, readCachedRemoteText(options.fetchText, url, cacheFile));
+        fetched.set(key, readCachedRemoteText(options.fetchText, url, options.cacheDir));
       }
       const text = await fetched.get(key);
       if (typeof text !== 'string') {

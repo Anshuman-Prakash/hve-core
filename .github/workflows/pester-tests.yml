@@ -221,6 +221,8 @@ jobs:
       - name: Run Integration Tests
         id: pester-integration
         shell: pwsh
+        env:
+          CODE_COVERAGE: ${{ inputs.code-coverage }}
         run: |
           # Run the full Integration-tagged suite. Slow remains excluded; passing
           # -ExcludeTag is required because it replaces (not appends to) the runner's
@@ -229,7 +231,7 @@ jobs:
 
           # The unit lane excludes Integration-tagged tests, so code those tests
           # exercise is measured only here.
-          if ('${{ inputs.code-coverage }}' -eq 'true') {
+          if ($env:CODE_COVERAGE -eq 'true') {
             $params['CodeCoverage'] = $true
           }
 

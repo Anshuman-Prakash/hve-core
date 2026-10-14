@@ -4,6 +4,7 @@
 // Custom checks for workflow problems GitHub's parser does not report.
 // Each rule has a capability probe in probes/, so a check can be retired once
 // the parser catches the same case.
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { isMap, isScalar, isSeq, LineCounter, parseDocument } from 'yaml';
@@ -48,7 +49,17 @@ const REMOTE_USES = /^(?<owner>[A-Za-z0-9_.-]+)\/(?<repo>[A-Za-z0-9_.-]+)(?<path
 // One lookup per URL per fetch function, so a missing file is fetched once per
 // run however many workflows reference it.
 const fetchMemo = new WeakMap();
-export async function readCachedRemoteText(fetchText, url, cacheFile = null) {
+export async function readCachedRemoteText(fetchText, url, cacheDir = null) {
+  let cacheFile = null;
+  if (cacheDir) {
+    const remote = new URL(url);
+    const pathParts = remote.pathname.split('/').filter(Boolean);
+    if (remote.protocol !== 'https:' || remote.hostname !== 'raw.githubusercontent.com'
+      || pathParts.length < 4 || !/^[0-9a-f]{40}$/.test(pathParts[2])) {
+      throw new Error('Remote workflow metadata cache accepts only raw GitHub content pinned to a commit');
+    }
+    cacheFile = join(cacheDir, 'remote', createHash('sha256').update(url).digest('hex'));
+  }
   if (cacheFile && existsSync(cacheFile)) return readFileSync(cacheFile, 'utf8');
   if (!fetchText) return null;
   if (!fetchMemo.has(fetchText)) fetchMemo.set(fetchText, new Map());
@@ -350,9 +361,8 @@ async function readUsedFile(ctx, uses, usesNode, actionFiles) {
   const path = (match.groups.path ?? '').replace(/^\//, '');
   const candidates = actionFiles ? actionFiles.map((name) => (path ? `${path}/${name}` : name)) : [path];
   for (const file of candidates) {
-    const cacheFile = cacheDir ? join(cacheDir, owner, repo, ref, file) : null;
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${file}`;
-    const text = await readCachedRemoteText(fetchText, url, cacheFile);
+    const text = await readCachedRemoteText(fetchText, url, cacheDir);
     if (typeof text === 'string') return text;
   }
   report(ctx, 'workflow-check/action-metadata-unavailable', usesNode, 0, `Could not read ${candidates.join(' or ')} from ${owner}/${repo} at ${ref.slice(0, 12)}, so its inputs were not verified`);

@@ -994,27 +994,18 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         [string]$identity['run'] | Should -Match "EVENT_ACTOR_ID.*EXPECTED_ACTOR_ID"
     }
 
-    It 'Denies Actions cache access to the release producer and every job it runs' {
-        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
-        $document.Contains('cache-mode') | Should -BeTrue
-        [string]$document['cache-mode'] | Should -BeExactly 'none'
-        foreach ($jobName in @($document['jobs'].Keys)) {
-            $job = $document['jobs'][$jobName]
-            if ($job.Contains('cache-mode')) {
-                [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "job '$jobName' must not widen cache access"
-            }
-        }
+    It 'Keeps the release producer free of Actions cache use' {
+        $text = Get-WorkflowText -Name 'release-vsix-publish.yml'
+        $text | Should -Not -Match 'actions/cache@|(?:astral-sh/setup-uv@|\$/.github/actions/setup-uv)'
     }
 
-    It 'Keeps every workflow the release producer calls within its cache-mode cap' {
-        # A called workflow that requests more cache access than the caller's
-        # explicit cap fails validation before the release starts. The pinned
-        # signer revision is a snapshot of the local signer file, so the local
-        # file stands in for the next snapshot.
+    It 'Keeps every workflow the release producer calls free of Actions cache use' {
+        # The pinned signer revision is a snapshot of the local signer file, so
+        # the local file stands in for the next snapshot.
         $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
         $calledNames = @(foreach ($jobName in @($document['jobs'].Keys)) {
                 $uses = [string]$document['jobs'][$jobName]['uses']
-                if ($uses -match '^(?:\./|microsoft/hve-core/)\.github/workflows/([^@/]+\.ya?ml)(?:@[0-9a-f]{40})?$') {
+                if ($uses -match '^(?:\$/|\./|microsoft/hve-core/)\.github/workflows/([^@/]+\.ya?ml)(?:@[0-9a-f]{40})?$') {
                     $Matches[1]
                 }
             })
@@ -1022,16 +1013,9 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         $calledNames | Should -Contain 'vex-attest.yml'
         $calledNames | Should -Contain 'release-close-milestone.yml'
         foreach ($calledName in ($calledNames | Sort-Object -Unique)) {
-            $called = Get-WorkflowDocument -Name $calledName
-            if ($called.Contains('cache-mode')) {
-                [string]$called['cache-mode'] | Should -BeExactly 'none' -Because "$calledName must not request cache access beyond the caller's cap"
-            }
-            foreach ($jobName in @($called['jobs'].Keys)) {
-                $job = $called['jobs'][$jobName]
-                if ($job.Contains('cache-mode')) {
-                    [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "$calledName job '$jobName' must not request cache access beyond the caller's cap"
-                }
-            }
+            $text = Get-WorkflowText -Name $calledName
+            $text | Should -Not -Match 'actions/cache@|(?:astral-sh/setup-uv@|\$/.github/actions/setup-uv)' `
+                -Because "$calledName must not restore or save dependency caches during release production"
         }
     }
 
@@ -2713,23 +2697,30 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         $source | Should -Match '(?m)^  skip-bots: \["dependabot\[bot\]"\]\r?$'
     }
 
-    It 'Hands authored demo content to the render by dispatch' {
+    It 'Hands authored demo content to the render through a filtered workflow_run' {
         $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
-        $render['on'].Contains('workflow_run') | Should -BeFalse
+        $render['on'].Contains('workflow_run') | Should -BeTrue
+        @($render['on']['workflow_run']['workflows']) | Should -Be @('Demo Material Author')
+        @($render['on']['workflow_run']['branches']) | Should -Be @('main')
+        @($render['on']['workflow_run']['types']) | Should -Be @('completed')
         $render['on']['workflow_dispatch']['inputs'].Contains('author-run-id') | Should -BeTrue
         $resolve = Get-NamedJobStep -Document $render -JobName 'resolve' -StepName 'Resolve author run and render mode'
-        [string]$resolve['with']['script'] | Should -Match 'authorRun = await waitForRun\(Number\(process\.env\.DISPATCH_AUTHOR_RUN_ID\)\)'
-        [string]$resolve['with']['script'] | Should -Match 'authorRun\.head_branch !== defaultBranch'
+        $resolveScript = [string]$resolve['with']['script']
+        $resolveScript | Should -Match 'authorRun = context\.payload\.workflow_run'
+        $resolveScript | Should -Match 'authorRun\.path !== "\.github/workflows/demo-material-author\.lock\.yml"'
+        $resolveScript | Should -Match 'authorRun\.head_branch !== defaultBranch'
+        $resolveScript | Should -Match 'demo-material-content-\$\{authorRun\.id\}'
 
         $author = Get-WorkflowDocument -Name 'demo-material-author.lock.yml'
-        $dispatch = $author['jobs']['dispatch-render']
-        @($dispatch['needs']) | Should -Contain 'agent'
-        [string]$dispatch['if'] | Should -Match "needs\.agent\.result == 'success'"
-        [string[]]@($dispatch['permissions'].Keys) | Should -Be @('actions')
-        [string]$dispatch['permissions']['actions'] | Should -BeExactly 'write'
-        $script = [string]@($dispatch['steps'] | Where-Object { $_['name'] -eq 'Dispatch the render for this run' })[0]['with']['script']
-        $script | Should -Match 'workflow_id: "demo-material-render\.yml"'
-        $script | Should -Match '"author-run-id": String\(context\.runId\)'
+        $author['jobs'].Contains('dispatch-render') | Should -BeFalse
+    }
+
+    It 'Passes Pester coverage control through the environment' {
+        $pester = Get-WorkflowDocument -Name 'pester-tests.yml'
+        $step = Get-NamedJobStep -Document $pester -JobName 'pester-integration' -StepName 'Run Integration Tests'
+        [string]$step['env']['CODE_COVERAGE'] | Should -BeExactly '${{ inputs.code-coverage }}'
+        [string]$step['run'] | Should -Match '\$env:CODE_COVERAGE'
+        [string]$step['run'] | Should -Not -Match '\$\{\{\s*inputs\.code-coverage\s*\}\}'
     }
 
     It 'Renders silent demo videos without Azure sign-in' {

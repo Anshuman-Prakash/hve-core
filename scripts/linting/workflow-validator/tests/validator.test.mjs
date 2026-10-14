@@ -18,7 +18,7 @@ import {
   stageGhAwHelpers,
   toSarif,
 } from '../validator.mjs';
-import { CHECK_RULES } from '../checks.mjs';
+import { CHECK_RULES, readCachedRemoteText } from '../checks.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -279,9 +279,8 @@ describe('stageGhAwHelpers', () => {
   it('reads a cached helper without fetching', async () => {
     const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
     const cacheDir = mkdtempSync(join(tmpdir(), 'stage-cache-'));
-    const cached = join(cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', 'helper.sh');
-    mkdirSync(dirname(cached), { recursive: true });
-    writeFileSync(cached, 'X=2\n');
+    const url = `https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/helper.sh`;
+    await readCachedRemoteText(async () => 'X=2\n', url, cacheDir);
     const result = await stageGhAwHelpers([entry], contents, { cacheDir, fetchText: () => assert.fail('should not fetch') }, staging);
     assert.deepEqual(result.findings, []);
     assert.equal(readFileSync(join(staging, commit, 'gh-aw', 'actions', 'helper.sh'), 'utf8'), 'X=2\n');

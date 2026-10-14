@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
@@ -234,16 +234,38 @@ describe('remote fetches', () => {
 
   it('shares memory and disk caching across remote readers', async () => {
     const cacheDir = mkdtempSync(join(tmpdir(), 'wfv-shared-cache-'));
-    const cacheFile = join(cacheDir, 'metadata.yml');
+    const url = `https://raw.githubusercontent.com/org/repo/${SHA}/metadata.yml?path=../../outside`;
     let calls = 0;
     const fetchText = async () => {
       calls++;
       return 'name: cached\n';
     };
 
-    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/metadata', cacheFile), 'name: cached\n');
-    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/metadata', cacheFile), 'name: cached\n');
+    assert.equal(await readCachedRemoteText(fetchText, url, cacheDir), 'name: cached\n');
+    assert.equal(await readCachedRemoteText(fetchText, url, cacheDir), 'name: cached\n');
     assert.equal(calls, 1);
+    const cacheFiles = readdirSync(join(cacheDir, 'remote'));
+    assert.equal(cacheFiles.length, 1);
+    assert.match(cacheFiles[0], /^[0-9a-f]{64}$/);
+    assert.equal(existsSync(join(cacheDir, 'outside')), false);
+    assert.equal(
+      await readCachedRemoteText(() => assert.fail('should read the disk cache'), url, cacheDir),
+      'name: cached\n',
+    );
+  });
+
+  it('refuses to cache unpinned or non-GitHub remote content', async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'wfv-rejected-cache-'));
+    for (const url of [
+      'https://example.invalid/metadata.yml',
+      'https://raw.githubusercontent.com/org/repo/main/metadata.yml',
+    ]) {
+      await assert.rejects(
+        readCachedRemoteText(async () => 'unsafe\n', url, cacheDir),
+        /cache accepts only raw GitHub content pinned to a commit/,
+      );
+    }
+    assert.equal(readdirSync(cacheDir).length, 0);
   });
 });
 

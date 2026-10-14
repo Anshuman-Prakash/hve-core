@@ -105,7 +105,17 @@ Describe 'Release app key governance' -Tag 'Unit' {
         $resolve.Contains('environment') | Should -BeFalse
         ($resolve['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'pull-requests')
         $resolve['permissions'].Values | Should -Not -Contain 'write'
-        [string]$resolve['steps'][0]['run'] | Should -Match 'commits/\$EVENT_SHA/pulls'
-        [string]$resolve['steps'][0]['run'] | Should -Match '\.merge_commit_sha == \$sha and \.base\.ref == \$base'
+        $step = $resolve['steps'][0]
+        [string]$step['uses'] | Should -BeExactly '$/.github/actions/resolve-merged-pr'
+        [string]$step['with']['token'] | Should -BeExactly '${{ github.token }}'
+        [string]$step['with']['repository'] | Should -BeExactly '${{ github.repository }}'
+        [string]$step['with']['event-sha'] | Should -BeExactly '${{ github.sha }}'
+        [string]$step['with']['base-branch'] | Should -BeExactly '${{ github.ref_name }}'
+
+        $action = Get-Content -Raw -LiteralPath (Join-Path $RepoRoot '.github/actions/resolve-merged-pr/action.yml') | ConvertFrom-Yaml
+        $actionStep = $action['runs']['steps'][0]
+        [string]$actionStep['env']['GH_TOKEN'] | Should -BeExactly '${{ inputs.token }}'
+        [string]$actionStep['run'] | Should -Match 'commits/\$\{EVENT_SHA\}/pulls'
+        [string]$actionStep['run'] | Should -Match '\.merge_commit_sha == \$sha and \.base\.ref == \$base'
     }
 }

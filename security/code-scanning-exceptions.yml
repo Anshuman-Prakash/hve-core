@@ -173,12 +173,22 @@ exceptions:
   - tool: zizmor
     rule: zizmor/undocumented-permissions
     path: .github/workflows/demo-material-author.lock.yml
-    count: 5
+    count: 4
     kind: generated-code
     upstream: https://github.com/github/gh-aw/issues/65940
     issue: 3137
     owner: WilliamBerryiii
     reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/dangerous-triggers
+    path: .github/workflows/demo-material-render.yml
+    count: 1
+    kind: platform-limitation
+    upstream: https://github.com/zizmorcore/zizmor/issues/1168
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: workflow_run is required for event-driven rendering and is restricted to completed Demo Material Author runs on main; the resolve job revalidates the workflow path, branch, conclusion, commit SHA, and exact artifact identity before use
     expires: 2026-12-31
   - tool: zizmor
     rule: zizmor/undocumented-permissions
@@ -470,6 +480,16 @@ exceptions:
     owner: WilliamBerryiii
     reason: gh-aw activation runs its own scripts from RUNNER_TEMP, which the computed .github checkout cannot supply. Poutine runs advisory (poutine-soft-fail) and the gate does not read its SARIF yet, so this entry is not evaluated until Poutine is gated.
     expires: 2026-12-31
+  - tool: poutine
+    rule: github_action_from_unverified_creator_used
+    path: .github/workflows/label-sync.yml
+    count: 1
+    kind: third-party
+    upstream: https://github.com/EndBug/label-sync/issues/321
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: The action is pinned to a reviewed commit and runs only on main label-definition changes or manual dispatch with contents read and issues write; replace it if upstream maintenance or ownership changes
+    expires: 2026-12-31
   - tool: CodeQL
     rule: actions/code-injection/medium
     path: .github/workflows/backlog-groom.lock.yml
@@ -499,6 +519,16 @@ exceptions:
     issue: 3137
     owner: WilliamBerryiii
     reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: js/http-to-file-access
+    path: scripts/linting/workflow-validator/checks.mjs
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/microsoft/hve-core/issues/3137
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: The cache accepts only HTTPS raw.githubusercontent.com URLs pinned to a 40-character commit, hashes the full URL into a fixed cache namespace, and rejects unpinned or non-GitHub content before any file access
     expires: 2026-12-31
   - tool: CodeQL
     rule: actions/envvar-injection/medium
