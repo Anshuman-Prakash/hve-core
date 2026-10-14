@@ -57,7 +57,7 @@ A compact return that lets the parent locate each candidate finding quickly, und
 * Assignment: the bounded question or comparison this return addresses
 * Candidate findings: one entry per apparent gap with the expected behavior or requirement, observed evidence and location, why it may matter, suggested severity, suggested route (`rpi-implement`, `rpi-plan`, `rpi-research`, or follow-up), and confidence (`High`, `Medium`, or `Low`); or `None within the assigned scope`
 * Consistent: each requirement or item compared and found consistent, with the evidence location where it is met, stated compactly; list anything without a location under Not assessed instead
-* Not assessed: boundaries the supplied evidence could not cover, or `None`
+* Not assessed: boundaries the supplied evidence could not cover and consistent items without an evidence location, or `None`
 * Validation evidence seen: passed, failed, skipped, or unavailable checks as recorded, or `None supplied`
 * Suggested next look: evidence the parent may want to read or verify next, or `None`
 * Stop reason: assignment covered, redundancy, explicit limit, scope boundary, or missing input
