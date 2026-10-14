@@ -1,7 +1,7 @@
 ---
 name: rpi-review
 description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
-argument-hint: "[task=...] [plan=...] [changes=...] [depth={standard|deep}]"
+argument-hint: "[task=...] [plan=...] [changes=...] [depth={standard|deep}] [effort={auto|low|medium|high|xhigh|max}] [subagents={auto|none}]"
 license: MIT
 user-invocable: true
 ---
@@ -23,7 +23,7 @@ Read [references/review.md](references/review.md) for the review document contra
 3. Resolve candidate decision participation: `user-owned` for standalone and manual RPI, `agent-owned` by default for confirmed automatic RPI Agent, and `user-retained` only when an automatic-session user explicitly keeps Review decisions. If the review record already exists, use its latest Parent Decision Record participation event. Record provenance.
 4. Confirm plan markers and task-local Goals, Requirements, Details, References, changes evidence, handoff prose, blockers, remaining work, and follow-up items are reconciled enough to form a credible review boundary. Inspect the review path. When a review record exists, continue a `started` review from its saved record, and reuse a finished review unless the user asks for a new one.
 5. To start a review, create the record skeleton from [templates/review-log.md](templates/review-log.md) at `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`, or at the next numbered path, such as `{{task_slug}}-review-2.md`, when the task already has a review record. Persist Scope and Evidence and Opening Review State with review execution `started` and append one stable participation event to Parent Decision Record. When parent state exists, record the review path. Send the opening message defined in the reference.
-6. Compare the evidence yourself in one marker-driven pass using the review method in the reference. Activate skills whose descriptions say they are used during review and fit the task as scoped review criteria; exclude this skill and other RPI lifecycle phase entrypoints. A subagent is optional; assign one a bounded, context-heavy portion of the comparison only when isolating it would help, and treat its candidates as suggestions to verify at the cited evidence, or investigate further yourself, before recording a finding. Optional helpers in [references/review.md](references/review.md) defines the assignment and return.
+6. Compare the evidence yourself in one marker-driven pass using the review method in the reference. Activate skills whose descriptions say they are used during review and fit the task as scoped review criteria; exclude this skill and other RPI lifecycle phase entrypoints. Subagents are optional and follow the user's direction, including using none. When a dispatch tool is available and isolating context-heavy portions would help, split them into independent lanes, dispatch the lanes in one parallel batch at the reasoning effort each lane needs, and treat their candidates as suggestions to verify at the cited evidence, or investigate further yourself, before recording a finding. Optional helpers in [references/review.md](references/review.md) defines lanes, each lane's reasoning effort, the assignment, and the return.
    * In standard depth, cover every material contract in the supplied boundary once while minimizing elapsed work: all directly relevant supplied evidence, concise findings, and no restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, or continual narration.
    * In deep depth, trace cross-evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns within the same supplied boundary. Deep does not permit open-ended research or a second review pass.
 7. Write the evidence body: acceptance and change coverage, one complete `RV-xxx` finding set with proposed routes, assessed execution status and outcome, validation coverage, limitations, and the reviewer self-check. Update review execution from `started` to Complete, Partial, or Blocked. A Partial or Blocked review names the unassessed boundary or blocker. On resume, a review still `started` continues its comparison from the saved record.
@@ -41,6 +41,8 @@ Read [references/review.md](references/review.md) for the review document contra
 * Stable task identity and requested review scope: full task, `Pxx`, or `Pxx-Txx`
 * Current task-centered plan, latest plan critique when one ran, changes record, relevant research, validation, blockers, remaining work, and follow-up items
 * Review depth and provenance: `standard` by default or `deep` only from explicit user direction
+* Helper lane reasoning effort: `auto` by default, which selects each lane's effort from what the lane must judge, or a level the user or caller sets for every lane or for lanes identified by kind or topic
+* Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
 * Decision participation: `user-owned`, `agent-owned`, or `user-retained`, with orchestration context and provenance
 * Canonical review-record path and parent orchestration context when present
 
@@ -48,6 +50,7 @@ Read [references/review.md](references/review.md) for the review document contra
 
 * Each review has one record at its canonical path, or at its numbered path for a user-requested new review, and includes all compared artifacts, review depth and provenance, review execution, and parent decisions.
 * The review parent compares the evidence once and authors the record; helper candidates become `RV-xxx` findings only after verification at the cited evidence.
+* Helper lanes, when used, run in parallel at the reasoning effort each lane needs, recorded with its source, and a requirement counts as consistent only from a cited location.
 * Review execution `started` is persisted before comparison, so an interrupted review resumes from its record instead of starting over.
 * Standard depth is the default and completely assesses the material acceptance boundary while omitting low-value review work. Deep occurs only from explicit user direction.
 * The record separates execution state from outcome verdict.
