@@ -78,15 +78,6 @@ permissions:
 safe-outputs:
   threat-detection:
     runs-on: ubuntu-24.04
-    # hve-core-lock-node-version-file: .node-version
-    steps:
-      - name: Checkout runtime version
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ github.workflow_sha }}
-          sparse-checkout: .node-version
-          sparse-checkout-cone-mode: false
   create-pull-request-review-comment:
     max: 5
   submit-pull-request-review:

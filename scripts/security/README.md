@@ -45,7 +45,7 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Get-CodeScanningExceptionStatus.ps1`](#get-codescanningexceptionstatusps1): tracked exception status for the weekly job
 * [`Get-UpstreamWatchStatus.ps1`](#get-upstreamwatchstatusps1): upstream catch-up watches
 * [`Test-ToolVersionConsistency.ps1`](#test-toolversionconsistencyps1): hard-coded tool versions against the manifest
-* [`Set-GhAwNodeVersionFile.ps1`](#set-ghawnodeversionfileps1): normalize generated detection jobs to the repository Node version file
+* [`Set-GhAwNodeVersion.ps1`](#set-ghawnodeversionps1): normalize generated detection jobs to the exact repository Node version
 * [`Test-ActionPinProvenance.ps1`](#test-actionpinprovenanceps1): action pin comments and commits against upstream
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
@@ -53,20 +53,18 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Modules/SecurityClasses.psm1`](#modulessecurityclassespsm1): shared data types
 * [`Modules/SecurityHelpers.psm1`](#modulessecurityhelperspsm1): shared utilities
 
-### `Set-GhAwNodeVersionFile.ps1`
+### `Set-GhAwNodeVersion.ps1`
 
-Normalizes the generated threat-detection jobs for canonical workflows that
-opt in with `hve-core-lock-node-version-file: .node-version`. Run it immediately
-after compiling those workflows with the `gh-aw` version pinned in
-`tool-checksums.json`. The script fails closed unless each generated detection
-job checks out `.node-version` from `github.workflow_sha` before one exact
-`setup-node` step. It makes the generated checkout unconditional so the
-version file exists whenever the generated setup step runs.
+Normalizes the generated threat-detection jobs for the declared canonical
+workflows. Run it immediately after compiling those workflows with the `gh-aw`
+version pinned in `tool-checksums.json`. The script reads the exact version from
+the repository `.node-version` file and fails closed unless each generated
+detection job contains one version-commented `setup-node` step.
 
 ```powershell
 gh aw compile
-./scripts/security/Set-GhAwNodeVersionFile.ps1
-./scripts/security/Set-GhAwNodeVersionFile.ps1 -Verify
+./scripts/security/Set-GhAwNodeVersion.ps1
+./scripts/security/Set-GhAwNodeVersion.ps1 -Verify
 ```
 
 ### `Test-DependencyPinning.ps1`

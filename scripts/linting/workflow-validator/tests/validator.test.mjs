@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -18,7 +19,7 @@ import {
   stageGhAwHelpers,
   toSarif,
 } from '../validator.mjs';
-import { CHECK_RULES, readCachedRemoteText } from '../checks.mjs';
+import { CHECK_RULES } from '../checks.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -280,7 +281,9 @@ describe('stageGhAwHelpers', () => {
     const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
     const cacheDir = mkdtempSync(join(tmpdir(), 'stage-cache-'));
     const url = `https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/helper.sh`;
-    await readCachedRemoteText(async () => 'X=2\n', url, cacheDir);
+    const cacheRoot = join(cacheDir, 'remote');
+    mkdirSync(cacheRoot);
+    writeFileSync(join(cacheRoot, createHash('sha256').update(url).digest('hex')), 'X=2\n');
     const result = await stageGhAwHelpers([entry], contents, { cacheDir, fetchText: () => assert.fail('should not fetch') }, staging);
     assert.deepEqual(result.findings, []);
     assert.equal(readFileSync(join(staging, commit, 'gh-aw', 'actions', 'helper.sh'), 'utf8'), 'X=2\n');

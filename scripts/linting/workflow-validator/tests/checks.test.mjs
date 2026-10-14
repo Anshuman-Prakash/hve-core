@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -232,7 +233,7 @@ describe('remote fetches', () => {
     assert.equal(calls, 3);
   });
 
-  it('shares memory and disk caching across remote readers', async () => {
+  it('shares memory and reads trusted cache content without persisting fetched bytes', async () => {
     const cacheDir = mkdtempSync(join(tmpdir(), 'wfv-shared-cache-'));
     const url = `https://raw.githubusercontent.com/org/repo/${SHA}/metadata.yml?path=../../outside`;
     let calls = 0;
@@ -244,13 +245,16 @@ describe('remote fetches', () => {
     assert.equal(await readCachedRemoteText(fetchText, url, cacheDir), 'name: cached\n');
     assert.equal(await readCachedRemoteText(fetchText, url, cacheDir), 'name: cached\n');
     assert.equal(calls, 1);
-    const cacheFiles = readdirSync(join(cacheDir, 'remote'));
-    assert.equal(cacheFiles.length, 1);
-    assert.match(cacheFiles[0], /^[0-9a-f]{64}$/);
+    assert.equal(existsSync(join(cacheDir, 'remote')), false);
     assert.equal(existsSync(join(cacheDir, 'outside')), false);
+
+    const remoteDir = join(cacheDir, 'remote');
+    const cacheFile = join(remoteDir, createHash('sha256').update(url).digest('hex'));
+    mkdirSync(remoteDir);
+    writeFileSync(cacheFile, 'name: trusted\n');
     assert.equal(
       await readCachedRemoteText(() => assert.fail('should read the disk cache'), url, cacheDir),
-      'name: cached\n',
+      'name: trusted\n',
     );
   });
 
@@ -281,7 +285,7 @@ describe('action and reusable workflow inputs', () => {
     }
   });
 
-  it('reads remote metadata at the pinned commit, allows docker args, and caches by commit', async () => {
+  it('reads remote metadata at the pinned commit, allows docker args, and memoizes without writing it', async () => {
     const cacheDir = mkdtempSync(join(tmpdir(), 'wfv-cache-'));
     const fetched = [];
     const fetchText = async (url) => {
@@ -291,9 +295,9 @@ describe('action and reusable workflow inputs', () => {
     const content = step(`org/repo/sub@${SHA}`, '          token: x\n          args: y\n          bogus: z\n');
     assert.deepEqual(rules(await check(content, { fetchText, cacheDir })), ['workflow-check/unknown-action-input']);
     assert.deepEqual(fetched, [`https://raw.githubusercontent.com/org/repo/${SHA}/sub/action.yml`]);
-    const refetched = [];
-    await check(content, { fetchText: async (url) => { refetched.push(url); return null; }, cacheDir });
-    assert.deepEqual(refetched, []);
+    assert.deepEqual(rules(await check(content, { fetchText, cacheDir })), ['workflow-check/unknown-action-input']);
+    assert.equal(fetched.length, 1);
+    assert.equal(readdirSync(cacheDir).length, 0);
   });
 
   it('fails closed when metadata cannot be read, and leaves unpinned refs to the pinning check', async () => {

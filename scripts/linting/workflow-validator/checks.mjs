@@ -5,8 +5,8 @@
 // Each rule has a capability probe in probes/, so a check can be retired once
 // the parser catches the same case.
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { isMap, isScalar, isSeq, LineCounter, parseDocument } from 'yaml';
 
 export const CHECK_RULES = {
@@ -65,12 +65,7 @@ export async function readCachedRemoteText(fetchText, url, cacheDir = null) {
   if (!fetchMemo.has(fetchText)) fetchMemo.set(fetchText, new Map());
   const memo = fetchMemo.get(fetchText);
   if (!memo.has(url)) memo.set(url, fetchText(url));
-  const text = await memo.get(url);
-  if (typeof text === 'string' && cacheFile) {
-    mkdirSync(dirname(cacheFile), { recursive: true });
-    writeFileSync(cacheFile, text);
-  }
-  return text;
+  return memo.get(url);
 }
 
 /**
