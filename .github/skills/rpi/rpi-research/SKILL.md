@@ -93,7 +93,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Findings answer each question or identify the smallest missing evidence. Every codebase finding uses a stable `C#` ID with a workspace-relative path and heading or symbol; every external finding uses a stable `W#` ID with a URL and retrieval date.
 * The artifact preserves alternatives and records a selected recommendation with evidence-based rejection rationale when the caller requests convergence. Other output modes preserve the decision state without forcing a selection.
 * Material decisions are resolved according to the recorded participation mode. User-owned and user-retained decisions use a focused, link-backed walkthrough; agent-owned decisions record an evidence-based selection or an honest blocker.
-* Any helper use is recorded with each lane's reasoning effort and what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
+* Any helper use is recorded with each lane's reasoning effort, that effort's source, and what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
 * The final response leads with the result of what the user asked for, backed by evidence, and names any unresolved blocker or explicit no-handoff reason.
 
 ## Constraints

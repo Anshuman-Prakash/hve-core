@@ -10,7 +10,7 @@ user-invocable: true
 
 ## Goal
 
-Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning: split the assessment into lens assessments that `RPI Plan Critic` subagents run in parallel, each at the lowest reasoning effort its lens needs, then verify and merge their candidates into one finding set. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
+Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning: split the assessment into lens assessments that `RPI Plan Critic` subagents run in parallel, each at the user- or caller-set reasoning effort, or otherwise the lowest effort its lens needs, then verify and merge their candidates into one finding set. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
 
 ## Flow
 

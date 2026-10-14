@@ -33,7 +33,7 @@ Append events first, then refresh the projection before closeout or handoff. On 
 
 ## Review method
 
-The review parent resolves scope, acceptance basis, depth, and artifact readiness, initializes the canonical review record, and performs one marker-driven comparison pass itself. It owns the evidence body, the findings, every decision in `## Parent Decision Record`, parent state, conversation, and continuation.
+The review parent resolves scope, acceptance basis, depth, and artifact readiness, initializes the canonical review record, and performs one marker-driven comparison pass, comparing the portions it keeps itself and reconciling lane returns for the rest. It owns the evidence body, the findings, every decision in `## Parent Decision Record`, parent state, conversation, and continuation.
 
 The comparison pass:
 
@@ -50,11 +50,11 @@ For a new Review, activate skills whose descriptions say they are used during re
 
 ## Optional helpers
 
-The review parent compares the evidence itself. A subagent is never required, and no review gate depends on one. Use subagents only under the subagent-use rule in the skill's Flow; otherwise do the whole comparison yourself.
+The review parent owns the comparison. A subagent is never required, and no review gate depends on one. Use subagents only under the subagent-use rule in the skill's Flow; otherwise do the whole comparison yourself.
 
 Use subagents to keep the review fast and your context focused. Give each context-heavy, independent portion of the comparison its own narrow lane, such as one task's requirements, scoped from the plan's phase, task, and requirement IDs and the changed-file list; a lane's time grows with how much it reads. Dispatch the lanes in one parallel batch right after you initialize the record, before you read the evidence they cover, and compare the portions you keep while they run, so their work does not repeat yours. Good lanes include comparing one phase's `Requirements:` blocks against the changes record and diff, tracing one requirement through source and validation output, checking a long critique's dispositions against the current plan, and, for a large review, the tool checks below. Keep tightly coupled or low-volume comparison yourself, including a check that takes only a few tool calls.
 
-Prefer a helper whose description says it is used during review, such as `RPI Reviewer`; a general-purpose subagent given the same instructions also works. Assign each lane one bounded question or comparison in your own words, the evidence paths to read, the acceptance basis to compare against when the lane needs one, and the scope. It does not need an `RV-xxx` ID, a `Pxx` or `Pxx-Txx` boundary, or the full review context. Expect candidate findings with expected behavior, observed evidence and location, why each may matter, and suggested severity and route, plus the evidence location for each requirement it found consistent and what it could not assess. `RPI Reviewer` runs on `Claude Haiku 5.5 (copilot)` from its frontmatter; give a general-purpose helper the same model when the dispatch tool accepts it, and pass a different model only when the user names one.
+Prefer a helper whose description says it is used during review, such as `RPI Reviewer`; a general-purpose subagent given the same instructions also works. Assign each lane one bounded question or comparison in your own words, the evidence paths to read, the acceptance basis to compare against when the lane needs one, the scope, and what to exclude or ignore. Tell a general-purpose helper not to dispatch other agents. It does not need an `RV-xxx` ID, a `Pxx` or `Pxx-Txx` boundary, or the full review context. Expect candidate findings with expected behavior, observed evidence and location, why each may matter, and suggested severity and route, plus the evidence location for each requirement it found consistent and what it could not assess. `RPI Reviewer` runs on `Claude Haiku 5.5 (copilot)` from its frontmatter; give a general-purpose helper the same model when the dispatch tool accepts it, and pass a different model only when the user names one.
 
 ### Lane reasoning effort
 

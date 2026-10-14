@@ -276,7 +276,7 @@ When no executable validation ran, label the review an artifact self-check. Conf
 * Finding-local explanation, supporting detail, confidence basis, and counter-evidence, with summaries grounded in those findings rather than duplicated detail
 * Method and boundary records for posture, provenance, any user- or caller-set helper lane effort, scope, limits, candidate areas, evidence root, constraints, and prior knowledge
 * Extension, participation, and direction records with selected or skipped reasons, answers or no-interaction rationale, and revalidation effects
-* Every executed cycle's ordered Wider, Deeper, and Contrarian waves, reflections, verified evidence, any helper lanes with their reasoning effort and its source, dispositions, and re-entry evaluation
+* Every executed cycle's ordered Wider, Deeper, and Contrarian waves, reflections, verified evidence, any helper lanes with their reasoning effort and its source, confirmation of any "not found" from a lane below `max` or at an unknown effort, dispositions, and re-entry evaluation
 * Answered or explicitly unanswerable questions and findings mapped to complete canonical evidence rows
 * Alternatives and a selected recommendation with rejected-alternative rationale when, and only when, convergence was requested
 * Current and unresolved decisions, decision participation and provenance, selected or deferred further research, Research disposition, Planning Readiness and next action, blockers, residual uncertainty, and research-only constraint status
