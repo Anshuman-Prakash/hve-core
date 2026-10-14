@@ -97,16 +97,17 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 ### Method and Boundaries
 
-| Field                            | Record                                                                 |
-|----------------------------------|------------------------------------------------------------------------|
-| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}   |
-| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}               |
-| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                   |
-| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                |
-| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                      |
-| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                         |
-| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}    |
-| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}} |
+| Field                            | Record                                                                                  |
+|----------------------------------|-----------------------------------------------------------------------------------------|
+| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}                    |
+| Helper lane effort               | {{auto_or_user_or_caller_set_level_for_every_lane_or_by_kind_or_topic_with_provenance}} |
+| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}                                |
+| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                                    |
+| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                                 |
+| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                                       |
+| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                                          |
+| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}                     |
+| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}}                  |
 
 ### Extensions and Participation
 
@@ -192,7 +193,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 * [ ] Findings keep their explanation, supporting detail, evidence state, and confidence basis together; summaries do not introduce unsupported claims.
 * [ ] Every codebase finding has a `C#` ID and workspace-relative path with a heading or symbol; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
 * [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, synthesis, and an evidence-based re-entry decision.
-* [ ] Method, extensions, participation, caller direction changes, helper lanes with their reasoning effort, and prior-knowledge treatment are recorded with their limits.
+* [ ] Method, extensions, participation, caller direction changes, helper lanes with their reasoning effort and its source, and prior-knowledge treatment are recorded with their limits.
 * [ ] Convergence selects and justifies one recommendation; other modes preserve decision state without forcing a selection.
 * [ ] Decision groups, participation mode, and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
 * [ ] Research disposition, Planning Readiness, blockers, continuation owner, gates, and next action are complete and evidence-backed.
