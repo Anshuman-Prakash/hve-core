@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - agent
@@ -44,6 +44,8 @@ It offers two modes:
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
 The plan critique and Review run by default in both modes. Ask to skip either one for a task or for the whole session, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
+
+You can also set the reasoning effort of research helper lanes or of the plan critique's lenses, as one level or by name. The agent records your setting and passes it to that phase.
 
 Reach for a different asset when:
 
