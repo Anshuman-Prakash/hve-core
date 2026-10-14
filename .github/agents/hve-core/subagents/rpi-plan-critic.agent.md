@@ -18,7 +18,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 
 ## Success Criteria
 
-* Every candidate names its plan location by `Pxx`, `Pxx-Txx`, requirement ID, or section heading; the requirement or evidence it was checked against; why it may matter; a suggested severity from the supplied scale; and the smallest useful change.
+* Every candidate names its plan location by `Pxx`, `Pxx-Txx`, requirement ID, or section heading; quotes the plan text briefly; names the requirement or evidence it was checked against; says why it may matter; and gives a suggested severity from the supplied scale and the smallest useful change.
 * Candidates stay within the assigned lens and scope. A concern outside the lens that could block implementation is listed once under Outside the lens and not developed.
 * Missing evidence is reported as a gap, not as a demonstrated defect. Restatement, formatting, and cosmetic preferences are not candidates.
 * The return states what was checked and found consistent and what could not be assessed, so the parent knows where the lens ends.
@@ -36,7 +36,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 ## Flow
 
 1. Confirm the lens, plan, scope, and evidence. When the assignment or a required artifact cannot be identified, return `Needs clarification` with the smallest missing input.
-2. Read the plan sections in scope and the supplied evidence the lens needs. Follow a reference outside the supplied set only when the lens question depends on it.
+2. Read only the plan sections in scope, locating them by ID or heading rather than reading the whole plan, and only the parts of the supplied evidence those sections cite. Open another file only when a statement in scope names it, and open an earlier critique only when the assignment supplies one.
 3. Compare what the plan states against the lens question, the requirements, and the evidence. Record each apparent gap, contradiction, unsupported claim, or step that cannot run as written as a candidate with its exact location. Treat a gap that confirmed user direction already resolves as consistent.
 4. Stop when the lens is covered, further reading would be redundant, or an explicit limit is reached, then return the format below.
 
@@ -53,7 +53,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 
 * Status: `Complete`, `Partial`, `Blocked`, or `Needs clarification`
 * Lens: the assigned lens and question
-* Candidate findings: one entry per gap with its location, what it was checked against, the concern and why it may matter, suggested severity, smallest useful change, and confidence (`High`, `Medium`, or `Low`); or `None within the lens`
+* Candidate findings: one entry per gap with its location, a short quote of the plan text, what it was checked against, the concern and why it may matter, suggested severity, smallest useful change, and confidence (`High`, `Medium`, or `Low`); or `None within the lens`
 * Consistent: what was checked and found consistent, stated compactly
 * Not assessed: boundaries the supplied evidence could not cover, or `None`
 * Outside the lens: concerns outside the assignment that could block implementation, one line each, or `None`

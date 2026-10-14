@@ -39,11 +39,13 @@ Every candidate is a suggestion. The critique parent verifies it at the cited pl
 A representative assignment from an `rpi-plan-critique` run:
 
 ```text
-Lens: Executability. Can phases P02 to P04 of
-.copilot-tracking/plans/2026-09-04/blob-storage-plan.md run as written, including
-dependencies and order, tools and environments, checks that can fail, and budgets?
-Read the plan and .copilot-tracking/research/2026-09-03/blob-storage-research.md.
-Depth: standard. Severity scale: Critical, High, Medium, and Low, as rpi-plan-critique defines them.
+Lens: Executability. Can each phase run as written, including dependencies and order,
+tools and environments, checks that can fail, and budgets?
+Plan: .copilot-tracking/plans/2026-09-04/blob-storage-plan.md; scope: P02 to P04
+Evidence: .copilot-tracking/research/2026-09-03/blob-storage-research.md
+Confirmed direction: the plan's User Decisions and Requirements section, plus none
+Depth: standard
+Severity scale: Critical, High, Medium, and Low, as rpi-plan-critique defines them
 ```
 
-The parent dispatches it at `medium` effort beside three other lenses. The critic returns one candidate: P03-T02 runs a migration check that depends on a storage emulator no phase installs, suggested High, with the smallest useful change of adding the emulator setup to P01-T01. The parent reads P03-T02 and P01-T01, confirms the gap, and records it as `PC-001 [High]`.
+The parent dispatches it at `medium` effort in one batch with the other lenses. The critic reads only P02 to P04 and the research sections they cite, and returns one candidate: P03-T02, quoted as "run the migration check against the local storage emulator", depends on an emulator no phase installs. It suggests High, with the smallest useful change of adding the emulator setup to P01-T01. The parent checks the quote against P03-T02 and P01-T01, confirms the gap, and records it as `PC-001 [High]`.
