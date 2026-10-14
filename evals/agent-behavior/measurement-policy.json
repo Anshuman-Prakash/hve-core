@@ -43,7 +43,6 @@
     "experiment-designer-class-recipe",
     "finding-deep-verifier-verdict-blocks",
     "finding-deep-verifier-no-new-findings",
-    "hve-builder-review-return-only-suggestions",
     "hve-demo-material-class-recipe",
     "issue-triage-class-recipe",
     "meeting-analyst-class-recipe",
@@ -63,11 +62,6 @@
     "rai-planner-class-recipe",
     "rai-reviewer-class-recipe",
     "rai-skill-assessor-reference-first-plan-mode",
-    "rpi-agent-class-recipe",
-    "rpi-agent-conformance-3eb62554",
-    "rpi-agent-task-recovery-class-recipe",
-    "rpi-researcher-return-only-suggestions",
-    "rpi-reviewer-return-only-suggestions",
     "security-planner-class-recipe",
     "security-reviewer-class-recipe",
     "skill-assessor-audit-mode-format",
@@ -187,6 +181,27 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "agentic-workflows-keeps-generated-lock-unedited": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "agentic-workflows",
+      "agentSource": ".github/agents/agentic-workflows.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "aw-version-checked",
+        "aw-canonical-source-updated",
+        "aw-reports-compile-outstanding"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".github/workflows/issue-implement.md"
+          }
+        ]
+      }
     },
     "backlog-grooming-assesses-large-inventory-advisory-only": {
       "class": "base-model",
@@ -318,6 +333,173 @@
       "authoritative": false,
       "measurement": "legacy"
     },
+    "code-review-accessibility-writes-batch-findings": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-accessibility",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-accessibility.agent.md",
+      "requiredSkills": [
+        "code-review",
+        "accessibility"
+      ],
+      "assertions": [
+        "accessibility-findings-cite-seeded-barrier"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/accessibility-findings.json"
+          }
+        ]
+      }
+    },
+    "code-review-explainer-persists-explanation": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-explainer",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-explainer.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "explainer-artifact-states-loop-bound"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/reviews/code-reviews/feature-refund-helpers/(?:[^/]+/)?[^/]+\\.md$",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "code-review-functional-writes-batch-findings": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-functional",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-functional.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "functional-findings-cite-seeded-defect"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/functional-findings.json"
+          }
+        ]
+      }
+    },
+    "code-review-orientation-writes-walkthrough": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-orientation",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-orientation.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "orientation-walkthrough-maps-changed-areas"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/orientation-walkthrough.md"
+          }
+        ]
+      }
+    },
+    "code-review-readiness-writes-batch-findings": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-readiness",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-readiness.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "readiness-findings-cite-stale-documentation"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/readiness-findings.json"
+          }
+        ]
+      }
+    },
+    "code-review-security-writes-batch-findings": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-security",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-security.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "security-findings-cite-seeded-injection"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/security-findings.json"
+          }
+        ]
+      }
+    },
+    "code-review-standards-writes-batch-findings": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-standards",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-standards.agent.md",
+      "requiredSkills": [
+        "code-review",
+        "python-foundational"
+      ],
+      "assertions": [
+        "standards-findings-trace-to-loaded-skill"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/standards-findings.json"
+          }
+        ]
+      }
+    },
+    "code-review-walkback-rejects-invalid-artifact-path": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "code-review-walkback",
+      "agentSource": ".github/agents/coding-standards/subagents/code-review-walkback.agent.md",
+      "requiredSkills": [
+        "code-review",
+        "rpi-research"
+      ],
+      "assertions": [
+        "walkback-needs-clarification-for-artifact-path"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "code-review-class-recipe": {
       "class": "agent-contract",
       "authoritative": true,
@@ -417,6 +599,105 @@
       "authoritative": false,
       "measurement": "candidate",
       "incumbent": "code-review-delegated-write-boundary",
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "code-review-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-class-recipe",
+      "agentSource": ".github/agents/coding-standards/code-review.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "orientation-and-board-cand",
+        "code-review-class-recipe-human-confirmation-cand",
+        "change-risk-evidence-cand",
+        "code-review-class-recipe-no-source-edit-cand",
+        "code-review-class-recipe-no-unsolicited-plan-drift-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/.+$"
+          }
+        ]
+      }
+    },
+    "code-review-security-planning-drift-context-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-security-planning-drift-context",
+      "agentSource": ".github/agents/coding-standards/code-review.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "plan-context-recognized-cand",
+        "waits-for-findings-cand",
+        "no-premature-drift-output-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "code-review-pull-request-standard-profile-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-pull-request-standard-profile",
+      "agentSource": ".github/agents/coding-standards/code-review.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "pull-request-standard-profile-cand",
+        "orientation-separated-cand",
+        "cr-pr-profile-human-confirmation-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "code-review-decision-ready-dispatch-board-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-decision-ready-dispatch-board",
+      "agentSource": ".github/agents/coding-standards/code-review.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "detailed-board-cand",
+        "perspectives-with-ownership-cand",
+        "omitted-perspective-rationale-cand",
+        "depth-with-rationale-cand",
+        "single-decision-prompt-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
+    "code-review-target-checkout-mismatch-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "code-review-target-checkout-mismatch",
+      "agentSource": ".github/agents/coding-standards/code-review.agent.md",
+      "requiredSkills": [
+        "code-review"
+      ],
+      "assertions": [
+        "mismatch-stops-review-cand",
+        "checkout-target-head-cand",
+        "no-auto-base-substitution-cand"
+      ],
       "filesystem": {
         "allow": []
       }
@@ -958,6 +1239,28 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "documentation-drift-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "documentation-drift-class-recipe",
+      "agentSource": ".github/agents/hve-core/documentation.agent.md",
+      "requiredSkills": [
+        "documentation"
+      ],
+      "assertions": [
+        "documentation-drift-cites-stale-page-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/documentation/\\d{4}-\\d{2}-\\d{2}-session\\.md$",
+            "max": 1
+          }
+        ]
+      }
+    },
     "dt-coach-class-recipe": {
       "class": "agent-contract",
       "authoritative": true,
@@ -1256,9 +1559,21 @@
       "measurement": "legacy"
     },
     "hve-builder-review-return-only-suggestions": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "hve-builder-review-return-only-suggestions",
+      "agentSource": ".github/agents/hve-core/subagents/hve-builder-review.agent.md",
+      "requiredSkills": [
+        "hve-builder"
+      ],
+      "assertions": [
+        "builder-review-flags-unjustified-removal",
+        "builder-review-advisory-revise-verdict"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "hve-demo-material-class-recipe": {
       "class": "base-model",
@@ -1467,29 +1782,99 @@
       "measurement": "legacy"
     },
     "rpi-agent-class-recipe": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rpi-agent-class-recipe",
+      "agentSource": ".github/agents/hve-core/rpi-agent.agent.md",
+      "requiredSkills": [
+        "rpi-research"
+      ],
+      "assertions": [
+        "rpi-names-plan-as-next-command",
+        "rpi-manual-research-phase-preserved"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/rpi-sessions/2026-09-21/synthetic-queue-selection-state.json"
+          }
+        ]
+      }
     },
     "rpi-agent-conformance-3eb62554": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rpi-agent-conformance-3eb62554",
+      "agentSource": ".github/agents/hve-core/rpi-agent.agent.md",
+      "requiredSkills": [
+        "rpi-research"
+      ],
+      "assertions": [
+        "rpi-closeout-reports-recorded-blocker",
+        "rpi-closeout-keeps-blocker-unresolved"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/rpi-sessions/2026-07-22/demo-state.json"
+          }
+        ]
+      }
     },
     "rpi-agent-task-recovery-class-recipe": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rpi-agent-task-recovery-class-recipe",
+      "agentSource": ".github/agents/hve-core/rpi-agent.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "rpi-requested-task-starts-without-plan",
+        "rpi-does-not-resume-other-task"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/(?!plans/|changes/).+$"
+          }
+        ]
+      }
     },
     "rpi-researcher-return-only-suggestions": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rpi-researcher-return-only-suggestions",
+      "agentSource": ".github/agents/hve-core/subagents/rpi-researcher.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "researcher-locates-image-excerpt",
+        "researcher-locates-prepublish-excerpt"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "rpi-reviewer-return-only-suggestions": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rpi-reviewer-return-only-suggestions",
+      "agentSource": ".github/agents/hve-core/subagents/rpi-reviewer.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "reviewer-flags-unbacked-prd-claim",
+        "reviewer-suggests-route",
+        "reviewer-assigns-no-review-ids"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "security-planner-class-recipe": {
       "class": "base-model",
@@ -1735,7 +2120,15 @@
     "vally-test-author-probes-order-sensitive-regex": {
       "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "vally-test-author-probes-order-sensitive-regex",
+      "agentSource": ".github/agents/hve-core/subagents/vally-test-author.agent.md",
+      "requiredSkills": [
+        "vally-tests"
+      ],
+      "assertions": [
+        "revised-pattern-removes-order-dependency"
+      ]
     }
   }
 }
