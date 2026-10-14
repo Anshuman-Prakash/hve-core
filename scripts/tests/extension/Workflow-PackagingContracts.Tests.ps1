@@ -1210,9 +1210,10 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         @($exceptions[0]['purl']) | Should -Be @('pkg:githubactions/googleapis/release-please-action')
     }
 
-    It 'Retains unrelated creator signal including EndBug' {
+    It 'Keeps package-only creator acknowledgements exact' {
         $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
-                @($_['rule']) -contains 'github_action_from_unverified_creator_used'
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                -not $_.Contains('path')
             })
         foreach ($exception in $exceptions) {
             @($exception.Keys | Sort-Object) | Should -Be @('purl', 'rule')
@@ -1221,9 +1222,45 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             @('pkg:githubactions/googleapis/release-please-action', 'pkg:githubactions/astral-sh/setup-uv') |
                 Should -Contain $exception['purl'][0]
         }
+    }
+
+    It 'Scopes the EndBug creator acknowledgement to one workflow and commit' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                @($_['path']) -contains '.github/workflows/label-sync.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('path', 'purl', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('github_action_from_unverified_creator_used')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/label-sync.yml')
+        @($exceptions[0]['purl']) | Should -Be @(
+            'pkg:githubactions/endbug/label-sync@52074158190acb45f3077f9099fea818aa43f97a'
+        )
+
         $labelSync = Get-WorkflowText -Name 'label-sync.yml'
         $labelSync | Should -Match 'EndBug/label-sync@[0-9a-f]{40}'
         $labelSync | Should -Not -Match 'poutine:ignore'
+    }
+
+    It 'Scopes the backlog grooming checkout acknowledgement to activation only' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'untrusted_checkout_exec' -and
+                @($_['path']) -contains '.github/workflows/backlog-groom.lock.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('job', 'path', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('untrusted_checkout_exec')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/backlog-groom.lock.yml')
+        @($exceptions[0]['job']) | Should -Be @('activation')
+    }
+
+    It 'Has no repository-wide Poutine rule suppression' {
+        @($script:PoutineConfig['skip'] | Where-Object {
+                $_.Contains('rule') -and
+                -not $_.Contains('path') -and
+                -not $_.Contains('purl') -and
+                -not $_.Contains('job')
+            }) | Should -BeNullOrEmpty
     }
 
     It 'Scopes the marketplace checkout acknowledgment to preparation only' {
