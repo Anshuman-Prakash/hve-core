@@ -49,6 +49,9 @@ on:
       exception-error-count:
         description: 'Number of stale, expired, mismatched, or malformed exception entries'
         value: ${{ jobs.scan.outputs.exception-error-count }}
+      gate-error:
+        description: 'Whether the exception-aware dependency gate failed before producing counts'
+        value: ${{ jobs.scan.outputs.gate-error }}
 
 permissions:
   contents: read
@@ -67,6 +70,7 @@ jobs:
       failing-count: ${{ steps.gate.outputs.failing-count }}
       excepted-count: ${{ steps.gate.outputs.excepted-count }}
       exception-error-count: ${{ steps.gate.outputs.exception-error-count }}
+      gate-error: ${{ steps.gate.outputs.gate-error }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

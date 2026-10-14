@@ -85,6 +85,7 @@ jobs:
           FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
           EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
           EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
+          GATE_ERROR: ${{ needs.validate-pinning.outputs.gate-error }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
           CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
           WORKFLOW_SCAN_RESULT: ${{ needs.dangerous-workflow-scan.result }}
@@ -94,18 +95,19 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           $pinningScore = $env:PINNING_SCORE
+          $gateError = $env:GATE_ERROR -eq 'true'
           # Registered exceptions are tracked findings, not new risks. Fall back to the raw
-          # scanner count only when the gate produced no output.
-          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
-          $exceptedCount = if ($env:EXCEPTED_COUNT) { $env:EXCEPTED_COUNT } else { '0' }
-          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
+          # scanner count only when the gate completed without producing a count.
+          $unpinnedCount = if ($gateError) { 'unknown' } elseif ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptedCount = if ($gateError) { 'unknown' } elseif ($env:EXCEPTED_COUNT) { $env:EXCEPTED_COUNT } else { '0' }
+          $exceptionErrorCount = if ($gateError) { 'unknown' } elseif ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $codeqlResult = $env:CODEQL_RESULT
           $workflowScanResult = $env:WORKFLOW_SCAN_RESULT
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Determine overall status
-          $hasIssues = $false
+          $hasIssues = $gateError
           if ($unpinnedCount -ne '0') { $hasIssues = $true }
           if ($exceptionErrorCount -ne '0') { $hasIssues = $true }
           if ($staleCount -ne '0') { $hasIssues = $true }
@@ -122,9 +124,10 @@ jobs:
           
           | Metric | Status | Details |
           |--------|--------|---------|
-          | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
-          | Unpinned Dependencies (not excepted) | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned or tracked' }) |
-          | Tracked Exceptions | $(if ($exceptionErrorCount -eq '0') { "✅ $exceptedCount excused" } else { "⚠️ $exceptionErrorCount register error(s)" }) | security/code-scanning-exceptions.yml |
+          | Dependency Pinning Gate | $(if ($gateError) { '❌ Failed' } else { '✅ Evaluated' }) | $(if ($gateError) { 'Review the validate-pinning job logs' } else { 'Exception register evaluated' }) |
+          | Dependency Pinning Compliance | $(if ($gateError) { '❌ Unavailable' } elseif ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
+          | Unpinned Dependencies (not excepted) | $(if ($gateError) { '❌ Unknown' } elseif ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($gateError) { 'Gate did not produce a trusted count' } elseif ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned or tracked' }) |
+          | Tracked Exceptions | $(if ($gateError) { '❌ Unknown' } elseif ($exceptionErrorCount -eq '0') { "✅ $exceptedCount excused" } else { "⚠️ $exceptionErrorCount register error(s)" }) | security/code-scanning-exceptions.yml |
           | Stale SHAs (>$thresholdDays days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Analysis
@@ -138,8 +141,18 @@ jobs:
 
           Advisory job success does not establish zero findings or a successful Poutine analysis.
           Review the scanner step logs, Security tab, and poutine-results artifact for scan evidence.
-          
-          $(if ($unpinnedCount -ne '0') {
+
+          $(if ($gateError) {
+            @"
+
+          ## ❌ Action Required: Dependency Gate Failure
+
+          The exception-aware dependency gate failed before it could produce trusted finding and exception counts. Review the `validate-pinning` job logs and rerun the workflow after correcting the gate failure.
+
+          "@
+          })
+
+          $(if (!$gateError -and $unpinnedCount -ne '0') {
             @"
           
           ## ⚠️ Action Required: Unpinned Dependencies
@@ -216,12 +229,13 @@ jobs:
           
           ### 📋 Next Steps
           
-          1. Review the build warnings generated in this workflow run
-          2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
-          3. For stale SHAs (>$thresholdDays days): Update them when convenient (maintenance task)
-          4. Download the JSON report artifacts for detailed analysis
-          $(if ($codeqlResult -ne 'success') { "5. CodeQL analysis result was $codeqlResult; review the codeql-analysis job logs`n" })
-          $(if ($workflowScanResult -ne 'success') { "6. Dangerous workflow scan result was $workflowScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists`n" })
+          * Review the build warnings generated in this workflow run
+          $(if ($gateError) { "* Correct the dependency gate failure before trusting the pinning and exception counts`n" })
+          * For unpinned dependencies: Pin them to SHAs immediately (security risk)
+          * For stale SHAs (>$thresholdDays days): Update them when convenient (maintenance task)
+          * Download the JSON report artifacts for detailed analysis
+          $(if ($codeqlResult -ne 'success') { "* CodeQL analysis result was $codeqlResult; review the codeql-analysis job logs`n" })
+          $(if ($workflowScanResult -ne 'success') { "* Dangerous workflow scan result was $workflowScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists`n" })
           
           "@
           })
@@ -235,19 +249,25 @@ jobs:
           FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
           EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
           EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
+          GATE_ERROR: ${{ needs.validate-pinning.outputs.gate-error }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
         run: |
-          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
-          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
+          $gateError = $env:GATE_ERROR -eq 'true'
+          $unpinnedCount = if ($gateError) { 'unknown' } elseif ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptionErrorCount = if ($gateError) { 'unknown' } elseif ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Informational output - workflow succeeds but logs warnings
-          if ($unpinnedCount -ne '0') {
+          if ($gateError) {
+            Write-Warning "Dependency pinning gate failed before producing trusted counts. Review the validate-pinning job logs."
+          }
+
+          if (!$gateError -and $unpinnedCount -ne '0') {
             Write-Output "::warning::Found $unpinnedCount unpinned dependencies that no tracked exception excuses. Review build warnings for details."
           }
 
-          if ($exceptionErrorCount -ne '0') {
+          if (!$gateError -and $exceptionErrorCount -ne '0') {
             Write-Output "::warning::Found $exceptionErrorCount stale, expired, or mismatched exception entries. Review the dependency pinning gate output."
           }
           
@@ -255,7 +275,7 @@ jobs:
             Write-Output "::warning::Found $staleCount stale SHA pins (>$thresholdDays days old). Consider updating them."
           }
           
-          if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {
+          if (!$gateError -and $unpinnedCount -eq '0' -and $exceptionErrorCount -eq '0' -and $staleCount -eq '0') {
             Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
           }
       - name: Download staleness report

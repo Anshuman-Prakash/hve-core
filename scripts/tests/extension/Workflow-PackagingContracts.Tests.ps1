@@ -1326,6 +1326,58 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         }
         $job.Contains('secrets') | Should -BeFalse
         @($document['jobs']['summary']['needs']) | Should -Contain 'dangerous-workflow-scan'
+
+        $pinningDocument = Get-WorkflowDocument -Name 'dependency-pinning-scan.yml'
+        $pinningDocument['on']['workflow_call']['outputs']['gate-error']['value'] |
+            Should -BeExactly '${{ jobs.scan.outputs.gate-error }}'
+        $pinningDocument['jobs']['scan']['outputs']['gate-error'] |
+            Should -BeExactly '${{ steps.gate.outputs.gate-error }}'
+        $summaryStep = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $summaryStep['env']['GATE_ERROR'] | Should -BeExactly '${{ needs.validate-pinning.outputs.gate-error }}'
+        $conclusionStep = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Set workflow conclusion'
+        $conclusionStep['env']['GATE_ERROR'] | Should -BeExactly '${{ needs.validate-pinning.outputs.gate-error }}'
+    }
+
+    It 'Reports dependency gate failures without success-shaped counts' {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $environment = @{
+            THRESHOLD_DAYS      = '30'
+            PINNING_SCORE       = '100'
+            UNPINNED_COUNT      = '7'
+            FAILING_COUNT       = ''
+            EXCEPTED_COUNT      = ''
+            EXCEPTION_ERROR_COUNT = ''
+            GATE_ERROR          = 'true'
+            STALE_COUNT         = '0'
+            CODEQL_RESULT       = 'success'
+            WORKFLOW_SCAN_RESULT = 'success'
+            EVENT_NAME          = 'schedule'
+            SERVER_URL          = 'https://github.com'
+            REPO                = 'example/repository'
+            RUN_ID              = '1'
+            GITHUB_STEP_SUMMARY = (Join-Path $TestDrive 'gate-error.md')
+        }
+        $savedEnvironment = @{}
+        try {
+            foreach ($key in $environment.Keys) {
+                $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key)
+                [Environment]::SetEnvironmentVariable($key, $environment[$key])
+            }
+
+            & ([scriptblock]::Create($step['run']))
+
+            $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
+            $summary | Should -Match 'Dependency Pinning Gate \| ❌ Failed'
+            $summary | Should -Match 'Gate did not produce a trusted count'
+            $summary | Should -Match 'Dependency Gate Failure'
+            $summary | Should -Not -Match '0 excused|Dependency Checks Clear'
+        }
+        finally {
+            foreach ($key in $savedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key])
+            }
+        }
     }
 
     It 'Reports CodeQL <CodeqlResult> and advisory scan <ScanResult> with targeted next steps' -ForEach @(
@@ -1346,6 +1398,7 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             THRESHOLD_DAYS = '30'
             PINNING_SCORE = '100'
             UNPINNED_COUNT = '0'
+            GATE_ERROR = ''
             STALE_COUNT = '0'
             CODEQL_RESULT = $CodeqlResult
             WORKFLOW_SCAN_RESULT = $ScanResult
