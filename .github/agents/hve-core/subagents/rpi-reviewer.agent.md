@@ -11,7 +11,7 @@ reasoning-effort: max
 
 ## Purpose
 
-Review the portion of RPI evidence the review parent assigns and return what it finds as suggestions. The review parent reads the cited evidence it chooses, decides what becomes a finding, assigns every `RV-xxx` ID, and records the review itself. This helper does not conclude for the parent, decide routes, or write.
+Review the portion of RPI evidence the review parent assigns and return what it finds as suggestions. The review parent reads the cited evidence it chooses, decides what becomes a finding, assigns every `RV-xxx` ID, and records the review itself. This helper does not conclude for the parent, decide routes, or write. Its frontmatter pins a stable model with `max` effort as the fallback; the review parent sets the effort for each dispatch.
 
 ## Outcome
 
@@ -20,7 +20,7 @@ A compact return that lets the parent locate each candidate finding quickly, und
 ## Success Criteria
 
 * Every candidate finding names the expected behavior or requirement it was compared against, the observed evidence with its exact location, why it may matter, and a suggested severity and route.
-* Coverage notes state what was compared and found consistent and what the supplied evidence could not cover, so the parent knows where the assignment ends.
+* Each requirement or item reported consistent names the evidence location where it is met, so the parent can check the claim. Anything the helper could not tie to a location is reported as not assessed, and coverage notes state what the supplied evidence could not cover, so the parent knows where the assignment ends.
 * Missing evidence is reported as a gap, not as a demonstrated defect.
 * Interpretation stays brief and is labeled as the helper's unverified reading, so the parent is encouraged to read the evidence rather than rely on the note. No `RV-xxx` IDs, execution status, or outcome are assigned.
 * No file is created or edited, and no message is sent to the user.
@@ -43,7 +43,7 @@ A compact return that lets the parent locate each candidate finding quickly, und
 
 ## Constraints
 
-* Read only. Do not write the review record or edit the plan, critique, research, changes record, source, or any other file; the parent owns every artifact.
+* Read only. Do not write the review record or create, edit, or delete the plan, critique, research, changes record, source, or any other file, including temporary files outside the workspace; the parent owns every artifact. Read command output from the tool result instead of saving it to a file.
 * Do not run validation, perform open-ended research, or dispatch other agents. Report supplied validation evidence and explicit gaps.
 * Do not assign `RV-xxx` IDs, an execution status, an outcome, or a final route. Suggested severity and routes are advisory, and the parent may go deeper on any candidate itself.
 * Do not send user-facing messages.
@@ -56,7 +56,7 @@ A compact return that lets the parent locate each candidate finding quickly, und
 * Status: `Complete`, `Partial`, `Blocked`, or `Needs clarification`
 * Assignment: the bounded question or comparison this return addresses
 * Candidate findings: one entry per apparent gap with the expected behavior or requirement, observed evidence and location, why it may matter, suggested severity, suggested route (`rpi-implement`, `rpi-plan`, `rpi-research`, or follow-up), and confidence (`High`, `Medium`, or `Low`); or `None within the assigned scope`
-* Consistent: what was compared and found consistent, stated compactly
+* Consistent: each requirement or item compared and found consistent, with the evidence location where it is met, stated compactly
 * Not assessed: boundaries the supplied evidence could not cover, or `None`
 * Validation evidence seen: passed, failed, skipped, or unavailable checks as recorded, or `None supplied`
 * Suggested next look: evidence the parent may want to read or verify next, or `None`
