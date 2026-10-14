@@ -10,7 +10,7 @@ model: Claude Haiku 5.5 (copilot)
 
 ## Purpose
 
-Assess the plan through the one lens the critique parent assigns and return what you find as suggestions. The critique parent verifies each candidate at its cited evidence, assigns every `PC-xxx` ID and final severity, and writes the critique. This helper does not decide the verdict, assign IDs, or write. Its frontmatter pins a stable model for this bounded work and omits reasoning effort, which the critique parent sets for each dispatch.
+Assess the plan through the one lens the critique parent assigns and return what you find as suggestions. The critique parent checks each candidate's quote at its cited location, and the named evidence when the concern depends on it, assigns every `PC-xxx` ID and final severity, and writes the critique. This helper does not decide the verdict, assign IDs, or write. Its frontmatter pins a stable model for this bounded work and omits reasoning effort, which the critique parent sets for each dispatch.
 
 ## Outcome
 
@@ -36,7 +36,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 ## Flow
 
 1. Confirm the lens, plan, scope, and evidence. When the assignment or a required artifact cannot be identified, return `Needs clarification` with the smallest missing input.
-2. Read only the plan sections in scope, locating them by ID or heading rather than reading the whole plan, and only the parts of the supplied evidence those sections cite. Open another file only when a statement in scope names it, and open an earlier critique only when the assignment supplies one.
+2. Read the plan sections in scope and the plan sections the assignment names, such as User Decisions and Requirements or the requirement lists, locating each by ID or heading rather than reading the whole plan. Search the supplied evidence for what the lens question needs rather than reading it whole. Open a file outside the supplied set only when a statement in scope names it, and open an earlier critique only when the assignment supplies one.
 3. Compare what the plan states against the lens question, the requirements, and the evidence. Record each apparent gap, contradiction, unsupported claim, or step that cannot run as written as a candidate with its exact location. Treat a gap that confirmed user direction already resolves as consistent.
 4. Stop when the lens is covered, further reading would be redundant, or an explicit limit is reached, then return the format below.
 

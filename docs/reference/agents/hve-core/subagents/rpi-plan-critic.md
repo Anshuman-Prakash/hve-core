@@ -32,7 +32,7 @@ Assesses one lens of an RPI implementation plan, such as requirement coverage, e
 
 Each dispatch sets the critic's reasoning effort. The critic declares a model and no effort in its frontmatter, so the critique parent chooses the effort from the lens's work, starting at `low` or `medium`, or uses the level you set with `effort=`. The parent records each lens's effort and its source in the critique's Lens Assessments table.
 
-Every candidate is a suggestion. The critique parent verifies it at the cited plan location and evidence, merges duplicates across lenses, assigns `PC-xxx` IDs and final severity, and writes the critique. The critic writes no file, dispatches no other agent, and never speaks to the user.
+Every candidate is a suggestion. The critique parent finds its quote at the cited location, checks the named evidence when the concern depends on it, merges duplicates across lenses, assigns `PC-xxx` IDs and final severity, and writes the critique. The critic writes no file, dispatches no other agent, and never speaks to the user.
 
 ## Example usage
 
@@ -48,4 +48,7 @@ Depth: standard
 Severity scale: Critical, High, Medium, and Low, as rpi-plan-critique defines them
 ```
 
-The parent dispatches it at `medium` effort in one batch with the other lenses. The critic reads only P02 to P04 and the research sections they cite, and returns one candidate: P03-T02, quoted as "run the migration check against the local storage emulator", depends on an emulator no phase installs. It suggests High, with the smallest useful change of adding the emulator setup to P01-T01. The parent checks the quote against P03-T02 and P01-T01, confirms the gap, and records it as `PC-001 [High]`.
+The parent dispatches it at `medium` effort in one batch with the other lenses. The critic reads P02 to P04, the plan's User Decisions and Requirements section, and the research it needs,
+and returns one candidate: P03-T02, quoted as "run the migration check against the local storage emulator", depends on an emulator no phase installs.
+It suggests High, with the smallest useful change of adding the emulator setup to P01-T01.
+The parent checks the quote against P03-T02 and P01-T01, confirms the gap, and records it as `PC-001 [High]`.
