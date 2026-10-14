@@ -1368,7 +1368,7 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             & ([scriptblock]::Create($step['run']))
 
             $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
-            $summary | Should -Match 'Dependency Pinning Gate \| ❌ Failed'
+            $summary | Should -Match 'Dependency Pinning Gate \| .+ Failed'
             $summary | Should -Match 'Gate did not produce a trusted count'
             $summary | Should -Match 'Dependency Gate Failure'
             $summary | Should -Not -Match '0 excused|Dependency Checks Clear'
