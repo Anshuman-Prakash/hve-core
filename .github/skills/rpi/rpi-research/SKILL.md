@@ -20,7 +20,7 @@ When the invoking agent or the user's request names the Research task or its slu
 
 ## Flow
 
-1. Establish the user-facing Scope and Questions plus the Research Record's Method and Boundaries: topic, purpose, audience or use, scope and non-goals, criteria, requested output and mode, initial questions, research posture and provenance, candidate areas, and explicit limits or deadline. Infer an initial topic only when the conversation provides enough context, and label assumptions for verification.
+1. Establish the user-facing Scope and Questions plus the Research Record's Method and Boundaries: topic, purpose, audience or use, scope and non-goals, criteria, requested output and mode, initial questions, research posture and provenance, any user- or caller-set helper lane effort with its provenance, candidate areas, and explicit limits or deadline. Infer an initial topic only when the conversation provides enough context, and label assumptions for verification.
 2. Determine applicable extensions at intake.
    * Apply matching instruction files by `applyTo` glob to the research inputs and evidence path.
    * Identify available skills whose descriptions say they are used during research and fit the topic or evidence need. Exclude this skill and other RPI lifecycle phase entrypoints. Activate useful matching skills as scoped research guidance.
@@ -78,7 +78,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Purpose, audience, requested outputs, and output mode
 * Scope, non-goals, criteria, constraints, and relevant workspace or external boundaries
 * Research posture: `balanced` by default; `focused` or `expansive` when the caller passes `posture=` or applicable codebase instructions select it, with provenance, plus any caller-provided or codebase-imposed limits or deadline
-* Helper lane reasoning effort: `auto` by default, which selects each lane's effort from how the lane finds its answer, or a level the user or caller sets for every lane or for named lanes
+* Helper lane reasoning effort: `auto` by default, which selects each lane's effort from how the lane finds its answer, or a level the user or caller sets for every lane or for lanes identified by kind or topic
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
 * Trusted alternate evidence root and evidence-path date, when supplied
 * Existing artifacts, chat context, and known decisions to verify

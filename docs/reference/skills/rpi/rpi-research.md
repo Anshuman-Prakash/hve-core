@@ -32,8 +32,8 @@ Use `rpi-research` when a task needs evidence before anyone plans or edits: a co
 
 A helper such as [RPI Researcher](../../agents/hve-core/subagents/rpi-researcher) may be asked for source pointers when isolating a gathering task helps; its return is a suggestion the research verifies at the source.
 
-Independent questions get their own narrow helper lanes, dispatched in parallel. Research picks each lane's reasoning effort: `low` when a tool guarantees a complete answer, such as a search that lists every match, and `max` when the lane must read for meaning or could answer "not found".
-A "not found" from a lane below `max` counts only after research confirms it. Set `effort=` to choose one level for every lane yourself.
+Independent questions get their own narrow helper lanes, dispatched in parallel. Research picks each lane's reasoning effort: `low` when a tool guarantees a complete answer, such as a search that lists every match, and `max` when the lane must read for meaning, especially to conclude that something is absent.
+A "not found" from a lane below `max` counts only after research confirms it. Set `effort=` to choose one level for every lane, or ask for a level for a kind of lane, such as documentation lanes.
 
 Each executed cycle runs Wider, Deeper, and Contrarian waves, then synthesizes findings, records Planning Readiness, and resolves material decisions according to the participation mode: `user-owned` when invoked directly, `agent-owned` or `user-retained` inside an automatic [RPI Agent](../../agents/hve-core/rpi-agent) session.
 

@@ -224,13 +224,13 @@ When you use one, give it the question, scope and non-goals, exclusions, the req
 
 Select each lane's reasoning effort when you dispatch it, from how the lane finds its answer:
 
-* `low` when a tool guarantees a complete result: a search that lists every match for a pattern, exact excerpts at a known location, or a signature or schema lookup.
-* `max` when the lane must read for meaning, such as documentation, issues, changelogs, code-path traces, and comparisons, and for any question whose answer could be "not found" or "not supported". A lower-effort reading lane is more likely to miss a source, and a source the helper never returns cannot be verified.
-* When the user or caller sets an effort, for every lane or for named lanes, use it instead.
+* `low` when a tool guarantees a complete result: a search that lists every match for a pattern, exact excerpts at a known location, or a signature or schema lookup. An empty result from such a lane is a "not found" to confirm, as described below.
+* `max` when the lane must read for meaning, such as documentation, issues, changelogs, code-path traces, and comparisons, especially when the reading could conclude that something is absent or unsupported. A lower-effort reading lane is more likely to miss a source, and a source the helper never returns cannot be verified.
+* When the user or caller sets an effort, for every lane or for lanes identified by kind or topic, such as search lanes or a documentation lane, use it instead.
 
-Pass the level through the dispatch tool's reasoning-effort parameter, such as `reasoning_effort`. `RPI Researcher` declares `max` in its frontmatter, so a dispatch that sets no effort runs at `max`; give a general-purpose helper its level explicitly. If a dispatch fails because its model does not support the selected effort, retry it once with `reasoning_effort` set to `medium`.
+Pass the level through the dispatch tool's reasoning-effort parameter, such as `reasoning_effort`. `RPI Researcher` declares `max` in its frontmatter, so a dispatch that sets no effort runs at `max` where the host applies agent frontmatter; give a general-purpose helper its level explicitly. When the tool has no such parameter, dispatch without one and record the effort as host default. If a dispatch fails because its model does not support the selected effort, retry it once with `reasoning_effort` set to `medium`, and record the lane's effort as `medium` with that reason.
 
-Treat the return as suggestions. Read the sources you choose to rely on, assign your own `C#` and `W#` IDs, and record only what you verified. Treat a "not found" or "not supported" return from a lane below `max` as unverified, and confirm the absence yourself or with a `max` lane before recording it. A helper writes no artifact, classifies no evidence state, selects no recommendation, and speaks to no user. Record each helper lane in the Research Record with its question, its reasoning effort and that effort's source (selected, user- or caller-set, or frontmatter default), and what was verified, and do not imply a helper ran when a wave ran without one.
+Treat the return as suggestions. Read the sources you choose to rely on, assign your own `C#` and `W#` IDs, and record only what you verified. Treat a "not found" or "not supported" return from a lane below `max` as unverified, and confirm the absence yourself or with a `max` lane before recording it. A helper writes no artifact, classifies no evidence state, selects no recommendation, and speaks to no user. Record each helper lane in the Research Record with its question, its reasoning effort and that effort's source (selected, user- or caller-set, frontmatter default, or host default), and what was verified, and do not imply a helper ran when a wave ran without one.
 
 ## Evidence, Findings, and Decisions
 
@@ -276,7 +276,7 @@ When no executable validation ran, label the review an artifact self-check. Conf
 * Finding-local explanation, supporting detail, confidence basis, and counter-evidence, with summaries grounded in those findings rather than duplicated detail
 * Method and boundary records for posture, provenance, scope, limits, candidate areas, evidence root, constraints, and prior knowledge
 * Extension, participation, and direction records with selected or skipped reasons, answers or no-interaction rationale, and revalidation effects
-* Every executed cycle's ordered Wider, Deeper, and Contrarian waves, reflections, verified evidence, any helper use, dispositions, and re-entry evaluation
+* Every executed cycle's ordered Wider, Deeper, and Contrarian waves, reflections, verified evidence, any helper lanes with their reasoning effort, dispositions, and re-entry evaluation
 * Answered or explicitly unanswerable questions and findings mapped to complete canonical evidence rows
 * Alternatives and a selected recommendation with rejected-alternative rationale when, and only when, convergence was requested
 * Current and unresolved decisions, decision participation and provenance, selected or deferred further research, Research disposition, Planning Readiness and next action, blockers, residual uncertainty, and research-only constraint status

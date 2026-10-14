@@ -192,7 +192,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 * [ ] Findings keep their explanation, supporting detail, evidence state, and confidence basis together; summaries do not introduce unsupported claims.
 * [ ] Every codebase finding has a `C#` ID and workspace-relative path with a heading or symbol; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
 * [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, synthesis, and an evidence-based re-entry decision.
-* [ ] Method, extensions, participation, caller direction changes, helper use, and prior-knowledge treatment are recorded with their limits.
+* [ ] Method, extensions, participation, caller direction changes, helper lanes with their reasoning effort, and prior-knowledge treatment are recorded with their limits.
 * [ ] Convergence selects and justifies one recommendation; other modes preserve decision state without forcing a selection.
 * [ ] Decision groups, participation mode, and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
 * [ ] Research disposition, Planning Readiness, blockers, continuation owner, gates, and next action are complete and evidence-backed.
