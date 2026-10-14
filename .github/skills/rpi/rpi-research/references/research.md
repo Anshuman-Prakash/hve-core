@@ -216,9 +216,21 @@ Research runs in this context. A subagent is never required, and no phase gate d
 
 Use a subagent when isolating a bounded gathering task would improve evidence quality or protect working context, for example collecting candidate sources for one question across a large corpus, or retrieving the exact signature, schema, or example a finding needs. Keep tightly coupled or low-volume investigation here.
 
-When you use one, give it the question, scope and non-goals, exclusions, the requested return kind (source pointers, exact excerpts, or both), and any explicit limit. Prefer a helper whose description says it is used during research, such as `RPI Researcher`; a general-purpose subagent given the same instructions also works. Expect a return of source locations, what each appears to contain, why it seems relevant, verbatim excerpts for requested contracts, and a brief interpretation labeled as unverified. `RPI Researcher` runs on `Claude Haiku 5.5 (copilot)` at `max` reasoning effort from its frontmatter; give a general-purpose helper the same model and `reasoning_effort: max` when the dispatch tool accepts them, and pass a different model only when the user names one. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+Give each independent question its own narrow lane, and dispatch independent lanes in one parallel batch rather than combining them into one broad lane. A lane's time grows with how much it reads, so narrow lanes finish sooner at any effort.
 
-Treat the return as suggestions. Read the sources you choose to rely on, assign your own `C#` and `W#` IDs, and record only what you verified. A helper writes no artifact, classifies no evidence state, selects no recommendation, and speaks to no user. Record helper use in the Research Record with what was verified, and do not imply a helper ran when a wave ran without one.
+When you use one, give it the question, scope and non-goals, exclusions, the requested return kind (source pointers, exact excerpts, or both), and any explicit limit. Prefer a helper whose description says it is used during research, such as `RPI Researcher`; a general-purpose subagent given the same instructions also works. Expect a return of source locations, what each appears to contain, why it seems relevant, verbatim excerpts for requested contracts, and a brief interpretation labeled as unverified. `RPI Researcher` runs on `Claude Haiku 5.5 (copilot)` from its frontmatter; give a general-purpose helper the same model when the dispatch tool accepts it, and pass a different model only when the user names one.
+
+### Lane reasoning effort
+
+Select each lane's reasoning effort when you dispatch it, from how the lane finds its answer:
+
+* `low` when a tool guarantees a complete result: a search that lists every match for a pattern, exact excerpts at a known location, or a signature or schema lookup.
+* `max` when the lane must read for meaning, such as documentation, issues, changelogs, code-path traces, and comparisons, and for any question whose answer could be "not found" or "not supported". A lower-effort reading lane is more likely to miss a source, and a source the helper never returns cannot be verified.
+* When the user or caller sets an effort, for every lane or for named lanes, use it instead.
+
+Pass the level through the dispatch tool's reasoning-effort parameter, such as `reasoning_effort`. `RPI Researcher` declares `max` in its frontmatter, so a dispatch that sets no effort runs at `max`; give a general-purpose helper its level explicitly. If a dispatch fails because its model does not support the selected effort, retry it once with `reasoning_effort` set to `medium`.
+
+Treat the return as suggestions. Read the sources you choose to rely on, assign your own `C#` and `W#` IDs, and record only what you verified. Treat a "not found" or "not supported" return from a lane below `max` as unverified, and confirm the absence yourself or with a `max` lane before recording it. A helper writes no artifact, classifies no evidence state, selects no recommendation, and speaks to no user. Record each helper lane in the Research Record with its question, its reasoning effort and that effort's source (selected, user- or caller-set, or frontmatter default), and what was verified, and do not imply a helper ran when a wave ran without one.
 
 ## Evidence, Findings, and Decisions
 

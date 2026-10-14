@@ -1,7 +1,7 @@
 ---
 name: rpi-research
 description: Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
-argument-hint: "[topic=...] [posture={balanced|focused|expansive}] [chat]"
+argument-hint: "[topic=...] [posture={balanced|focused|expansive}] [effort={auto|low|medium|high|xhigh|max}] [chat]"
 license: MIT
 user-invocable: true
 ---
@@ -47,7 +47,7 @@ When the invoking agent or the user's request names the Research task or its slu
       * Narrow to `focused` for a bounded internal task with named source targets and supplied failure evidence when adjacent discovery is unlikely to change the result. Widen to `expansive` when the caller or applicable codebase instructions select it, or when the brief is broad and the decision space is materially unknown.
    2. Record active caller direction controls, including additions, changes, narrowed scope, exclusions, discarded directions, selected posture and provenance, and explicit limits or deadline. When uncertainty would materially affect research, ask and persist the answer for `user-owned` or `user-retained`; for `agent-owned`, persist an evidence-supported decision or the smallest gap before continuing.
    3. Before substantive search, persist the canonical opening state in its owning sections, then send the opening update defined in Conversation guidance.
-   4. Research runs in this context. A subagent is optional; use one only when isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines the request and return.
+   4. Research runs in this context. A subagent is optional; use one only when isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines lanes, each lane's reasoning effort, the request, and the return.
 6. Complete all three waves in order for each executed cycle. Do not stop the cycle after early evidence appears sufficient.
    1. Wider: investigate breadth for ideas, conjectures, hypotheses, claims, and questions, including relevant libraries, frameworks, APIs, schemas, contracts, standards, current resources, current decisions or documentation, and potential evidence.
    2. Deeper: prioritize the material from Wider, then investigate key details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code or visual style.
@@ -78,6 +78,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Purpose, audience, requested outputs, and output mode
 * Scope, non-goals, criteria, constraints, and relevant workspace or external boundaries
 * Research posture: `balanced` by default; `focused` or `expansive` when the caller passes `posture=` or applicable codebase instructions select it, with provenance, plus any caller-provided or codebase-imposed limits or deadline
+* Helper lane reasoning effort: `auto` by default, which selects each lane's effort from how the lane finds its answer, or a level the user or caller sets for every lane or for named lanes
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
 * Trusted alternate evidence root and evidence-path date, when supplied
 * Existing artifacts, chat context, and known decisions to verify
@@ -91,7 +92,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Findings answer each question or identify the smallest missing evidence. Every codebase finding uses a stable `C#` ID with a workspace-relative path and heading or symbol; every external finding uses a stable `W#` ID with a URL and retrieval date.
 * The artifact preserves alternatives and records a selected recommendation with evidence-based rejection rationale when the caller requests convergence. Other output modes preserve the decision state without forcing a selection.
 * Material decisions are resolved according to the recorded participation mode. User-owned and user-retained decisions use a focused, link-backed walkthrough; agent-owned decisions record an evidence-based selection or an honest blocker.
-* Any helper use is recorded with what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
+* Any helper use is recorded with each lane's reasoning effort and what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
 * The final response leads with the result of what the user asked for, backed by evidence, and names any unresolved blocker or explicit no-handoff reason.
 
 ## Constraints

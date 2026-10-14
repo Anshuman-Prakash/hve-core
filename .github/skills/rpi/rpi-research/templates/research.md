@@ -172,7 +172,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 
 <!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
-* Helpers: {{none_or_helper_use_with_the_questions_gathered_and_what_was_verified_at_the_source}}
+* Helpers: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_source}}
 
 | ID | Claim or finding | Source or location                                | Retrieved and version      | Tool                   | Confidence       | Notes       |
 |----|------------------|---------------------------------------------------|----------------------------|------------------------|------------------|-------------|

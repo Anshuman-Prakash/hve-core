@@ -3,7 +3,7 @@ title: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-13
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - agent
@@ -29,6 +29,8 @@ Gathers candidate sources for one bounded research question and returns source p
 ## When to use it
 
 `RPI Researcher` is an optional helper that [rpi-research](../../../skills/rpi/rpi-research) may use, not a required step and not something a user selects. The research context decides whether isolating a bounded gathering task, such as collecting candidate sources for one question or retrieving an exact API, schema, or example, would improve evidence quality or protect its working context.
+
+Each dispatch can set the helper's reasoning effort. Its frontmatter pins Claude Haiku 5.5 at `max`, which applies when a dispatch sets none. rpi-research lowers a lane to `low` when a tool guarantees a complete result, such as a search inventory, and keeps `max` for lanes that read for meaning.
 
 The helper gathers and returns; it does not conclude. Its return lists each suggested source with an exact location (a workspace-relative path and heading or symbol, or a URL with retrieval date), a line on what it appears to contain, a line on why it seems relevant, verbatim excerpts when a contract was requested, and a brief interpretation labeled as unverified.
 
