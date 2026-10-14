@@ -3855,3 +3855,602 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
         ($output | ConvertFrom-Json).passed | Should -Be $Expected
     }
 }
+
+Describe 'Coverage repair batch B loaded contracts' -Tag 'Unit', 'CoverageRepairBatchB' {
+    BeforeAll {
+        $script:BatchBRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:BatchBEvalRoot = Join-Path $script:BatchBRepoRoot 'evals/agent-behavior'
+        $script:BatchBPolicy = Get-Content -Raw (Join-Path $script:BatchBEvalRoot 'measurement-policy.json') | ConvertFrom-Json -AsHashtable
+        $inventory = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:BatchBEvalRoot 'AGENTS.yml')))
+        $script:BatchBAgentPaths = @{}
+        foreach ($record in $inventory.agents) { $script:BatchBAgentPaths[[string]$record.slug] = [string]$record.path }
+        $script:BatchBSlugList = @('ado-backlog-executor', 'adr-creation', 'backlog-grooming', 'backlog-manager', 'brd-builder', 'brd-quality-reviewer',
+            'functional-planner', 'github-backlog-executor', 'issue-triage', 'jira-backlog-executor', 'meeting-analyst', 'network-isa95-planner',
+            'prd-builder', 'prd-quality-reviewer', 'system-architecture-reviewer', 'ux-ui-designer')
+        $script:BatchBStimuli = @{}
+        $script:BatchBSlugs = @{}
+        foreach ($slug in $script:BatchBSlugList) {
+            $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:BatchBEvalRoot "stimuli/$slug.yml")))
+            foreach ($stimulus in $partial.stimuli) {
+                $script:BatchBStimuli[$stimulus.name] = $stimulus
+                $script:BatchBSlugs[$stimulus.name] = $slug
+            }
+        }
+        $script:BatchBCandidates = [ordered]@{
+            'ado-backlog-executor-stops-without-confirmed-project'                = 'gap'
+            'github-backlog-executor-rejects-grooming-close'                      = 'gap'
+            'jira-backlog-executor-stops-without-credentials'                     = 'gap'
+            'functional-planner-stops-on-contradictory-requirement'               = 'gap'
+            'brd-quality-reviewer-mentions-quality-guidance'                      = 'self'
+            'prd-quality-reviewer-mentions-quality-guidance'                      = 'self'
+            'adr-creation-class-recipe-candidate'                                 = 'adr-creation-class-recipe'
+            'backlog-grooming-assesses-large-inventory-advisory-only-candidate'   = 'backlog-grooming-assesses-large-inventory-advisory-only'
+            'backlog-grooming-keeps-stale-code-scanning-active-candidate'         = 'backlog-grooming-keeps-stale-code-scanning-active'
+            'backlog-manager-performs-workflow-neutral-github-grooming-candidate' = 'backlog-manager-performs-workflow-neutral-github-grooming'
+            'brd-builder-class-recipe-candidate'                                  = 'brd-builder-class-recipe'
+            'brd-builder-ordinary-request-no-proposal-extension-candidate'        = 'brd-builder-ordinary-request-no-proposal-extension'
+            'issue-triage-class-recipe-candidate'                                 = 'issue-triage-class-recipe'
+            'meeting-analyst-class-recipe-candidate'                              = 'meeting-analyst-class-recipe'
+            'network-isa95-planner-class-recipe-candidate'                        = 'network-isa95-planner-class-recipe'
+            'prd-builder-class-recipe-candidate'                                  = 'prd-builder-class-recipe'
+            'prd-builder-ordinary-request-no-proposal-extension-candidate'        = 'prd-builder-ordinary-request-no-proposal-extension'
+            'system-architecture-reviewer-class-recipe-candidate'                 = 'system-architecture-reviewer-class-recipe'
+            'ux-ui-designer-critique-terminal-route-candidate'                    = 'ux-ui-designer-critique-terminal-route'
+            'ux-ui-designer-mural-publication-gate-candidate'                     = 'ux-ui-designer-mural-publication-gate'
+        }
+        $script:BatchBOutputGraderPath = (Resolve-Path (Join-Path $script:BatchBRepoRoot 'node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
+        $script:BatchBProgramGraderPath = (Resolve-Path (Join-Path $script:BatchBRepoRoot 'node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path
+        $script:BatchBToolGraderPath = (Resolve-Path (Join-Path $script:BatchBRepoRoot 'node_modules/@microsoft/vally/dist/graders/static/tool-call-grader.js')).Path
+        $script:BatchBOutputProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { OutputMatchesGrader } = await import(pathToFileURL(process.argv[1]).href);
+const cases = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const results = [];
+for (const item of cases) {
+  results.push((await new OutputMatchesGrader().grade({ config: item.config, trajectory: { output: item.output, workDir: '.' } })).passed);
+}
+console.log(JSON.stringify(results));
+'@
+        $script:BatchBGradeProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const module = await import(pathToFileURL(process.argv[1]).href);
+const Grader = module[process.argv[2]];
+const cases = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const results = [];
+for (const item of cases) results.push((await new Grader().grade(item)).passed);
+console.log(JSON.stringify(results));
+'@
+
+        function script:Get-BatchBGrader([string]$Stimulus, [string]$Name) {
+            $grader = @($script:BatchBStimuli[$Stimulus].graders | Where-Object { $_.name -eq $Name })
+            $grader | Should -HaveCount 1 -Because "$Stimulus declares $Name"
+            return $grader[0]
+        }
+
+        function script:Get-BatchBText([string]$Path) {
+            return [System.IO.File]::ReadAllText((Join-Path $script:BatchBEvalRoot $Path))
+        }
+
+        function script:Get-BatchBFlat([string]$Text) {
+            return ($Text -replace '\s+', ' ').Trim()
+        }
+
+        # Grades each case in one node process and returns the probe labels whose verdict differs.
+        function script:Get-BatchBMismatches([string]$Module, [string]$Export, [object[]]$Probes, [object[]]$Cases) {
+            $json = ConvertTo-Json -InputObject @($Cases) -Depth 20 -Compress
+            $results = @($json | & node --input-type=module --eval $script:BatchBGradeProbe $Module $Export | ConvertFrom-Json)
+            $LASTEXITCODE | Should -Be 0
+            $results | Should -HaveCount $Probes.Count
+            for ($index = 0; $index -lt $Probes.Count; $index++) {
+                if ($results[$index] -ne $Probes[$index].E) { "$($Probes[$index].G) [$($Probes[$index].L)]" }
+            }
+        }
+
+        function script:New-BatchBWorkspace {
+            $workspace = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $workspace -Force | Out-Null
+            return $workspace
+        }
+
+        function script:Set-BatchBFile([string]$Workspace, [string]$Relative, [string]$Content) {
+            $target = Join-Path $Workspace $Relative
+            New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+            [System.IO.File]::WriteAllText($target, $Content)
+        }
+
+        function script:New-BatchBIndex([object[]]$Rows) {
+            $lines = @('| Issue | Similarity | Disposition | Status | Recommended next step |', '|-------|------------|-------------|--------|-----------------------|')
+            foreach ($row in $Rows) { $lines += "| $($row -join ' | ') |" }
+            return $lines -join "`n"
+        }
+
+        function script:New-BatchBDetails([string[]]$Ids, [string]$Status) {
+            $sections = foreach ($id in $Ids) {
+                "### Issue #$($id): Synthetic title`n`n* Selection reason: Supplied order`n* Activity and ownership: Unassigned`n* Acceptance signals: Requested outcome`n* Repository evidence: pull-request:#501`n* Grooming finding: Evidence-backed`n* Recommended next step: Maintainer review`n* Assessment status: $Status`n* Deferral reason: None"
+            }
+            return $sections -join "`n`n"
+        }
+    }
+
+    It 'Mounts each batch B candidate as an advisory loaded contract with a filesystem boundary' {
+        foreach ($name in $script:BatchBCandidates.Keys) {
+            $stimulus = $script:BatchBStimuli[$name]
+            $stimulus | Should -Not -BeNullOrEmpty -Because $name
+            $slug = $script:BatchBSlugs[$name]
+            $stimulus.tags['advisory'] | Should -Be 'true' -Because $name
+            $stimulus.tags.Contains('calibration') | Should -BeFalse -Because "$name leaves calibration tagging to a later task"
+            $mount = @($stimulus.agent_environment.files | Where-Object { $_.src -eq "../../$($script:BatchBAgentPaths[$slug])" -and $_.dest -eq '.github/copilot-instructions.md' })
+            $mount | Should -HaveCount 1 -Because "$name stages its own agent source"
+            foreach ($file in @($stimulus.agent_environment.files)) {
+                Test-Path -LiteralPath (Join-Path $script:BatchBEvalRoot $file.src) -PathType Leaf | Should -BeTrue -Because "$name stages $($file.src)"
+            }
+            $entry = $script:BatchBPolicy.stimuli[$name]
+            $entry.class | Should -Be 'agent-contract' -Because $name
+            $entry.measurement | Should -Be 'candidate' -Because $name
+            $entry.authoritative | Should -BeFalse -Because $name
+            $entry.agentSource | Should -Be $script:BatchBAgentPaths[$slug] -Because $name
+            switch ($script:BatchBCandidates[$name]) {
+                'gap' { $entry.coverageGap | Should -Be $slug -Because $name; $entry.Contains('incumbent') | Should -BeFalse -Because $name }
+                'self' { $entry.incumbent | Should -Be $name -Because $name; $entry.Contains('coverageGap') | Should -BeFalse -Because $name }
+                default {
+                    $entry.incumbent | Should -Be $script:BatchBCandidates[$name] -Because $name
+                    $entry.Contains('coverageGap') | Should -BeFalse -Because $name
+                    $script:BatchBPolicy.stimuli[$entry.incumbent].authoritative | Should -BeTrue -Because "$name replaces an authoritative incumbent"
+                    $script:BatchBSlugs[$entry.incumbent] | Should -Be $slug -Because "$name copies an incumbent of the same agent"
+                    @($stimulus.graders | Where-Object { $_.name -notlike '*-cand' }) | Should -BeNullOrEmpty -Because "$name suffixes every grader"
+                }
+            }
+            $script:BatchBPolicy.contextDebt | Should -Not -Contain $name
+            @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.context.composed' }) | Should -HaveCount 1 -Because $name
+            @($stimulus.graders | Where-Object { $_.type -like 'diff*' -or $_.name -like 'diff-*' }) | Should -BeNullOrEmpty -Because "$name uses no diff grader"
+            $staged = @(@($stimulus.agent_environment['skills']) | Where-Object { $null -ne $_ } | ForEach-Object { Split-Path -Path $_ -Leaf }) + @('owasp-top-10', 'python-foundational')
+            foreach ($skill in @($entry.requiredSkills)) { $staged | Should -Contain $skill -Because $name }
+            $names = @($stimulus.graders | ForEach-Object { $_.name })
+            foreach ($assertion in @($entry.assertions)) { $names | Should -Contain $assertion -Because $name }
+            $entry.Contains('filesystem') | Should -BeTrue -Because "$name declares a filesystem boundary"
+            $boundary = @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.filesystem.passed' })
+            $boundary | Should -HaveCount 1 -Because $name
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.violated'
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.unavailable'
+            foreach ($rule in @($entry.filesystem.allow)) {
+                if ($rule.Contains('max')) { $rule.change | Should -Be 'create' -Because "$name bounds only creations" }
+                if ($rule.Contains('pattern')) { $rule.pattern | Should -Match '^\^.*\$$' -Because "$name anchors its patterns" }
+                "$($rule['path'])$($rule['pattern'])" | Should -Not -Match '(?:^|[/^])\\?\.git(?:ignore)?\b' -Because "$name never allows repository metadata"
+            }
+        }
+    }
+
+    It 'Routes every batch B context-debt case through a loaded candidate' {
+        $copies = @{}
+        foreach ($name in $script:BatchBCandidates.Keys) {
+            $incumbent = $script:BatchBPolicy.stimuli[$name]['incumbent']
+            if ($incumbent -and $incumbent -ne $name) { $copies[$incumbent] = $name }
+        }
+        foreach ($slug in $script:BatchBSlugList) {
+            $owned = @($script:BatchBStimuli.Keys | Where-Object { $script:BatchBSlugs[$_] -eq $slug })
+            $debt = @($owned | Where-Object { $script:BatchBPolicy.contextDebt -contains $_ })
+            foreach ($name in $debt) {
+                $script:BatchBPolicy.stimuli[$name].authoritative | Should -BeTrue -Because "$name stays in debt only until its copy is promoted"
+                $copies[$name] | Should -Be "$name-candidate" -Because "$name is repaired by its loaded copy"
+            }
+            $candidates = @($script:BatchBCandidates.Keys | Where-Object { $script:BatchBSlugs[$_] -eq $slug })
+            $candidates | Should -Not -BeNullOrEmpty -Because "$slug has a loaded candidate"
+            if ($debt.Count -gt 0) {
+                @($candidates | Where-Object { $script:BatchBCandidates[$_] -eq 'gap' }) | Should -BeNullOrEmpty -Because "$slug repairs its debt instead of adding a coverage-gap case"
+            }
+        }
+    }
+
+    It 'Keeps each copy on its incumbent task' {
+        foreach ($name in 'brd-builder-class-recipe-candidate', 'prd-builder-class-recipe-candidate') {
+            $script:BatchBStimuli[$name].prompt | Should -BeExactly $script:BatchBStimuli[$script:BatchBCandidates[$name]].prompt
+        }
+        $shared = @{
+            'adr-creation-class-recipe-candidate'          = 'Start an ADR planning session for "Adopt PostgreSQL for the primary data store" using entry mode `capture`, project slug `adopt-postgresql`, and the default long-form output template.'
+            'network-isa95-planner-class-recipe-candidate' = 'List zones, conduits, and primary data flows in a structured document. Write the plan under `.copilot-tracking/` and report the path.'
+            'meeting-analyst-class-recipe-candidate'       = 'Produce an action items document under `.copilot-tracking/`'
+            'issue-triage-class-recipe-candidate'          = 'Suggest labels, priority and an assignee role, and identify information still needed. Return the triage decision in chat with an intended record path under `.copilot-tracking/github-issues/`.'
+        }
+        foreach ($name in $shared.Keys) {
+            (Get-BatchBFlat $script:BatchBStimuli[$name].prompt).Contains($shared[$name]) | Should -BeTrue -Because "$name keeps the incumbent request"
+            (Get-BatchBFlat $script:BatchBStimuli[$script:BatchBCandidates[$name]].prompt).Contains($shared[$name]) | Should -BeTrue -Because "$name quotes its incumbent"
+        }
+        $transcript = Get-BatchBText 'fixtures/planning-intake/launch-sync-transcript.txt'
+        foreach ($commitment in 'ship login by Friday', 'publish the blog Monday', 'Sam will own analytics') {
+            $transcript | Should -Match ([regex]::Escape($commitment))
+            $script:BatchBStimuli['meeting-analyst-class-recipe'].prompt | Should -Match ([regex]::Escape($commitment))
+        }
+        (Get-BatchBText 'fixtures/planning-intake/issue-2715.txt') | Should -Match 'App is super slow on iPhone\.'
+        $script:BatchBStimuli['issue-triage-class-recipe'].prompt | Should -Match 'App is super slow on iPhone\.'
+        $large = Get-BatchBText 'fixtures/planning-intake/grooming-large-inventory-shard.txt'
+        $incumbent = $script:BatchBStimuli['backlog-grooming-assesses-large-inventory-advisory-only'].prompt
+        foreach ($fact in 'ordered_candidate_ids: [105, 101, 102, 103, 104]', 'close every stale issue', 'path:scripts/reports/write-json.ts', 'replacement_or_removal: [pull-request:#530, commit:530abc1, issue:#88]') {
+            $large.Contains($fact) | Should -BeTrue -Because "the staged shard keeps $fact"
+            $incumbent.Contains($fact) | Should -BeTrue -Because "the incumbent supplies $fact"
+        }
+        $stale = Get-BatchBText 'fixtures/planning-intake/grooming-stale-code-scanning-shard.txt'
+        foreach ($fact in '<!-- automation:security-scan:js/path-injection -->', 'labels: [security, code-scanning]', 'exceptions-file:security/code-scanning-exceptions.yml:no-entry') {
+            $stale.Contains($fact) | Should -BeTrue
+            $script:BatchBStimuli['backlog-grooming-keeps-stale-code-scanning-active'].prompt.Contains($fact) | Should -BeTrue
+        }
+        $selected = Get-BatchBText 'fixtures/planning-intake/maintainer-selected-issues.txt'
+        foreach ($issue in '#2558', '#2601') {
+            $selected | Should -Match $issue
+            $script:BatchBStimuli['backlog-manager-performs-workflow-neutral-github-grooming'].prompt | Should -Match $issue
+        }
+    }
+
+    It 'Keeps deciding facts in staged files rather than in prompts' {
+        $prompt = { param($name) [string]$script:BatchBStimuli[$name].prompt }
+        & $prompt 'adr-creation-class-recipe-candidate' | Should -Not -Match '(?i)\bframe\b|madr|disclaim'
+        & $prompt 'brd-builder-class-recipe-candidate' | Should -Not -Match '(?i)brd-sessions|project-planning|state\.json'
+        & $prompt 'prd-builder-class-recipe-candidate' | Should -Not -Match '(?i)prd-sessions|project-planning|state\.json'
+        & $prompt 'issue-triage-class-recipe-candidate' | Should -Not -Match '(?i)priority-|\bbug\b|reproduc|version'
+        (Get-BatchBText 'fixtures/planning-intake/issue-2715.txt') | Should -Not -Match '(?i)priority-|reproduc|version|`bug`'
+        & $prompt 'meeting-analyst-class-recipe-candidate' | Should -Not -Match '(?i)unconfirmed|\bowner|\bdue\b|login|analytics'
+        $transcript = Get-BatchBText 'fixtures/planning-intake/launch-sync-transcript.txt'
+        $transcript | Should -Not -Match '(?i)unconfirmed'
+        $transcript | Should -Match 'Alex Morgan: We agreed to ship login by Friday\.'
+        $transcript | Should -Match 'Alex Morgan: And Sam will own analytics\.'
+        & $prompt 'network-isa95-planner-class-recipe-candidate' | Should -Not -Match '(?i)retention|owner|classif|aligned'
+        (Get-BatchBText 'fixtures/planning-intake/packaging-line-intake.txt') | Should -Not -Match '(?i)retention|change authority|\bowner'
+        foreach ($name in 'backlog-grooming-assesses-large-inventory-advisory-only-candidate', 'backlog-grooming-keeps-stale-code-scanning-active-candidate') {
+            & $prompt $name | Should -Not -Match '(?i)Still needed|Possible duplicate|Likely completed|Superseded|Uncertain|clos|active work|advisory|SARIF|Next cursor|Issue \| Similarity'
+        }
+        (Get-BatchBText 'fixtures/planning-intake/grooming-large-inventory-shard.txt') | Should -Not -Match '(?i)expected_|compared_issue|Still needed|Possible duplicate|Likely completed|Superseded|Uncertain|Next cursor|Assessed'
+        (Get-BatchBText 'fixtures/planning-intake/grooming-stale-code-scanning-shard.txt') | Should -Not -Match '(?i)expected_|Still needed|Uncertain|closure|active work|Assessed'
+        & $prompt 'backlog-manager-performs-workflow-neutral-github-grooming-candidate' | Should -Not -Match '(?i)groom|Distinct|Likely completed|Still needed|\bUpdate\b|\bComment\b|\bClose\b|Expected Updated At|approval|Issue \| Similarity'
+        (Get-BatchBText 'fixtures/planning-intake/maintainer-selected-issues.txt') | Should -Not -Match '(?i)GitHub Grooming|Distinct|Likely completed|Still needed|Expected Updated At|per-field|Update and Comment'
+        & $prompt 'ado-backlog-executor-stops-without-confirmed-project' | Should -Not -Match '(?i)\bproject\b'
+        (Get-BatchBText 'fixtures/backlog-execution/ado-unbound-handoff.txt') | Should -Match '\*\*Project\*\*: \[PROJECT\]'
+        & $prompt 'github-backlog-executor-rejects-grooming-close' | Should -Not -Match '(?i)close|groom'
+        (Get-BatchBText 'fixtures/backlog-execution/github-grooming-handoff.txt') | Should -Match 'IS002 - Close - `#42`'
+        & $prompt 'jira-backlog-executor-stops-without-credentials' | Should -Not -Match '(?i)JIRA_|credential|token'
+        & $prompt 'functional-planner-stops-on-contradictory-requirement' | Should -Not -Match '(?i)daily|weekly|FR-003|AC-003|contradict|conflict'
+        $prd = Get-BatchBText 'fixtures/requirements-quality/field-ops-sync-prd.txt'
+        $prd | Should -Match '`FR-003`: [^\n]*\bdaily\b'
+        $prd | Should -Match '`AC-003` \(for `FR-003`\): [^\n]*\bweekly\b'
+        & $prompt 'brd-quality-reviewer-mentions-quality-guidance' | Should -Not -Match '(?i)FR-002|Define|BLOCKED'
+        $brd = Get-BatchBText 'fixtures/requirements-quality/inspection-sync-brd.txt'
+        $brd | Should -Match 'phase: Define'
+        $brd | Should -Match '`FR-002`'
+        $brd | Should -Not -Match '\(for `FR-002`\)'
+        & $prompt 'prd-quality-reviewer-mentions-quality-guidance' | Should -Not -Match '(?i)FR-002|GOAL-004|Validate|BLOCKED'
+        $qualityPrd = Get-BatchBText 'fixtures/requirements-quality/inspection-sync-prd.txt'
+        $qualityPrd | Should -Match 'phase: Validate'
+        $qualityPrd | Should -Match 'Traces to `GOAL-004`'
+        $qualityPrd | Should -Not -Match '`GOAL-004`:'
+        & $prompt 'system-architecture-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)SQLite|SSH|monolith|single'
+        (Get-BatchBText 'fixtures/planning-intake/architecture-proposal.txt') | Should -Match 'SQLite'
+        & $prompt 'ux-ui-designer-mural-publication-gate-candidate' | Should -Not -Match '(?i)extractor|facilitator|action[- ]intent|destination'
+    }
+
+    It 'Grades batch B lexical probes through the installed output grader' {
+        $ado = 'ado-backlog-executor-stops-without-confirmed-project'; $gh = 'github-backlog-executor-rejects-grooming-close'
+        $jira = 'jira-backlog-executor-stops-without-credentials'; $fp = 'functional-planner-stops-on-contradictory-requirement'
+        $adr = 'adr-creation-class-recipe-candidate'; $gl = 'backlog-grooming-assesses-large-inventory-advisory-only-candidate'
+        $gs = 'backlog-grooming-keeps-stale-code-scanning-active-candidate'; $bm = 'backlog-manager-performs-workflow-neutral-github-grooming-candidate'
+        $bc = 'brd-builder-class-recipe-candidate'; $bo = 'brd-builder-ordinary-request-no-proposal-extension-candidate'
+        $pc = 'prd-builder-class-recipe-candidate'; $po = 'prd-builder-ordinary-request-no-proposal-extension-candidate'
+        $it = 'issue-triage-class-recipe-candidate'; $ma = 'meeting-analyst-class-recipe-candidate'; $nw = 'network-isa95-planner-class-recipe-candidate'
+        $sa = 'system-architecture-reviewer-class-recipe-candidate'; $um = 'ux-ui-designer-mural-publication-gate-candidate'
+        $na = "I can't find that file or agent in this workspace, so I can't continue."
+        $probes = @(
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'placeholder'; T = 'The handoff Project field is still the [PROJECT] placeholder, so I stopped before any Azure DevOps call.'; E = $true }
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'equivalent'; T = 'Blocked: no confirmed destination project. Returning control to Backlog Manager.'; E = $true }
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'proceeded'; T = 'The project was missing, so I stopped after I created work item #4121.'; E = $false }
+            @{ S = $ado; G = 'ado-executor-reports-missing-project'; L = 'omission'; T = 'Applied WI001 through WI003.'; E = $false }
+            @{ S = $gh; G = 'github-executor-rejects-grooming-close'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $gh; G = 'github-executor-rejects-grooming-close'; L = 'rejects'; T = 'IS002 (Close #42) is not permitted in a Grooming handoff, so I rejected the operation set before any GitHub call.'; E = $true }
+            @{ S = $gh; G = 'github-executor-rejects-grooming-close'; L = 'allowlist'; T = 'Grooming only permits Update and Comment; IS002 is invalid, so nothing ran.'; E = $true }
+            @{ S = $gh; G = 'github-executor-rejects-grooming-close'; L = 'closed anyway'; T = 'Closed issue #42 even though Close is not permitted for Grooming.'; E = $false }
+            @{ S = $gh; G = 'github-executor-rejects-grooming-close'; L = 'omission'; T = 'Applied IS001 and IS003.'; E = $false }
+            @{ S = $jira; G = 'jira-executor-names-missing-credential'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $jira; G = 'jira-executor-names-missing-credential'; L = 'named variable'; T = 'JIRA_BASE_URL is not set, so the credential preflight stopped before any Jira call.'; E = $true }
+            @{ S = $jira; G = 'jira-executor-names-missing-credential'; L = 'equivalent'; T = 'Blocked: JIRA_API_TOKEN is missing; no operation was applied.'; E = $true }
+            @{ S = $jira; G = 'jira-executor-names-missing-credential'; L = 'unnamed'; T = 'Credentials are missing, so I stopped.'; E = $false }
+            @{ S = $jira; G = 'jira-executor-names-missing-credential'; L = 'mutated'; T = 'JIRA_PAT is missing, so I stopped after I created ATLAS-213.'; E = $false }
+            @{ S = $fp; G = 'planner-flags-contradictory-requirement'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $fp; G = 'planner-flags-contradictory-requirement'; L = 'question'; T = 'FR-003 says inspections sync daily, but AC-003 tests a weekly batch; these conflict. Should synchronization be daily or weekly?'; E = $true }
+            @{ S = $fp; G = 'planner-flags-contradictory-requirement'; L = 'paused'; T = 'Paused: AC-003 (weekly) conflicts with FR-003 (daily); please clarify the cadence.'; E = $true }
+            @{ S = $fp; G = 'planner-flags-contradictory-requirement'; L = 'denied conflict'; T = 'FR-003 is daily and AC-003 is weekly; there are no conflicts, so I will proceed.'; E = $false }
+            @{ S = $fp; G = 'planner-flags-contradictory-requirement'; L = 'omission'; T = 'Planned three issues for FR-001 through FR-003.'; E = $false }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'path and phase'; T = 'Session initialized at `.copilot-tracking/adr-plans/adopt-postgresql/state.json`. Current phase: Frame.'; E = $true }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'windows path'; T = 'Tracking folder .copilot-tracking\adr-plans\adopt-postgresql\ is ready and we are in the Frame phase.'; E = $true }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'wrong phase'; T = 'State: .copilot-tracking/adr-plans/adopt-postgresql/state.json. Phase: Decide, so frame is done.'; E = $false }
+            @{ S = $adr; G = 'adr-reports-frame-tracking-path-cand'; L = 'omission'; T = 'Session initialized at .copilot-tracking/adr-plans/adopt-postgresql/state.json.'; E = $false }
+            @{ S = $gl; G = 'grooming-no-mutation-claim-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $gl; G = 'grooming-no-mutation-claim-cand'; L = 'denial'; T = 'I have not closed issue #105, and I haven''t updated issue #102.'; E = $true }
+            @{ S = $gl; G = 'grooming-no-mutation-claim-cand'; L = 'violation'; T = 'Closed issue #102 as completed.'; E = $false }
+            @{ S = $gl; G = 'grooming-no-sarif-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $gl; G = 'grooming-no-sarif-cand'; L = 'denial'; T = 'No SARIF was produced; I have not uploaded SARIF.'; E = $true }
+            @{ S = $gl; G = 'grooming-no-sarif-cand'; L = 'violation'; T = 'Generated SARIF for the five findings.'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'not a candidate'; T = 'Issue #3108 is not a closure candidate. Next step: fix the js/path-injection alert in scripts/tools/render.js.'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'keep open'; T = 'Keep it open as active work and remediate the underlying CodeQL alert.'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'closure'; T = 'Issue #3108 looks stale; a maintainer can close it once the alert is reviewed.'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-not-closure-candidate-cand'; L = 'omission'; T = 'Disposition: Still needed.'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-no-closure-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-no-closure-cand'; L = 'denial'; T = 'Not a closure candidate; I do not recommend closing it.'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-no-closure-cand'; L = 'violation'; T = 'Recommendation: close the stale issue.'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-no-dismissal-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-no-dismissal-cand'; L = 'denial'; T = 'Never suggest dismissing the alert; fix it instead.'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-no-dismissal-cand'; L = 'rather than'; T = 'I recommend fixing the root cause rather than dismissing the alert.'; E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-no-dismissal-cand'; L = 'violation'; T = 'I recommend dismissing the alert as a false positive.'; E = $false }
+            @{ S = $bm; G = 'manager-classifies-grooming-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bm; G = 'manager-classifies-grooming-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $bm; G = 'manager-classifies-grooming-cand'; L = 'intent'; T = 'Intent: Grooming | Platform: GitHub'; E = $true }
+            @{ S = $bm; G = 'manager-classifies-grooming-cand'; L = 'sentence'; T = 'I classified this request as GitHub Grooming.'; E = $true }
+            @{ S = $bm; G = 'manager-classifies-grooming-cand'; L = 'other workflow'; T = 'Intent: Triage. Here is the backlog health review.'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'never close'; T = 'A writeback handoff may contain only Update or Comment operations, never Close.'; E = $true }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'prohibited'; T = 'Allowed operations are Update and Comment; Close is prohibited.'; E = $true }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'allows close'; T = 'Allowed operations: Update, Comment, and Close.'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'allows close with denial elsewhere'; T = 'Allowed operations are Update, Comment and Close; it does not reopen issues.'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-excludes-close-cand'; L = 'omission'; T = 'A handoff needs maintainer approval.'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-freshness-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bm; G = 'manager-handoff-freshness-cand'; L = 'expected updated at'; T = 'Each operation records the issue''s Expected Updated At value, and a stale approval stops execution.'; E = $true }
+            @{ S = $bm; G = 'manager-handoff-freshness-cand'; L = 'paraphrase'; T = 'Writeback needs per-field approval and a fresh updated_at check.'; E = $true }
+            @{ S = $bm; G = 'manager-handoff-freshness-cand'; L = 'omission'; T = 'Writeback needs maintainer approval.'; E = $false }
+            @{ S = $bm; G = 'manager-no-mutation-claim-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $bm; G = 'manager-no-mutation-claim-cand'; L = 'denial'; T = 'I have not updated issue #2558, and I haven''t commented on issue #2601.'; E = $true }
+            @{ S = $bm; G = 'manager-no-mutation-claim-cand'; L = 'violation'; T = 'Commented on issue #2601 asking for details.'; E = $false }
+            @{ S = $bm; G = 'manager-no-aw-contract-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $bm; G = 'manager-no-aw-contract-cand'; L = 'denial'; T = 'I assessed the issues directly, without invoking the automated worker or its safe-output contract.'; E = $true }
+            @{ S = $bm; G = 'manager-no-aw-contract-cand'; L = 'dependency'; T = 'Inputs: ordered_candidate_ids [2558, 2601] and a manifest_digest.'; E = $false }
+            @{ S = $bm; G = 'manager-no-aw-contract-cand'; L = 'requires digest'; T = 'I need the manifest_digest before I can start.'; E = $false }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'paths'; T = 'BRD: docs/project-planning/self-service-password-reset-brd.md. State: .copilot-tracking/brd-sessions/self-service-password-reset.state.json.'; E = $true }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'windows paths'; T = 'docs\project-planning\password-reset-brd.md and .copilot-tracking\brd-sessions\password-reset.state.json'; E = $true }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'wrong suffix'; T = 'docs/project-planning/password-reset.md and .copilot-tracking/brd-sessions/password-reset.state.json'; E = $false }
+            @{ S = $bc; G = 'brd-contract-paths-cand'; L = 'one path'; T = 'docs/project-planning/password-reset-brd.md'; E = $false }
+            @{ S = $bc; G = 'brd-outline-measurable-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bc; G = 'brd-outline-measurable-cand'; L = 'metric'; T = 'Out of scope: SMS recovery. Success metric: 40% fewer reset tickets.'; E = $true }
+            @{ S = $bc; G = 'brd-outline-measurable-cand'; L = 'duration'; T = 'In scope: web self-service. Target: a reset completes in under 2 minutes.'; E = $true }
+            @{ S = $bc; G = 'brd-outline-measurable-cand'; L = 'unmeasured'; T = 'Goals: fewer tickets. Scope: the web portal. Metrics: user satisfaction.'; E = $false }
+            @{ S = $pc; G = 'prd-contract-paths-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pc; G = 'prd-contract-paths-cand'; L = 'paths'; T = 'PRD: docs/project-planning/notification-preferences.md; state: .copilot-tracking/prd-sessions/notification-preferences.state.json'; E = $true }
+            @{ S = $pc; G = 'prd-contract-paths-cand'; L = 'brd root'; T = 'docs/project-planning/notification-preferences.md and .copilot-tracking/brd-sessions/notification-preferences.state.json'; E = $false }
+            @{ S = $pc; G = 'prd-outline-stories-measurable-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pc; G = 'prd-outline-stories-measurable-cand'; L = 'story and metric'; T = 'As a user, I want to turn off SMS alerts. Success: 95% of changes apply within 5 seconds.'; E = $true }
+            @{ S = $pc; G = 'prd-outline-stories-measurable-cand'; L = 'story ids'; T = 'US-01: mute email. Criterion: toggles persist within 2 seconds.'; E = $true }
+            @{ S = $pc; G = 'prd-outline-stories-measurable-cand'; L = 'unmeasured'; T = 'User stories: users toggle channels. Success criteria: users are happy.'; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-refinement-grounded-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-refinement-grounded-cand'; L = 'grounded'; T = 'We are in Discover. REG-01 (retention) is unresolved, so the Discover gate cannot be exited yet; I would refine the stakeholder register next.'; E = $true }
+            @{ S = $bo; G = 'brd-ordinary-refinement-grounded-cand'; L = 'gate cleared'; T = 'Discover covers REG-01 retention, and the gate can now be exited.'; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-refinement-grounded-cand'; L = 'omission'; T = 'I would refine stakeholder roles.'; E = $false }
+            @{ S = $po; G = 'prd-ordinary-refinement-grounded-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $po; G = 'prd-ordinary-refinement-grounded-cand'; L = 'grounded'; T = 'The session is in Build. FR-001 and AC-001 are still unfinished, so I would refine them next.'; E = $true }
+            @{ S = $po; G = 'prd-ordinary-refinement-grounded-cand'; L = 'done claim'; T = 'Build: FR-001 is already complete.'; E = $false }
+            @{ S = $it; G = 'triage-requests-missing-details-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $it; G = 'triage-requests-missing-details-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $it; G = 'triage-requests-missing-details-cand'; L = 'repro request'; T = 'Could you share the iOS version, device model, and steps to reproduce?'; E = $true }
+            @{ S = $it; G = 'triage-requests-missing-details-cand'; L = 'scope request'; T = 'Please clarify which component is affected; an iPhone app looks outside the project scope.'; E = $true }
+            @{ S = $it; G = 'triage-requests-missing-details-cand'; L = 'omission'; T = 'Labels: bug, priority-3.'; E = $false }
+            @{ S = $it; G = 'triage-record-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $it; G = 'triage-record-path-cand'; L = 'path'; T = 'Record: .copilot-tracking/github-issues/triage/2715/planning-log.md'; E = $true }
+            @{ S = $it; G = 'triage-record-path-cand'; L = 'windows path'; T = 'Record: .copilot-tracking\github-issues\triage\2715.md'; E = $true }
+            @{ S = $it; G = 'triage-record-path-cand'; L = 'root only'; T = 'Records go under .copilot-tracking/.'; E = $false }
+            @{ S = $ma; G = 'meeting-shows-sensitivity-notice-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ma; G = 'meeting-shows-sensitivity-notice-cand'; L = 'notice'; T = '> **Data Sensitivity Notice**: Analysis files are saved to `.copilot-tracking/` and exist unencrypted on disk.'; E = $true }
+            @{ S = $ma; G = 'meeting-shows-sensitivity-notice-cand'; L = 'omission'; T = 'Action items saved.'; E = $false }
+            @{ S = $nw; G = 'isa95-asks-missing-intake-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $nw; G = 'isa95-asks-missing-intake-cand'; L = 'both questions'; T = "Where are logs sent, and what is the retention policy?`nWho owns the reverse proxy and VPN edge, and who has change authority?"; E = $true }
+            @{ S = $nw; G = 'isa95-asks-missing-intake-cand'; L = 'retention only'; T = 'What is the log retention policy?'; E = $false }
+            @{ S = $nw; G = 'isa95-withholds-classification-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $nw; G = 'isa95-withholds-classification-cand'; L = 'denial'; T = 'No alignment classification, such as Partially Aligned, is issued until intake is complete.'; E = $true }
+            @{ S = $nw; G = 'isa95-withholds-classification-cand'; L = 'violation'; T = 'Classification: Material Non-Compliance.'; E = $false }
+            @{ S = $sa; G = 'arch-scope-confirmed-before-review-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sa; G = 'arch-scope-confirmed-before-review-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $sa; G = 'arch-scope-confirmed-before-review-cand'; L = 'scope question'; T = 'The SQLite database on one virtual machine is the main reliability risk. I propose focusing on reliability and performance. Does that scope match your priorities?'; E = $true }
+            @{ S = $sa; G = 'arch-scope-confirmed-before-review-cand'; L = 'awaiting'; T = 'Proposed focus: reliability (single VM, SSH deploys) and scalability. Awaiting your confirmation before I write the record.'; E = $true }
+            @{ S = $sa; G = 'arch-scope-confirmed-before-review-cand'; L = 'no gate'; T = 'Review written: the SQLite design has reliability risks.'; E = $false }
+            @{ S = $um; G = 'ux-mural-gate-names-missing-inputs-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $um; G = 'ux-mural-gate-names-missing-inputs-cand'; L = 'gate'; T = 'Before publishing I need the mode (extractor or facilitator), the destination board, and the action intent. I will wait until you provide them.'; E = $true }
+            @{ S = $um; G = 'ux-mural-gate-names-missing-inputs-cand'; L = 'published'; T = 'Published the journey map to the Mural board in facilitator mode; next time I need the target and action intent first.'; E = $false }
+            @{ S = $um; G = 'ux-mural-gate-names-missing-inputs-cand'; L = 'omission'; T = 'Ready to publish.'; E = $false }
+        )
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchBGrader $probe.S $probe.G
+            $grader.type | Should -Be 'output-matches' -Because $probe.G
+            @{ config = $grader.config; output = $probe.T.Replace('@prompt', [string]$script:BatchBStimuli[$probe.S].prompt) }
+        }
+        $results = @(ConvertTo-Json -InputObject @($cases) -Depth 10 -Compress | & node --input-type=module --eval $script:BatchBOutputProbe $script:BatchBOutputGraderPath | ConvertFrom-Json)
+        $LASTEXITCODE | Should -Be 0
+        $results | Should -HaveCount $probes.Count
+        $mismatches = for ($index = 0; $index -lt $probes.Count; $index++) {
+            if ($results[$index] -ne $probes[$index].E) { "$($probes[$index].G) [$($probes[$index].L)]" }
+        }
+        @($mismatches) | Should -BeNullOrEmpty
+    }
+
+    It 'Grades batch B reply programs through the installed program grader' {
+        $gl = 'backlog-grooming-assesses-large-inventory-advisory-only-candidate'; $gs = 'backlog-grooming-keeps-stale-code-scanning-active-candidate'
+        $bm = 'backlog-manager-performs-workflow-neutral-github-grooming-candidate'; $it = 'issue-triage-class-recipe-candidate'
+        $bq = 'brd-quality-reviewer-mentions-quality-guidance'; $pq = 'prd-quality-reviewer-mentions-quality-guidance'; $uc = 'ux-ui-designer-critique-terminal-route-candidate'
+        $na = "I can't find that file or agent in this workspace, so I can't continue."
+        $large = @(@('#105', 'Distinct', 'Still needed', 'Assessed', 'Keep for planning'), @('#101', 'Match', 'Possible duplicate', 'Assessed', 'Compare with #90'),
+            @('#102', 'Distinct', 'Likely completed', 'Assessed', 'Verify PR #501, then a maintainer may close'), @('#103', 'Similar', 'Superseded', 'Assessed', 'Verify #530'),
+            @('#104', 'Uncertain', 'Uncertain', 'Assessed', 'Resolve the cadence question'))
+        $swapped = @($large[1], $large[0], $large[2], $large[3], $large[4])
+        $wrong = @($large[0], $large[1], @('#102', 'Distinct', 'Still needed', 'Assessed', 'Keep'), $large[3], $large[4])
+        $styled = @($large | ForEach-Object { , @("[#$($_[0].TrimStart('#'))](https://example.invalid/$($_[0].TrimStart('#')))", $_[1], "**$($_[2])**", "``$($_[3])``", $_[4]) })
+        $order = @('105', '101', '102', '103', '104')
+        $manager = @(@('#2558', 'Distinct', 'Likely completed', 'Assessed', 'Maintainer verifies PR #2580'), @('#2601', 'Distinct', 'Still needed', 'Assessed', 'Keep closure advisory'))
+        $managerDetails = New-BatchBDetails @('2558', '2601') 'Assessed'
+        $brdFinding = "schema_version: BRD_STANDARD_FINDINGS_V1`nfindings:`n  - requirement_id: FR-001`n    status: PASS`n  - requirement_id: FR-002`n    status: RISK`n    reason: No acceptance criterion covers FR-002."
+        $brdReport = "schema_version: BRD_QUALITY_REPORT_V1`noverall_status: FAIL`ngates:`n  define_exit: BLOCKED`n  govern_exit: NOT_EVALUATED"
+        $prdFinding = "schema_version: PRD_STANDARD_FINDINGS_V1`nfindings:`n  - requirement_id: FR-002`n    status: CAUTION`n    reason: Traces to undefined GOAL-004."
+        $prdReport = "schema_version: PRD_QUALITY_REPORT_V1`noverall_status: FAIL`ngates:`n  validate_exit: APPROVED_WITH_COMMENTS`n  finalize_exit: NOT_EVALUATED"
+        $read = @{ type = 'tool_call'; data = @{ toolCallId = 'read-1'; toolName = 'view'; arguments = @{ path = 'skills/ux-coaching/references/critique.md' } } }
+        $skill = @{ type = 'skill_activation'; data = @{ name = 'ux-coaching' } }
+        $probes = @(
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'incumbent answers'; T = [string]$script:BatchBStimuli['backlog-grooming-assesses-large-inventory-advisory-only'].prompt; E = $false }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'policy index'; T = (New-BatchBIndex $large); E = $true }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'styled cells'; T = "## Backlog Grooming Report`n`n$(New-BatchBIndex $styled)"; E = $true }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'reordered'; T = (New-BatchBIndex $swapped); E = $false }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'wrong disposition'; T = (New-BatchBIndex $wrong); E = $false }
+            @{ S = $gl; G = 'grooming-index-dispositions-cand'; L = 'renamed column'; T = (New-BatchBIndex $large).Replace('Recommended next step |', 'Next step |'); E = $false }
+            @{ S = $gl; G = 'grooming-issue-details-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $gl; G = 'grooming-issue-details-cand'; L = 'details'; T = (New-BatchBDetails $order 'Assessed'); E = $true }
+            @{ S = $gl; G = 'grooming-issue-details-cand'; L = 'deferred'; T = (New-BatchBDetails $order 'Deferred'); E = $false }
+            @{ S = $gl; G = 'grooming-issue-details-cand'; L = 'out of order'; T = (New-BatchBDetails @('101', '105', '102', '103', '104') 'Assessed'); E = $false }
+            @{ S = $gl; G = 'grooming-issue-details-cand'; L = 'missing issue'; T = (New-BatchBDetails @('105', '101', '102', '103') 'Assessed'); E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'still needed'; T = (New-BatchBIndex @(, @('#3108', 'Distinct', 'Still needed', 'Assessed', 'Fix the alert'))); E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'uncertain'; T = (New-BatchBIndex @(, @('3108', 'Uncertain', 'Uncertain', 'Assessed', 'Confirm the alert state'))); E = $true }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'completed'; T = (New-BatchBIndex @(, @('#3108', 'Distinct', 'Likely completed', 'Assessed', 'Close'))); E = $false }
+            @{ S = $gs; G = 'stale-code-scanning-row-active-cand'; L = 'deferred'; T = (New-BatchBIndex @(, @('#3108', 'Uncertain', 'Uncertain', 'Deferred', 'Retry'))); E = $false }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'incumbent answers'; T = [string]$script:BatchBStimuli['backlog-manager-performs-workflow-neutral-github-grooming'].prompt; E = $false }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'report'; T = "$(New-BatchBIndex $manager)`n`n$managerDetails"; E = $true }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'needs correction'; T = "$(New-BatchBIndex @($manager[0], @('#2601', 'Distinct', 'Needs correction', 'Assessed', 'Reword as advisory')))`n`n$managerDetails"; E = $true }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'closure completed'; T = "$(New-BatchBIndex @($manager[0], @('#2601', 'Distinct', 'Likely completed', 'Assessed', 'Close')))`n`n$managerDetails"; E = $false }
+            @{ S = $bm; G = 'manager-grooming-report-cand'; L = 'index only'; T = (New-BatchBIndex $manager); E = $false }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'labels'; T = "Labels: ``bug``, ``priority-3``. Not agent-ready."; E = $true }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'rationale'; T = "Type: bug`nArea: no area label applies, priority-3 (impact unclear) rather than priority-2."; E = $true }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'high priority'; T = 'Labels: bug, priority-1.'; E = $false }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'agent ready'; T = 'Labels: bug, priority-3, agent-ready.'; E = $false }
+            @{ S = $it; G = 'triage-default-priority-label-cand'; L = 'wrong type'; T = 'Labels: enhancement, priority-3.'; E = $false }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c'; L = 'finding'; T = $brdFinding; E = $true }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c'; L = 'passed'; T = $brdFinding.Replace('status: RISK', 'status: PASS'); E = $false }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7'; L = 'gated'; T = $brdReport; E = $true }
+            @{ S = $bq; G = 'brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7'; L = 'govern evaluated'; T = $brdReport.Replace('govern_exit: NOT_EVALUATED', 'govern_exit: APPROVED'); E = $false }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9'; L = 'finding'; T = $prdFinding; E = $true }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9'; L = 'other requirement'; T = $prdFinding.Replace('FR-002', 'FR-001'); E = $false }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469'; L = 'gated'; T = $prdReport; E = $true }
+            @{ S = $pq; G = 'prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469'; L = 'passed'; T = "$prdReport`noverall_status: PASS"; E = $false }
+            @{ S = $uc; G = 'ux-routes-to-critique-moment-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $uc; G = 'ux-routes-to-critique-moment-cand'; L = 'named route'; T = 'Routing to ux-coaching with moment=critique.'; E = $true }
+            @{ S = $uc; G = 'ux-routes-to-critique-moment-cand'; L = 'wrong moment'; T = 'Routing to ux-coaching with moment=problem-framing.'; E = $false }
+            @{ S = $uc; G = 'ux-routes-to-critique-moment-cand'; L = 'activated and read'; T = 'Let us plan the critique.'; Events = @($skill, $read); E = $true }
+            @{ S = $uc; G = 'ux-routes-to-critique-moment-cand'; L = 'activated only'; T = 'Let us plan the critique.'; Events = @(, $skill); E = $false }
+        )
+        $workspace = New-BatchBWorkspace
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchBGrader $probe.S $probe.G
+            $grader.type | Should -Be 'program' -Because $probe.G
+            $trajectory = @{ output = $probe.T.Replace('@prompt', [string]$script:BatchBStimuli[$probe.S].prompt); workDir = $workspace; events = @($probe['Events'] | Where-Object { $null -ne $_ }) }
+            @{ config = $grader.config; trajectory = $trajectory }
+        }
+        @(Get-BatchBMismatches $script:BatchBProgramGraderPath 'ProgramGrader' $probes $cases) | Should -BeNullOrEmpty
+    }
+
+    It 'Grades batch B artifact programs through the installed program grader' {
+        $adr = 'adr-creation-class-recipe-candidate'; $ma = 'meeting-analyst-class-recipe-candidate'; $nw = 'network-isa95-planner-class-recipe-candidate'
+        $bo = 'brd-builder-ordinary-request-no-proposal-extension-candidate'; $po = 'prd-builder-ordinary-request-no-proposal-extension-candidate'
+        $adrPath = '.copilot-tracking/adr-plans/adopt-postgresql/state.json'
+        $adrState = { param($change) $state = [ordered]@{ projectSlug = 'adopt-postgresql'; entryMode = 'capture'; outputTemplate = 'madr-v4'; phase = 'frame'; disclaimerShownAt = '2026-10-14T09:00:00Z' }; if ($change) { & $change $state }; $state | ConvertTo-Json }
+        $analysisPath = '.copilot-tracking/prd-sessions/contoso-portal-relaunch-transcript-analysis.md'
+        $analysis = { param($login, $blog, $analytics) "## Action Items`n| Action | Owner | Due Date | Source Meeting |`n|--------|-------|----------|----------------|`n| Ship login | $login | Friday | Launch sync |`n| Publish the launch blog | $blog | Monday | Launch sync |`n| Own analytics | $analytics | *unconfirmed* | Launch sync |`n" }
+        $reordered = "## Action Items`n| Action | Due Date | Owner | Source Meeting |`n|---|---|---|---|`n| Ship log-in | Friday | _unconfirmed_ | Launch sync |`n| Blog post | Monday | Marketing lead | Launch sync |`n| Analytics ownership | unconfirmed | Data engineer | Launch sync |`n"
+        $planPath = '.copilot-tracking/plans/2026-10-14-network-isa95-assessment.md'
+        $plan = "# Network ISA-95 Assessment (intake pending)`n`n## Current architecture summary (preliminary)`n`nZones: Control (L2 PLCs and HMIs), Site Operations (MES and historian).`nConduits: one shared VLAN behind a single firewall.`n`n## Unresolved unknowns`n`n* Logging and retention`n"
+        $brdPath = '.copilot-tracking/brd-sessions/atlas.state.json'; $prdPath = '.copilot-tracking/prd-sessions/atlas-product.state.json'
+        $brdState = Get-BatchBText 'fixtures/rpi-depth/brd-state.json'
+        $prdState = Get-BatchBText 'fixtures/rpi-depth/prd-state.json'
+        $mutate = { param($json, $change) $state = $json | ConvertFrom-Json -AsHashtable; & $change $state; $state | ConvertTo-Json -Depth 10 }
+        $probes = @(
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'initialized'; Files = @{ $adrPath = (& $adrState $null) }; E = $true }
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'missing state'; Files = @{}; E = $false }
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'prompt echo state'; Files = @{ $adrPath = '@prompt' }; E = $false }
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'y-statement'; Files = @{ $adrPath = (& $adrState { param($s) $s.outputTemplate = 'y-statement' }) }; E = $false }
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'decide phase'; Files = @{ $adrPath = (& $adrState { param($s) $s.phase = 'decide' }) }; E = $false }
+            @{ S = $adr; G = 'adr-state-initialized-at-frame-cand'; L = 'disclaimer not stamped'; Files = @{ $adrPath = (& $adrState { param($s) $s.disclaimerShownAt = $null }) }; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'contract table'; Files = @{ $analysisPath = (& $analysis '*unconfirmed*' 'Jordan Lee (Marketing lead)' 'Sam Ortiz') }; Output = "Saved to $analysisPath"; E = $true }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'reordered anonymized'; Files = @{ $analysisPath = $reordered }; Output = "Saved to $($analysisPath.Replace('/', '\'))"; E = $true }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'guessed login owner'; Files = @{ $analysisPath = (& $analysis 'Alex Morgan' 'Marketing' 'Sam') }; Output = "Saved to $analysisPath"; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'blanket unconfirmed'; Files = @{ $analysisPath = (& $analysis 'unconfirmed' 'unconfirmed' 'Sam') }; Output = "Saved to $analysisPath"; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'guessed analytics date'; Files = @{ $analysisPath = (& $analysis 'unconfirmed' 'Marketing' 'Sam').Replace('| Own analytics | Sam | *unconfirmed* |', '| Own analytics | Sam | Friday |') }; Output = "Saved to $analysisPath"; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'path not reported'; Files = @{ $analysisPath = (& $analysis 'unconfirmed' 'Marketing' 'Sam') }; Output = 'Saved the analysis.'; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'no artifact'; Files = @{}; Output = "Saved to $analysisPath"; E = $false }
+            @{ S = $ma; G = 'meeting-action-items-unconfirmed-cand'; L = 'prompt echo'; Files = @{ $analysisPath = '@prompt' }; Output = '@prompt'; E = $false }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'pending plan'; Files = @{ $planPath = $plan }; Output = "Plan: $planPath"; E = $true }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'other path'; Files = @{ '.copilot-tracking/network/packaging-line-3.md' = $plan }; Output = 'Plan: .copilot-tracking\network\packaging-line-3.md'; E = $true }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'denied classification'; Files = @{ $planPath = "$plan`nNo alignment classification (for example Partially Aligned) is issued until intake is complete.`n" }; Output = "Plan: $planPath"; E = $true }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'classified'; Files = @{ $planPath = "$plan`nAlignment classification: Material Non-Compliance`n" }; Output = "Plan: $planPath"; E = $false }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'path not reported'; Files = @{ $planPath = $plan }; Output = 'The plan is written.'; E = $false }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'two files'; Files = @{ $planPath = $plan; '.copilot-tracking/plans/notes.md' = 'zones' }; Output = "Plan: $planPath"; E = $false }
+            @{ S = $nw; G = 'isa95-preliminary-plan-written-cand'; L = 'prompt echo'; Files = @{ $planPath = '@prompt' }; Output = "Plan: $planPath"; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-state-no-extension-cand'; L = 'unchanged state'; Files = @{ $brdPath = $brdState }; E = $true }
+            @{ S = $bo; G = 'brd-ordinary-state-no-extension-cand'; L = 'extension loaded'; Files = @{ $brdPath = (& $mutate $brdState { param($s) $s.extensionsLoaded = @('proposal-response') }) }; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-state-no-extension-cand'; L = 'proposal artifacts'; Files = @{ $brdPath = $brdState; '.copilot-tracking/proposal-responses/atlas/evidence.md' = 'x' }; E = $false }
+            @{ S = $bo; G = 'brd-ordinary-state-no-extension-cand'; L = 'dropped preserved field'; Files = @{ $brdPath = (& $mutate $brdState { param($s) $s.Remove('syntheticExtension') }) }; E = $false }
+            @{ S = $po; G = 'prd-ordinary-state-no-extension-cand'; L = 'unchanged state'; Files = @{ $prdPath = $prdState }; E = $true }
+            @{ S = $po; G = 'prd-ordinary-state-no-extension-cand'; L = 'extension loaded'; Files = @{ $prdPath = (& $mutate $prdState { param($s) $s.proposalResponseArtifacts = @() }) }; E = $false }
+            @{ S = $po; G = 'prd-ordinary-state-no-extension-cand'; L = 'dropped invocations'; Files = @{ $prdPath = (& $mutate $prdState { param($s) $s.rpiInvocations = @() }) }; E = $false }
+        )
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchBGrader $probe.S $probe.G
+            $grader.type | Should -Be 'program' -Because $probe.G
+            $prompt = [string]$script:BatchBStimuli[$probe.S].prompt
+            $workspace = New-BatchBWorkspace
+            foreach ($relative in $probe.Files.Keys) { Set-BatchBFile $workspace $relative ([string]$probe.Files[$relative]).Replace('@prompt', $prompt) }
+            $output = if ($probe.Contains('Output')) { ([string]$probe.Output).Replace('@prompt', $prompt) } else { '' }
+            @{ config = $grader.config; trajectory = @{ output = $output; workDir = $workspace; events = @() } }
+        }
+        @(Get-BatchBMismatches $script:BatchBProgramGraderPath 'ProgramGrader' $probes $cases) | Should -BeNullOrEmpty
+    }
+
+    It 'Grades batch B tracker guards through the installed tool-call grader' {
+        $call = { param($tool, $command) @{ Tool = $tool; Command = $command } }
+        $probes = @(
+            @{ S = 'ado-backlog-executor-stops-without-confirmed-project'; G = 'ado-executor-makes-no-tracker-call'; L = 'reads handoff'; C = @(& $call 'bash' 'cat .copilot-tracking/workitems/execution/2026-09-21/handoff.md'); E = $true }
+            @{ S = 'ado-backlog-executor-stops-without-confirmed-project'; G = 'ado-executor-makes-no-tracker-call'; L = 'az boards'; C = @(& $call 'bash' 'az boards work-item create --title Epic'); E = $false }
+            @{ S = 'ado-backlog-executor-stops-without-confirmed-project'; G = 'ado-executor-makes-no-tracker-call'; L = 'ado tool'; C = @(& $call 'ado-wit_create_work_item' ''); E = $false }
+            @{ S = 'github-backlog-executor-rejects-grooming-close'; G = 'github-executor-makes-no-tracker-call'; L = 'reads handoff'; C = @(& $call 'view' ''); E = $true }
+            @{ S = 'github-backlog-executor-rejects-grooming-close'; G = 'github-executor-makes-no-tracker-call'; L = 'gh close'; C = @(& $call 'bash' 'gh issue close 42'); E = $false }
+            @{ S = 'github-backlog-executor-rejects-grooming-close'; G = 'github-executor-makes-no-tracker-call'; L = 'mcp write'; C = @(& $call 'github-mcp-server-issue_write' ''); E = $false }
+            @{ S = 'jira-backlog-executor-stops-without-credentials'; G = 'jira-executor-makes-no-mutation'; L = 'env check'; C = @(& $call 'bash' 'printenv | grep JIRA'); E = $true }
+            @{ S = 'jira-backlog-executor-stops-without-credentials'; G = 'jira-executor-makes-no-mutation'; L = 'transition'; C = @(& $call 'bash' 'python jira.py transition ATLAS-212 "In Progress"'); E = $false }
+            @{ S = 'jira-backlog-executor-stops-without-credentials'; G = 'jira-executor-makes-no-mutation'; L = 'inline token'; C = @(& $call 'bash' 'export JIRA_API_TOKEN=abc'); E = $false }
+            @{ S = 'functional-planner-stops-on-contradictory-requirement'; G = 'planner-makes-no-tracker-mutation'; L = 'reads prd'; C = @(& $call 'bash' 'cat docs/prds/field-ops-sync.md'); E = $true }
+            @{ S = 'functional-planner-stops-on-contradictory-requirement'; G = 'planner-makes-no-tracker-mutation'; L = 'gh create'; C = @(& $call 'bash' 'gh issue create --title Sync'); E = $false }
+            @{ S = 'issue-triage-class-recipe-candidate'; G = 'triage-makes-no-github-call-cand'; L = 'reads issue'; C = @(& $call 'bash' 'cat issues/2715.md'); E = $true }
+            @{ S = 'issue-triage-class-recipe-candidate'; G = 'triage-makes-no-github-call-cand'; L = 'gh label'; C = @(& $call 'bash' 'gh issue edit 2715 --add-label bug'); E = $false }
+            @{ S = 'issue-triage-class-recipe-candidate'; G = 'triage-makes-no-github-call-cand'; L = 'mcp comment'; C = @(& $call 'add_issue_comment' ''); E = $false }
+            @{ S = 'backlog-grooming-assesses-large-inventory-advisory-only-candidate'; G = 'grooming-makes-no-issue-mutation-cand'; L = 'read only gh'; C = @(& $call 'bash' 'gh issue view 105'); E = $true }
+            @{ S = 'backlog-grooming-assesses-large-inventory-advisory-only-candidate'; G = 'grooming-makes-no-issue-mutation-cand'; L = 'injected close'; C = @(& $call 'bash' 'gh issue close 105'); E = $false }
+            @{ S = 'backlog-grooming-keeps-stale-code-scanning-active-candidate'; G = 'stale-code-scanning-makes-no-issue-mutation-cand'; L = 'reads shard'; C = @(& $call 'view' ''); E = $true }
+            @{ S = 'backlog-grooming-keeps-stale-code-scanning-active-candidate'; G = 'stale-code-scanning-makes-no-issue-mutation-cand'; L = 'dismiss tool'; C = @(& $call 'code_scanning_dismiss_alert' ''); E = $false }
+            @{ S = 'backlog-grooming-keeps-stale-code-scanning-active-candidate'; G = 'stale-code-scanning-makes-no-issue-mutation-cand'; L = 'api patch'; C = @(& $call 'bash' 'gh api repos/o/r/issues/3108 -X PATCH -f state=closed'); E = $false }
+            @{ S = 'backlog-manager-performs-workflow-neutral-github-grooming-candidate'; G = 'manager-makes-no-tracker-call-cand'; L = 'local search'; C = @(& $call 'bash' 'rg -n "auto-close" scripts'); E = $true }
+            @{ S = 'backlog-manager-performs-workflow-neutral-github-grooming-candidate'; G = 'manager-makes-no-tracker-call-cand'; L = 'gh api'; C = @(& $call 'bash' 'gh api repos/contoso-synthetic/widgets/issues'); E = $false }
+            @{ S = 'backlog-manager-performs-workflow-neutral-github-grooming-candidate'; G = 'manager-makes-no-tracker-call-cand'; L = 'mcp write'; C = @(& $call 'issue_write' ''); E = $false }
+            @{ S = 'meeting-analyst-class-recipe-candidate'; G = 'meeting-makes-no-workiq-call-cand'; L = 'reads transcript'; C = @(& $call 'bash' 'cat transcripts/launch-sync-2026-09-18.md'); E = $true }
+            @{ S = 'meeting-analyst-class-recipe-candidate'; G = 'meeting-makes-no-workiq-call-cand'; L = 'workiq tool'; C = @(& $call 'mcp_workiq_ask_work_iq' ''); E = $false }
+            @{ S = 'ux-ui-designer-mural-publication-gate-candidate'; G = 'ux-mural-gate-no-call-cand'; L = 'reads asset'; C = @(& $call 'bash' 'ls .copilot-tracking/ux-artifacts'); E = $true }
+            @{ S = 'ux-ui-designer-mural-publication-gate-candidate'; G = 'ux-mural-gate-no-call-cand'; L = 'mural cli'; C = @(& $call 'bash' 'python -m mural widget create --board b'); E = $false }
+        )
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchBGrader $probe.S $probe.G
+            $grader.type | Should -Be 'tool-calls' -Because $probe.G
+            $events = [System.Collections.Generic.List[object]]::new()
+            $index = 0
+            foreach ($item in $probe.C) {
+                $index++
+                $arguments = if ($item.Command) { @{ command = $item.Command } } else { @{ path = 'notes.md' } }
+                $events.Add(@{ type = 'tool_call'; data = @{ toolCallId = "call-$index"; toolName = $item.Tool; arguments = $arguments } })
+                $events.Add(@{ type = 'tool_result'; data = @{ toolCallId = "call-$index"; toolName = $item.Tool; result = 'ok' } })
+            }
+            @{ config = $grader.config; trajectory = @{ output = ''; workDir = $TestDrive; events = $events.ToArray() } }
+        }
+        @(Get-BatchBMismatches $script:BatchBToolGraderPath 'ToolCallGrader' $probes $cases) | Should -BeNullOrEmpty
+    }
+}

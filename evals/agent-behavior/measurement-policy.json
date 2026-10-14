@@ -15,7 +15,6 @@
     "backlog-manager-performs-workflow-neutral-github-grooming",
     "brd-builder-class-recipe",
     "brd-builder-ordinary-request-no-proposal-extension",
-    "brd-quality-reviewer-mentions-quality-guidance",
     "code-review-accessibility-lens",
     "code-review-explainer-factual",
     "code-review-functional-lens",
@@ -56,7 +55,6 @@
     "pptx-class-recipe",
     "prd-builder-class-recipe",
     "prd-builder-ordinary-request-no-proposal-extension",
-    "prd-quality-reviewer-mentions-quality-guidance",
     "privacy-planner-class-recipe",
     "privacy-reviewer-class-recipe",
     "rai-planner-class-recipe",
@@ -172,10 +170,56 @@
       "authoritative": false,
       "measurement": "legacy"
     },
+    "ado-backlog-executor-stops-without-confirmed-project": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "ado-backlog-executor",
+      "agentSource": ".github/agents/project-planning/subagents/ado-backlog-executor.agent.md",
+      "requiredSkills": [
+        "backlog-execute",
+        "backlog-management"
+      ],
+      "assertions": [
+        "ado-executor-reports-missing-project",
+        "ado-executor-makes-no-tracker-call"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/workitems/execution/2026-09-21/handoff-logs.md"
+          }
+        ]
+      }
+    },
     "adr-creation-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "adr-creation-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "adr-creation-class-recipe",
+      "agentSource": ".github/agents/project-planning/adr-creation.agent.md",
+      "requiredSkills": [
+        "adr-author"
+      ],
+      "assertions": [
+        "adr-reports-frame-tracking-path-cand",
+        "adr-state-initialized-at-frame-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/adr-plans/adopt-postgresql/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
     },
     "agentic-workflows-class-recipe": {
       "class": "base-model",
@@ -208,10 +252,48 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "backlog-grooming-assesses-large-inventory-advisory-only-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "backlog-grooming-assesses-large-inventory-advisory-only",
+      "agentSource": ".github/agents/backlog-grooming.agent.md",
+      "requiredSkills": [
+        "backlog-management"
+      ],
+      "assertions": [
+        "grooming-index-dispositions-cand",
+        "grooming-issue-details-cand",
+        "grooming-no-mutation-claim-cand",
+        "grooming-makes-no-issue-mutation-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "backlog-grooming-keeps-stale-code-scanning-active": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "backlog-grooming-keeps-stale-code-scanning-active-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "backlog-grooming-keeps-stale-code-scanning-active",
+      "agentSource": ".github/agents/backlog-grooming.agent.md",
+      "requiredSkills": [
+        "backlog-management"
+      ],
+      "assertions": [
+        "stale-code-scanning-row-active-cand",
+        "stale-code-scanning-not-closure-candidate-cand",
+        "stale-code-scanning-no-closure-cand",
+        "stale-code-scanning-no-dismissal-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "backlog-manager-frontmatter-name-and-description": {
       "class": "artifact-reference",
@@ -238,10 +320,53 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "backlog-manager-performs-workflow-neutral-github-grooming-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "backlog-manager-performs-workflow-neutral-github-grooming",
+      "agentSource": ".github/agents/project-planning/backlog-manager.agent.md",
+      "requiredSkills": [
+        "backlog-management"
+      ],
+      "assertions": [
+        "manager-classifies-grooming-cand",
+        "manager-grooming-report-cand",
+        "manager-handoff-excludes-close-cand",
+        "manager-handoff-freshness-cand",
+        "manager-makes-no-tracker-call-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/github-issues/backlog/[a-z0-9-]+/(?:issue-analysis|issues-plan|planning-log)\\.md$",
+            "max": 3
+          }
+        ]
+      }
+    },
     "brd-builder-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "brd-builder-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "brd-builder-class-recipe",
+      "agentSource": ".github/agents/project-planning/brd-builder.agent.md",
+      "requiredSkills": [
+        "requirements-author"
+      ],
+      "assertions": [
+        "brd-contract-paths-cand",
+        "brd-outline-measurable-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "brd-builder-ordinary-request-no-proposal-extension": {
       "class": "base-model",
@@ -288,10 +413,45 @@
       "authoritative": true,
       "measurement": "legacy"
     },
-    "brd-quality-reviewer-mentions-quality-guidance": {
-      "class": "base-model",
+    "brd-builder-ordinary-request-no-proposal-extension-candidate": {
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "brd-builder-ordinary-request-no-proposal-extension",
+      "agentSource": ".github/agents/project-planning/brd-builder.agent.md",
+      "requiredSkills": [
+        "requirements-author",
+        "proposal-response"
+      ],
+      "assertions": [
+        "brd-ordinary-refinement-grounded-cand",
+        "brd-ordinary-state-no-extension-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/brd-sessions/atlas.state.json"
+          }
+        ]
+      }
+    },
+    "brd-quality-reviewer-mentions-quality-guidance": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "brd-quality-reviewer-mentions-quality-guidance",
+      "agentSource": ".github/agents/project-planning/subagents/brd-quality-reviewer.agent.md",
+      "requiredSkills": [
+        "requirements-author"
+      ],
+      "assertions": [
+        "brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c",
+        "brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "code-review-accessibility-lens": {
       "class": "base-model",
@@ -1538,6 +1698,29 @@
       "authoritative": false,
       "measurement": "legacy"
     },
+    "functional-planner-stops-on-contradictory-requirement": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "functional-planner",
+      "agentSource": ".github/agents/project-planning/functional-planner.agent.md",
+      "requiredSkills": [
+        "functional-planner"
+      ],
+      "assertions": [
+        "planner-flags-contradictory-requirement",
+        "planner-makes-no-tracker-mutation"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/github-issues/prds/[^/]+/(?:planning-log|issue-analysis|issues-plan)\\.md$",
+            "max": 3
+          }
+        ]
+      }
+    },
     "github-backlog-executor-frontmatter-name-and-description": {
       "class": "artifact-reference",
       "authoritative": false,
@@ -1557,6 +1740,29 @@
       "class": "artifact-reference",
       "authoritative": false,
       "measurement": "legacy"
+    },
+    "github-backlog-executor-rejects-grooming-close": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "github-backlog-executor",
+      "agentSource": ".github/agents/project-planning/subagents/github-backlog-executor.agent.md",
+      "requiredSkills": [
+        "backlog-execute",
+        "backlog-management"
+      ],
+      "assertions": [
+        "github-executor-rejects-grooming-close",
+        "github-executor-makes-no-tracker-call"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/github-issues/execution/2026-09-21/handoff-logs.md"
+          }
+        ]
+      }
     },
     "hve-builder-review-return-only-suggestions": {
       "class": "agent-contract",
@@ -1584,6 +1790,25 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "issue-triage-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "issue-triage-class-recipe",
+      "agentSource": ".github/agents/issue-triage.agent.md",
+      "requiredSkills": [
+        "backlog-management"
+      ],
+      "assertions": [
+        "triage-default-priority-label-cand",
+        "triage-requests-missing-details-cand",
+        "triage-record-path-cand",
+        "triage-makes-no-github-call-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "issue-triage-code-scanning-alert": {
       "class": "artifact-reference",
@@ -1615,15 +1840,82 @@
       "authoritative": false,
       "measurement": "legacy"
     },
+    "jira-backlog-executor-stops-without-credentials": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "coverageGap": "jira-backlog-executor",
+      "agentSource": ".github/agents/project-planning/subagents/jira-backlog-executor.agent.md",
+      "requiredSkills": [
+        "jira",
+        "backlog-execute",
+        "backlog-management"
+      ],
+      "assertions": [
+        "jira-executor-names-missing-credential",
+        "jira-executor-makes-no-mutation"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/jira-issues/execution/2026-09-21/handoff-logs.md"
+          }
+        ]
+      }
+    },
     "meeting-analyst-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
     },
+    "meeting-analyst-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "meeting-analyst-class-recipe",
+      "agentSource": ".github/agents/project-planning/meeting-analyst.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "meeting-action-items-unconfirmed-cand",
+        "meeting-shows-sensitivity-notice-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/prd-sessions/[a-z0-9-]+-transcript(?:\\.state\\.json|-analysis\\.md)$",
+            "max": 2
+          }
+        ]
+      }
+    },
     "network-isa95-planner-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "network-isa95-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "network-isa95-planner-class-recipe",
+      "agentSource": ".github/agents/project-planning/network-isa95-planner.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "isa95-asks-missing-intake-cand",
+        "isa95-withholds-classification-cand",
+        "isa95-preliminary-plan-written-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/(?:[^/]+/)*[^/]+\\.md$",
+            "max": 1
+          }
+        ]
+      }
     },
     "outlook-drafter-approved-html-create": {
       "class": "base-model",
@@ -1665,6 +1957,23 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "prd-builder-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "prd-builder-class-recipe",
+      "agentSource": ".github/agents/project-planning/prd-builder.agent.md",
+      "requiredSkills": [
+        "requirements-author"
+      ],
+      "assertions": [
+        "prd-contract-paths-cand",
+        "prd-outline-stories-measurable-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "prd-builder-ordinary-request-no-proposal-extension": {
       "class": "base-model",
       "authoritative": true,
@@ -1695,10 +2004,45 @@
       "authoritative": true,
       "measurement": "legacy"
     },
-    "prd-quality-reviewer-mentions-quality-guidance": {
-      "class": "base-model",
+    "prd-builder-ordinary-request-no-proposal-extension-candidate": {
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "prd-builder-ordinary-request-no-proposal-extension",
+      "agentSource": ".github/agents/project-planning/prd-builder.agent.md",
+      "requiredSkills": [
+        "requirements-author",
+        "proposal-response"
+      ],
+      "assertions": [
+        "prd-ordinary-refinement-grounded-cand",
+        "prd-ordinary-state-no-extension-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/prd-sessions/atlas-product.state.json"
+          }
+        ]
+      }
+    },
+    "prd-quality-reviewer-mentions-quality-guidance": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "prd-quality-reviewer-mentions-quality-guidance",
+      "agentSource": ".github/agents/project-planning/subagents/prd-quality-reviewer.agent.md",
+      "requiredSkills": [
+        "requirements-author"
+      ],
+      "assertions": [
+        "prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9",
+        "prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "privacy-planner-class-recipe": {
       "class": "base-model",
@@ -2037,6 +2381,22 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "system-architecture-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "system-architecture-reviewer-class-recipe",
+      "agentSource": ".github/agents/project-planning/system-architecture-reviewer.agent.md",
+      "requiredSkills": [
+        "architecture-review"
+      ],
+      "assertions": [
+        "arch-scope-confirmed-before-review-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "ux-ui-designer-problem-framing-route": {
       "class": "agent-contract",
       "authoritative": true,
@@ -2101,6 +2461,46 @@
       "class": "agent-contract",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "ux-ui-designer-critique-terminal-route-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "ux-ui-designer-critique-terminal-route",
+      "agentSource": ".github/agents/project-planning/ux-ui-designer.agent.md",
+      "requiredSkills": [
+        "ux-coaching"
+      ],
+      "assertions": [
+        "ux-routes-to-critique-moment-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/ux-coaching/settings-redesign/[^/]+\\.(?:ya?ml|md)$",
+            "max": 2
+          }
+        ]
+      }
+    },
+    "ux-ui-designer-mural-publication-gate-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "ux-ui-designer-mural-publication-gate",
+      "agentSource": ".github/agents/project-planning/ux-ui-designer.agent.md",
+      "requiredSkills": [
+        "ux-artifacts",
+        "mural"
+      ],
+      "assertions": [
+        "ux-mural-gate-names-missing-inputs-cand",
+        "ux-mural-gate-no-call-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "vally-test-author-advisory-and-routing": {
       "class": "artifact-reference",
