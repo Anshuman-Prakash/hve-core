@@ -53,7 +53,7 @@
     "reasoning-effort": {
       "type": "string",
       "enum": ["low", "medium", "high", "xhigh", "max"],
-      "description": "Reasoning effort for this agent's model. Set max on subagent-only agents whose work is research, planning, or review; omit it otherwise so the model or session default applies. The Copilot harness and Copilot CLI apply it; VS Code's Local harness ignores it."
+      "description": "Reasoning effort for this agent's model. Omit it to let a per-call value from the dispatcher, the session, or the model default apply. The Copilot harness and Copilot CLI apply it; VS Code's Local harness ignores it."
     },
     "target": {
       "type": "string",
