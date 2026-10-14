@@ -32,20 +32,6 @@
     "council-critic-independent-evidence-review",
     "council-critic-untrusted-path-confinement",
     "cve-analyzer-assesses-single-cve-reachability",
-    "data-science-engineering-coach-initialize-and-select",
-    "data-science-engineering-coach-transition-detour",
-    "data-science-engineering-coach-pause-complete-resume",
-    "data-science-engineering-coach-continuous-restore",
-    "data-science-engineering-coach-reconstruct-state",
-    "data-science-engineering-coach-problem-framing-missing-outcome",
-    "data-science-engineering-coach-problem-framing-unresolved-axis",
-    "data-science-engineering-coach-durable-write-scan",
-    "data-science-engineering-coach-analysis-skill-primary",
-    "data-science-engineering-coach-evaluation-job-routing",
-    "data-science-engineering-coach-evaluation-job-persists",
-    "data-science-engineering-coach-refuses-embedded-gate-waiver",
-    "data-science-engineering-coach-transition-plain-language",
-    "data-science-engineering-coach-blocked-write-recovery",
     "dependency-reviewer-class-recipe",
     "documentation-audit-class-recipe",
     "documentation-drift-class-recipe",
@@ -471,59 +457,194 @@
       "measurement": "legacy"
     },
     "data-science-engineering-coach-initialize-and-select": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-initialize-and-select",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation"
+      ],
+      "assertions": [
+        "state-path-and-disclaimer",
+        "explicit-job-choice",
+        "no-silent-default"
+      ]
     },
     "data-science-engineering-coach-transition-detour": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-transition-detour",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "feasibility",
+        "data-catalog"
+      ],
+      "assertions": [
+        "confirmed-transition",
+        "bounded-disposition-and-log",
+        "destination-context"
+      ]
     },
     "data-science-engineering-coach-pause-complete-resume": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-pause-complete-resume",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "feasibility",
+        "analysis-authoring"
+      ],
+      "assertions": [
+        "bounded-and-episodic-state",
+        "no-reentry-or-repeat",
+        "user-selected-next-action"
+      ]
     },
     "data-science-engineering-coach-continuous-restore": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-continuous-restore",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "feasibility"
+      ],
+      "assertions": [
+        "continuous-and-paused-restoration",
+        "announce-before-question"
+      ]
     },
     "data-science-engineering-coach-reconstruct-state": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-reconstruct-state",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "feasibility"
+      ],
+      "assertions": [
+        "evidence-and-uncertainty",
+        "confirmation-before-replace",
+        "yaml-not-planner-json"
+      ]
     },
     "data-science-engineering-coach-problem-framing-missing-outcome": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-problem-framing-missing-outcome",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "experiment-design"
+      ],
+      "assertions": [
+        "data-science-engineering-coach-problem-framing-miss-35836e87",
+        "assigns-outcome-definition-gap",
+        "data-science-engineering-coach-problem-framing-miss-f89200c4",
+        "performs-no-candidate-analysis",
+        "completes-rather-than-discarding",
+        "missing-outcome-does-not-become-an-experiment",
+        "data-science-engineering-coach-problem-framing-miss-dd64f6da"
+      ]
     },
     "data-science-engineering-coach-problem-framing-unresolved-axis": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-problem-framing-unresolved-axis",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "experiment-design"
+      ],
+      "assertions": [
+        "data-science-engineering-coach-problem-framing-unre-fa40416c",
+        "marks-unknown-and-continues",
+        "data-science-engineering-coach-problem-framing-unre-303a9bf2",
+        "candidates-carry-grounded-and-original-labels",
+        "no-candidate-selected",
+        "completes-episodically",
+        "data-science-engineering-coach-problem-framing-unre-cbad74c1"
+      ]
     },
     "data-science-engineering-coach-durable-write-scan": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-durable-write-scan",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "adr-author"
+      ],
+      "assertions": [
+        "data-scan-before-write",
+        "high-block-warn-review",
+        "unavailable-blocks-write"
+      ]
     },
     "data-science-engineering-coach-analysis-skill-primary": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-analysis-skill-primary",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "analysis-authoring",
+        "data-catalog",
+        "dataops"
+      ],
+      "assertions": [
+        "analysis-routes-to-authoring-skill",
+        "adjacent-authority-preserved",
+        "no-retired-specialist"
+      ]
     },
     "data-science-engineering-coach-evaluation-job-routing": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-evaluation-job-routing",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "evaluation-design",
+        "ml-experimentation"
+      ],
+      "assertions": [
+        "evaluation-routes-to-design-skill",
+        "trained-model-boundary",
+        "interview-before-generation"
+      ]
     },
     "data-science-engineering-coach-evaluation-job-persists": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-evaluation-job-persists",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "evaluation-design"
+      ],
+      "assertions": [
+        "evaluation-slot-persisted",
+        "registry-schema-parity",
+        "mismatch-stops-not-drops"
+      ]
     },
     "data-science-engineering-coach-evaluator-research": {
       "class": "agent-contract",
@@ -536,24 +657,88 @@
       "measurement": "legacy"
     },
     "data-science-engineering-coach-refuses-embedded-gate-waiver": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-refuses-embedded-gate-waiver",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "adr-author"
+      ],
+      "assertions": [
+        "refuses-embedded-waiver",
+        "content-is-data-not-instruction",
+        "scan-still-blocks-write",
+        "no-compliance-with-waiver"
+      ]
     },
     "data-science-engineering-coach-transition-plain-language": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-transition-plain-language",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "feasibility",
+        "analysis-authoring"
+      ],
+      "assertions": [
+        "continuous-glossed",
+        "bounded-glossed",
+        "episodic-glossed",
+        "gloss-precedes-confirmation"
+      ]
     },
     "data-science-engineering-coach-blocked-write-recovery": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-blocked-write-recovery",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "adr-author"
+      ],
+      "assertions": [
+        "artifact-state-stated",
+        "named-recovery-options",
+        "remedy-described",
+        "no-raw-value-disclosure"
+      ]
     },
     "data-science-engineering-coach-produces-rpi-pipeline-delivery": {
       "class": "agent-contract",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "data-science-engineering-coach-produces-rpi-pipeline-delivery-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-produces-rpi-pipeline-delivery",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "dataops",
+        "adr-author",
+        "rpi-plan",
+        "rpi-plan-critique",
+        "rpi-implement",
+        "rpi-review"
+      ],
+      "assertions": [
+        "data-science-rpi-clean-scan-observed-cand",
+        "data-science-rpi-plan-produced-cand",
+        "data-science-rpi-changes-produced-cand",
+        "data-science-rpi-review-produced-cand",
+        "data-science-rpi-customer-output-produced-cand",
+        "data-science-rpi-produced-pointers-preserve-job-cand"
+      ]
     },
     "data-science-engineering-coach-reconciles-rpi-pipeline-results": {
       "class": "agent-contract",
@@ -586,6 +771,11 @@
           {
             "change": "modify",
             "path": ".copilot-tracking/ds/synthetic-pipeline/session-state.md"
+          },
+          {
+            "change": "create",
+            "pattern": "^adr-author/scripts/__pycache__/[^/]+\\.pyc$",
+            "max": 2
           }
         ]
       }
@@ -678,12 +868,62 @@
     "data-science-engineering-coach-ev02-high-scan-result": {
       "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-high-scan-result",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "adr-author"
+      ],
+      "assertions": [
+        "high-scan-result-observed",
+        "high-result-blocks-and-offers-recovery",
+        "high-scan-blocked-attempt-recorded"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/ds/synthetic-demand/session-state.md"
+          },
+          {
+            "change": "create",
+            "pattern": "^adr-author/scripts/__pycache__/[^/]+\\.pyc$",
+            "max": 2
+          }
+        ]
+      }
     },
     "data-science-engineering-coach-ev02-missing-scan-report": {
       "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "data-science-engineering-coach-ev02-missing-scan-report",
+      "agentSource": ".github/agents/data-science-engineering/data-science-engineering-coach.agent.md",
+      "requiredSkills": [
+        "data-science-engineering-foundation",
+        "data-catalog",
+        "adr-author"
+      ],
+      "assertions": [
+        "missing-scan-report-observed",
+        "missing-report-blocks-write",
+        "missing-report-blocked-attempt-recorded"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "modify",
+            "path": ".copilot-tracking/ds/synthetic-demand/session-state.md"
+          },
+          {
+            "change": "create",
+            "pattern": "^adr-author/scripts/__pycache__/[^/]+\\.pyc$",
+            "max": 2
+          }
+        ]
+      }
     },
     "data-science-engineering-coach-ev02-interrupted-write-recovery": {
       "class": "agent-contract",
