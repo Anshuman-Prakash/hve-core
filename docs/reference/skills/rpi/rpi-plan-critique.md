@@ -43,7 +43,8 @@ runs them in parallel, each in an [RPI Plan Critic](../../agents/hve-core/subage
 subagent. It picks each lens's reasoning effort from the lens's work, starting at `low` or `medium`,
 and records the effort it used in the artifact. Set `effort=` to run every lens at one level, or
 name a level for specific lenses. A single-phase plan, or a host without subagents, gets the same
-lens questions in one pass.
+lens questions in one pass. The critique parent then verifies every candidate itself, so the total
+time also depends on the reasoning effort of the session that runs the critique.
 
 After corrections, a follow-up critique is optional. The planner runs one only when you ask, or
 when the fix for a Critical or High finding changed requirements, scope, or architecture, and runs
