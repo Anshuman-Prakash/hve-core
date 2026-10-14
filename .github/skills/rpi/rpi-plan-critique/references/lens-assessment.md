@@ -10,15 +10,15 @@ Split the assessment into lens assessments when a dispatch tool is available and
 
 ## Lenses
 
-| Lens           | Question                                                                                                                                     | Reads                                       | Default effort |
-|----------------|----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|----------------|
-| Coverage       | Do the tasks cover every requirement, goal, and acceptance condition, with task `Requirements:` a reader can check?                          | Plan; requirement sources                   | `low`          |
-| Evidence       | Are the plan's claims, decisions, and `Details:` supported by the supplied research and evidence?                                            | Plan; research and evidence                 | `medium`       |
-| Executability  | Can each phase run as written, including dependencies and order, tools and environments, checks that can fail, and budgets?                  | Plan; evidence about tools and environments | `medium`       |
-| Risk           | Are material risks, side effects, and irreversible, shared-system, or externally visible actions handled, and are user decisions identified? | Plan; risk-relevant evidence                | `medium`       |
-| Reconciliation | Is each earlier finding resolved, still open, or superseded, and did the corrections introduce regressions?                                  | Plan; earlier critique                      | `low`          |
+| Lens           | Question                                                                                                                                                                                            | Reads                                                      | Default effort |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|----------------|
+| Coverage       | Do the tasks cover every requirement, goal, and acceptance condition, with task `Requirements:` a reader can check?                                                                                 | Plan requirement lists and every task; requirement sources | `low`          |
+| Evidence       | Are the plan's claims, decisions, `Details:`, and `References:` supported by the supplied research and evidence?                                                                                    | Plan; research and evidence                                | `medium`       |
+| Executability  | Can each phase run as written, including dependencies and order, tools and environments, checks that can fail, and budgets?                                                                         | Plan; evidence about tools and environments                | `medium`       |
+| Risk           | Are material risks, side effects, and irreversible, shared-system, or externally visible actions handled, are user decisions identified, and what material concern does the plan leave unaddressed? | Plan; risk-relevant evidence                               | `medium`       |
+| Reconciliation | Is each earlier finding resolved, still open, or superseded, and did the corrections introduce regressions?                                                                                         | Plan; earlier critique                                     | `low`          |
 
-Run Coverage, Evidence, Executability, and Risk for an initial critique. For a follow-up critique, run Reconciliation and only the lenses whose subject the corrections changed, scoped to the changed text. When one lens would cover a long plan, split it by phase range rather than raising its effort, so each assignment finishes quickly.
+Run Coverage, Evidence, Executability, and Risk for an initial critique. For a follow-up critique, run Reconciliation and only the lenses whose subject the corrections changed, scoped to the changed text. When Evidence, Executability, or Risk would cover a long plan, split it by phase range rather than raising its effort, so each assignment finishes quickly. Keep Coverage whole, because it must see every task.
 
 ## Reasoning effort
 
@@ -45,7 +45,7 @@ Severity scale: <the four definitions from Severity scale>
 
 `RPI Plan Critic` defines its own reading limits and return format, so the assignment does not restate them. Leave out any list of suspected weaknesses and your own observations. The lens question and the severity scale are the whole brief, so each critic assesses the plan instead of confirming the parent's view.
 
-`RPI Plan Critic` runs on the model its frontmatter declares; pass a different model only when the user names one. When `RPI Plan Critic` is unavailable, give a general-purpose subagent the same assignment at the same effort, and ask it to return each candidate with its location, a short quote, the concern, a suggested severity, and the smallest useful change.
+`RPI Plan Critic` runs on the model its frontmatter declares; pass a different model only when the user names one. When `RPI Plan Critic` is unavailable, give a general-purpose subagent the same assignment at the same effort, and ask it to return a status and, for each candidate, the location, a short quote, what it was checked against, the concern, a suggested severity, the smallest useful change, and its confidence.
 
 ## Severity scale
 
@@ -58,8 +58,8 @@ Rate each finding by its consequence for how this plan will actually run, such a
 
 ## Merge the returns
 
-1. Read every return, including concerns listed under Outside the lens. Verify each candidate against its quoted plan text, and read the cited location only when the quote does not settle it.
+1. Read every return, and treat each concern under Outside the lens as a candidate too. Verify each candidate by finding its quote at the cited location, and check the named evidence there when the concern depends on it. Do not reassess the plan beyond the candidates.
 2. Merge duplicates across lenses into one finding keyed to the earliest affected ID.
 3. Record a `PC-xxx` finding only for a verified candidate, with its final severity from the scale. Reject a candidate that the cited evidence contradicts or that confirmed user direction resolves, and note the reason in Lens Assessments.
-4. Do not reassess areas a lens covered or investigate beyond the returned candidates. When a lens returns `Partial`, `Blocked`, or nothing, cover the gap yourself when it is small; otherwise record the unassessed boundary and set critique execution to Partial.
+4. When a lens returns `Partial`, `Blocked`, or nothing, cover the gap yourself when it is small; otherwise record the unassessed boundary and set critique execution to Partial.
 5. Do not dispatch a second round of lenses for the same critique.
