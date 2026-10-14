@@ -45,7 +45,7 @@ Both modes stop for blockers, required human review, and destructive, hard-to-re
 
 The plan critique and Review run by default in both modes. Ask to skip either one for a task or for the whole session, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
 
-You can also set the reasoning effort of research helper lanes or of the plan critique's lenses, as one level or for specific lane kinds, topics, or lenses. The agent records your setting and passes it to that phase.
+You can also set the reasoning effort of research or review helper lanes, or of the plan critique's lenses, as one level or for specific lane kinds, topics, or lenses. Subagents stay optional in every phase: say how phases should use them, including not at all, and the agent records that direction and passes it to each phase. The agent passes these settings to the matching phase.
 
 Reach for a different asset when:
 
