@@ -1,7 +1,7 @@
 ---
 name: rpi-plan-critique
 description: "Independently assess an RPI plan without editing it. Use when an implementation-ready plan needs a credibility check or a revised plan needs its earlier findings reconciled."
-argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}] [prior=...]"
+argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}] [effort={auto|low|medium|high|xhigh|max}] [prior=...]"
 license: MIT
 user-invocable: true
 ---
@@ -10,20 +10,21 @@ user-invocable: true
 
 ## Goal
 
-Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
+Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning: split the assessment into lens assessments that `RPI Plan Critic` subagents run in parallel, each at the lowest reasoning effort its lens needs, then verify and merge their candidates into one finding set. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
 
 ## Flow
 
-1. Confirm the task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation. Standalone use needs only these inputs; no planning parent is required.
-2. Read the plan, directly relevant supplied evidence, and the earlier critique when one is supplied. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
-3. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns. For a follow-up critique, mark each earlier finding resolved, still open, or superseded against the current plan, and add new findings for gaps the revision introduced.
+1. Confirm the task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, critique depth, and any lens reasoning effort supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation. Standalone use needs only these inputs; no planning parent is required.
+2. Read the plan and the earlier critique when one is supplied. Read other supplied evidence when you need it to scope the lenses or verify a candidate. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
+3. Choose the lenses and their scope, select each lens's reasoning effort, and dispatch the lenses to `RPI Plan Critic` in parallel, following [references/lens-assessment.md](references/lens-assessment.md). You own the effort choice: use the user's or caller's effort when one is set, otherwise select it from the lens's work. Agent frontmatter does not set it. Assess a single-phase plan, or any plan when no dispatch tool is available, yourself, one lens at a time.
+4. Verify and merge the lens results into one assessment of the full boundary across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns. For a follow-up critique, mark each earlier finding resolved, still open, or superseded against the current plan, and add new findings for gaps the revision introduced.
    * Assess coverage across the supplied plan and evidence as a whole. Do not require a task to repeat requirements already established elsewhere solely for restatement. A stated requirement alone does not prove implementation coverage; ground required changes in demonstrated omissions, contradictions, or material evidence gaps.
    * Treat missing detail in an abbreviated task or excerpt as a limitation of the supplied evidence, not proof that the full plan omits it. Identify the evidence needed to resolve a decision-critical uncertainty; do not turn the same uncertainty into a separate requirement-restatement finding.
    * In `standard`, assess the complete supplied boundary while prioritizing implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Follow direct evidence and omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions so the complete evidence-supported actionable set is recorded with minimal elapsed work.
    * In `deep`, trace supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep remains one assessment and does not widen research authority.
    * In either depth, return one complete finding set rather than serializing findings across critique passes.
-4. Write the critique using [templates/plan-critique.md](templates/plan-critique.md). Use severity-graded `PC-xxx` findings keyed to relevant requirement, research, phase, or task IDs. For each actionable finding, name the smallest useful change, action owner, exact resolving evidence, and whether it is a direct planner correction or needs a significant or divergent user decision. A follow-up critique continues the earlier `PC-xxx` numbering and records each earlier finding's reconciled status.
-5. Record critique execution as Complete, Partial, or Blocked, separately from its Pass, Revise, or Blocked verdict. A passing critique may identify residual risks the parent explicitly accepted. When no assessment was produced, return that limitation with verdict unavailable and preserve any fragments; do not manufacture a verdict.
+5. Write the critique using [templates/plan-critique.md](templates/plan-critique.md), including each lens's scope, reasoning effort and its source, status, and adopted and rejected candidates under Lens Assessments. Use `PC-xxx` findings keyed to relevant requirement, research, phase, or task IDs and graded on the severity scale in [references/lens-assessment.md](references/lens-assessment.md). For each actionable finding, name the smallest useful change, action owner, exact resolving evidence, and whether it is a direct planner correction or needs a significant or divergent user decision. A follow-up critique continues the earlier `PC-xxx` numbering and records each earlier finding's reconciled status.
+6. Record critique execution as Complete, Partial, or Blocked, separately from its Pass, Revise, or Blocked verdict. A passing critique may identify residual risks the parent explicitly accepted. When no assessment was produced, return that limitation with verdict unavailable and preserve any fragments; do not manufacture a verdict.
 
 ## Inputs
 
@@ -34,11 +35,13 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * One critique output path
 * The earlier critique when this is a follow-up critique
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
+* Lens reasoning effort: `auto` by default, which selects each lens's effort from its work, or a user- or caller-set level for every lens or for named lenses
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
 * Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
+* A multi-phase plan is assessed through parallel lens assessments when a dispatch tool is available. Each lens's reasoning effort is set at dispatch, from the user or caller or selected by the critique, never by agent frontmatter, and is recorded with its source.
 * Standalone use works without a planning parent. A follow-up critique reconciles every earlier finding as resolved, still open, or superseded rather than repeating it.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.
@@ -52,6 +55,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 ## Constraints
 
 * Do not edit the plan, research, changes, or review records.
+* Lens critics read and return candidates only. You verify them, assign every `PC-xxx` ID and final severity, and write the single critique artifact.
 * Do not perform research beyond the supplied inputs. Route a material research gap to the planning parent as a Blocked or Revise finding.
 * Do not grade formatting, document cosmetics, or template adherence unless the issue conceals a substantive planning risk.
 * Confirmed user requests and answers outrank critique advice. A conflicting recommendation is rejected when current user direction already resolves it. Classify a significant or divergent issue as a user decision only when current user direction does not resolve it.
@@ -72,7 +76,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 
 * Return Blocked when supplied evidence cannot support a decision-critical assessment; do not request another critique.
 * Return Revise when substantive findings require a plan change; the parent disposes findings and decides whether a follow-up critique runs.
-* Return Pass when the plan is credible for implementation and any residual risks are explicitly accepted.
+* Return Pass when the plan is credible for implementation, no Critical or High finding applies, and any residual risks are explicitly accepted.
 * Stop after returning one assessment or execution limitation. Return a failed or incomplete run to the caller without retrying or inventing findings.
 
 ## Handoff

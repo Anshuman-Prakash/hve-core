@@ -21,6 +21,14 @@
 * Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
 * Assessment boundary: {{supplied_plan_and_evidence_scope_and_what_the_critique_can_and_cannot_conclude}}
 
+## Lens Assessments
+
+<!-- One row per lens. Use "direct" as the status when the critique parent assessed the lens itself. -->
+
+| Lens     | Scope                        | Reasoning effort and source                          | Status                                 | Candidates                                                          |
+|----------|------------------------------|------------------------------------------------------|----------------------------------------|---------------------------------------------------------------------|
+| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) | {{Complete_Partial_Blocked_or_direct}} | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
+
 ## Coverage Assessment
 
 <!-- In standard mode, aggregate fully covered IDs where practical and give individual rows to Partial or Missing coverage and material concerns. In deep mode, expand traceability when it helps resolve substantive concerns. -->
