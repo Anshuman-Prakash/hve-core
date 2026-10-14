@@ -341,7 +341,7 @@ Integrate exits only when:
 ### Activities
 
 * Assess completeness and quality before approval.
-* Run the PRD Quality Reviewer to emit `PRD_STANDARD_FINDINGS_V1` and `PRD_QUALITY_REPORT_V1` per [PRD Quality Formats](references/prd/prd-quality-formats.md).
+* Run the PRD Quality Reviewer to emit `PRD_STANDARD_FINDINGS_V1` and `PRD_QUALITY_REPORT_V1` per [PRD Quality Formats](references/prd/prd-quality-formats.md). If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
 * Review findings against the rubric and resolve or disposition gaps.
 
 ### Hard exit gate

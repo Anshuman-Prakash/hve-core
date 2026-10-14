@@ -2,6 +2,8 @@
 name: Engagement Report Council Arbiter
 description: Reconciles independent report critiques against research evidence and records user-approved decisions.
 user-invocable: false
+model: Claude Haiku 5.5 (copilot)
+reasoning-effort: max
 agents: []
 tools:
   - read

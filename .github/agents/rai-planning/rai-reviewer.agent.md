@@ -62,6 +62,8 @@ All frameworks resolve to reference files owned by the `rai-standards` skill.
 
 ## Required Steps
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 ### Pre-requisite: Setup
 
 1. Display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim before any scanning begins.

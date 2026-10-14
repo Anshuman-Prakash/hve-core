@@ -2,6 +2,8 @@
 name: Engagement Report Council Critic
 description: Independently critiques one engagement report draft against research evidence without reading other critiques.
 user-invocable: false
+model: Claude Haiku 5.5 (copilot)
+reasoning-effort: max
 agents: []
 tools:
   - read

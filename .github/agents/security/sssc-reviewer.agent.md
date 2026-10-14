@@ -39,6 +39,8 @@ Review a repository's supply-chain security posture and produce an evidence-base
 | Finding Deep Verifier       | `.github/agents/**/finding-deep-verifier.agent.md`       | Deep adversarial verification of FAIL and PARTIAL findings.              |
 | CVE Analyzer                | `.github/agents/**/cve-analyzer.agent.md`                | Per-CVE exploitability analysis for the VEX assessment capability.       |
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 This reviewer authors its own report and does not delegate report generation. `Report Generator` writes into `.copilot-tracking/security` or `.copilot-tracking/accessibility` using the `VULN_REPORT_V1` framework-oriented template, which is neither this reviewer's report root nor its report contract.
 
 ### Available Skills

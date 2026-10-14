@@ -73,6 +73,9 @@ flatten Markdown or substitute plain text.
     decision set. When independent agent runs are unavailable, ask the user to
     run the manual-only `engagement-report-council-critique` skill
     (`/engagement-report-council-critique`) in separate model sessions
+
+    If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 12. Present the final draft for explicit user approval and save the approved
    output
 13. When Outlook distribution is configured, ask separately for approval to

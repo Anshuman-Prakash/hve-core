@@ -41,6 +41,7 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 * Delegate only work that benefits materially from isolation, parallelism, disposable context, or a distinct model profile. Handle tightly coupled, low-volume, latency-sensitive edits in the current context.
 * Define a delegated task's inputs, write boundary, return shape, stage consumer, and nested-dispatch policy. Parallelize only independent work.
 * Keep the parent responsible for synthesis, decisions, and final outcomes. A worker return is evidence, not automatic authority to change scope.
+* Give a subagent-only agent whose work is research, planning, or review `reasoning-effort: max` in its frontmatter, and omit the key on other subagents so the model or user default applies. When a dispatch of a `max`-pinned subagent fails because the model lacks that effort, the dispatching agent or skill retries once with `reasoning_effort` set to `medium`.
 
 ## Frontmatter and Portability
 

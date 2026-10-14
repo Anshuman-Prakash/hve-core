@@ -59,6 +59,7 @@ Use a subagent when the host needs a specialized independent review dimension or
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 * Model fit: `model:` is optional and omitted by default; an omitted extension subagent inherits the invoking parent's model. Declare it only when the extension needs a stable Medium or Low profile, and resolve the current model name by the procedure in [artifact-types.md](artifact-types.md). A High responsibility omits `model:` unless the caller supplies one.
+* Effort fit: a research, planning, or review extension subagent declares `reasoning-effort: max`, and other extension subagents omit it so the model or user default applies. The invoking parent retries a dispatch that fails because the model does not support that effort once with `reasoning_effort` set to `medium`. See "Effort from responsibility" in [requirements-catalog.md](requirements-catalog.md).
 * Host registration: verify both that the host discovers the agent and that the invoking parent permits dispatch. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin. Parent `agents:` restrictions are a separate constraint, and omission permits access only where the target host documents that behavior.
 
 Example frontmatter, inheriting the parent's model:
@@ -68,6 +69,7 @@ Example frontmatter, inheriting the parent's model:
 name: Terraform Module Reviewer
 description: "Reviews a Terraform module and returns severity-graded findings. Use when reviewing Terraform module changes."
 user-invocable: false
+reasoning-effort: max
 ---
 ```
 
@@ -144,6 +146,7 @@ Example frontmatter:
 name: Acme Corpus Research Helper
 description: "Searches the Acme internal corpus for one bounded research question and returns source pointers, excerpts, and brief relevance notes as suggestions; writes nothing. Use during research when a question concerns Acme services; pass the question, scope, exclusions, and requested return kind."
 user-invocable: false
+reasoning-effort: max
 agents: []
 ---
 ```

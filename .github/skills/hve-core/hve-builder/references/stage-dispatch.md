@@ -28,6 +28,8 @@ Dispatch `HVE Builder Reviewer` in fresh context after the complete, mechanicall
 * The read-only boundary and what to ignore
 * The review shape: one complete, bounded finding set, or targeted closure of named finding IDs
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 Do not provide author reasoning or prior review conclusions. The reviewer does not explore outside supplied inputs, inspect agent or subagent `tools` configuration, write files, or edit source. It returns a suggested `Pass`, `Revise`, or `Blocked` verdict with severity-graded findings and the smallest resolving changes, which the parent verifies at each cited location before recording anything.
 
 For closure, give the reviewer only the original finding IDs, corrected targets, and acceptance evidence. Closure verifies those findings and does not become another full review. A materially changed assessment boundary needs a fresh review scoped to that change, not a routine repeat of the entire review.

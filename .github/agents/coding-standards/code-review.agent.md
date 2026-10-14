@@ -101,6 +101,8 @@ Read every external file exactly once using a single full-range `read_file` call
 
 ## Required Steps
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 ### Step 1: Tier 0 Context Bootstrap
 
 1. Read the Skill Reference Contract files (above) in one parallel block.

@@ -50,6 +50,7 @@ authority for reporting behavior.
 
 ## Constraints
 
+* If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
 * Do not restate, replace, or weaken the skill's phase protocols, evidence
   rules, approval gates, or stop conditions
 * Never call a mail-write operation from this parent agent; only the Outlook

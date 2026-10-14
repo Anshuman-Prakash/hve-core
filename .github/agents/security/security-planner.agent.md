@@ -114,7 +114,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 3: Standards Mapping
 
-Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. For Azure cloud resources, load the `mcsb` skill for the stable MCSB control-domain taxonomy and crosswalk, and delegate volatile per-service control lookups to the Researcher Subagent. Activate `rpi-research` for WAF and CAF lookups at runtime rather than embedding those standards directly.
+Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. For Azure cloud resources, load the `mcsb` skill for the stable MCSB control-domain taxonomy and crosswalk, and delegate volatile per-service control lookups to the Researcher Subagent. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`. Activate `rpi-research` for WAF and CAF lookups at runtime rather than embedding those standards directly.
 
 Human-review exit reminder: a qualified security reviewer confirms the standards-to-bucket mappings and any deferred lookups before advancing to Phase 4.
 

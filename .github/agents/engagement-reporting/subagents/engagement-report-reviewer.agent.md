@@ -2,6 +2,8 @@
 name: Engagement Report Reviewer
 description: Reviews engagement report drafts for grounding, privacy, audience fit, style, terminology, and continuity.
 user-invocable: false
+model: Claude Haiku 5.5 (copilot)
+reasoning-effort: max
 agents: []
 tools:
   - read

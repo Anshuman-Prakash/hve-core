@@ -17,7 +17,7 @@ The skill provides a reusable review workflow for pull requests, branch diffs, a
 
 ## Shared principles
 
-Review work should stay anchored in evidence and should avoid premature conclusions. Keep the review grounded in file and line evidence, use proportional depth based on risk, read the full diff range before narrowing, and keep factual orientation separate from structured findings.
+Review work should stay anchored in evidence and should avoid premature conclusions. Keep the review grounded in file and line evidence, use proportional depth based on risk, read the full diff range before narrowing, and keep factual orientation separate from structured findings. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
 
 ## Local write boundary
 

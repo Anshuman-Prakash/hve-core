@@ -64,6 +64,8 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 ## Required Steps
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 ### Pre-requisite: Setup
 
 1. Set the report date to today's date.

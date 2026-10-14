@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-13
 ms.topic: how-to
 keywords:
   - contributing
@@ -111,7 +111,7 @@ When a stable model is needed, select a responsibility profile first (High, Medi
 
 ```yaml
 # Low profile: bounded, literal, mechanical execution
-model: GPT-6 Luna (copilot)
+model: Claude Haiku 5.5 (copilot)
 ```
 
 ```yaml
@@ -128,6 +128,10 @@ Do not use a YAML array for `model` (for example, a list of fallback models). VS
 Array-form fallback lists remain valid for `.prompt.md` files only.
 
 Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
+
+Subagent-only agents whose work is research, planning, or review also declare `reasoning-effort: max`, and other subagents omit it.
+A pinned level that the subagent's model does not offer fails the dispatch, so an orchestrator that dispatches a `max`-pinned subagent retries such a failure once with `reasoning_effort` set to `medium`.
+See [reasoning-effort](../customization/custom-agents#reasoning-effort) for how the value applies.
 
 Run `npm run lint:models` to validate model references against the catalog.
 

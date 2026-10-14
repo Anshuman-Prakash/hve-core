@@ -176,6 +176,8 @@ Read the `security-reviewer-formats` skill for format templates used by subagent
 
 Detect the scanning mode, profile the codebase or plan document, assess applicable skills, verify findings (audit and diff modes only), generate the report, display the completion summary, and optionally correlate that report with a supplied Security Planner baseline. All steps execute for every mode except Step 3, which is skipped in plan mode, and Step 6, which requires an eligible baseline reference.
 
+If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
+
 ### Pre-requisite: Setup
 
 1. Set the report date to today's date.

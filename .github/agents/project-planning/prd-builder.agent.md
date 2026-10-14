@@ -89,7 +89,7 @@ Load `prd-author#integrate` first. Incorporate user-provided references, documen
 
 ### Validate
 
-Load `prd-author#validate` first. Confirm completeness and quality before approval. Dispatch the `PRD Quality Reviewer` subagent to emit `PRD_STANDARD_FINDINGS_V1` and `PRD_QUALITY_REPORT_V1`; the report authorizes Validate exit via `gate_decisions.validate_exit`.
+Load `prd-author#validate` first. Confirm completeness and quality before approval. Dispatch the `PRD Quality Reviewer` subagent to emit `PRD_STANDARD_FINDINGS_V1` and `PRD_QUALITY_REPORT_V1`; the report authorizes Validate exit via `gate_decisions.validate_exit`. If a subagent dispatch fails because its model does not support the subagent's reasoning effort, retry it once with `reasoning_effort` set to `medium`.
 
 ### Finalize
 

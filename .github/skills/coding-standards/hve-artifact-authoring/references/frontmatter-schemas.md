@@ -24,6 +24,7 @@ field boundaries that most often affect artifact design.
 | `agents`                   | No       | Fixed subagent allowlist; omit for unrestricted use  |
 | `tools`                    | No       | User-managed opaque tool configuration               |
 | `model`                    | No       | One scalar model selection                           |
+| `reasoning-effort`         | No       | Effort pin; `max` on research and review subagents   |
 | `handoffs`                 | No       | User-mediated transitions                            |
 | `user-invocable`           | No       | Picker visibility; false for background-only workers |
 | `disable-model-invocation` | No       | Prevents model-driven invocation of an orchestrator  |

@@ -11,6 +11,8 @@ tools:
   - edit/createDirectory
   - edit/editFiles
 user-invocable: false
+model: Claude Haiku 5.5 (copilot)
+reasoning-effort: max
 ---
 
 # Code Review Walkback
