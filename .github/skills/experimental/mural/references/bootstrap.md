@@ -47,7 +47,7 @@ Mural needs an authenticated session before I can continue. Login selects `--pro
 If `mural doctor` returns `needs_scope_upgrade`, pause and say:
 
 ```text
-The current Mural authorization is missing a required scope for this operation. Please reauthorize Mural with the required repository-documented scopes, passing --force to the login command so it replaces the existing session, then ask me to retry.
+The current Mural authorization is missing a required scope for this operation. Login does not use the profile selected by `mural auth use`, so pass `--profile NAME` with the profile reported by `mural doctor`, add `--force`, and reauthorize Mural with the required repository-documented scopes. Then ask me to retry.
 ```
 
 If `mural doctor` returns `wrong_cwd`, pause and say:
