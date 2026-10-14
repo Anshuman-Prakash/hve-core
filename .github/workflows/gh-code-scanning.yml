@@ -118,10 +118,8 @@ jobs:
 
       - name: Evaluate upstream watches
         shell: pwsh
-        env:
-          RUN_ID: ${{ github.run_id }}
         run: |
-          $params = @{ Owner = $env:OWNER; Repo = $env:REPO; RunId = $env:RUN_ID }
+          $params = @{ Owner = $env:OWNER; Repo = $env:REPO }
           if (Test-Path probe-observations.json) { $params['ObservationsPath'] = 'probe-observations.json' }
           $status = & ./scripts/security/Get-UpstreamWatchStatus.ps1 @params
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -112,6 +112,11 @@ Describe 'File checks' -Tag 'Unit' {
         (Invoke-Check (New-Repo -Files @{ '.devcontainer/scripts/on-create.sh' = $content })).Findings | Should -BeNullOrEmpty
     }
 
+    It 'matches architecture tokens delimited by underscores' {
+        $content = "case `"`${TARGET}`" in`n  linux_amd64)`n    GITLEAKS_SHA256=`"$($script:Amd)`"`n    ;;`n  linux_arm64)`n    GITLEAKS_SHA256=`"$($script:Arm)`"`n    ;;`nesac"
+        (Invoke-Check (New-Repo -Files @{ '.devcontainer/scripts/on-create.sh' = $content })).Findings | Should -BeNullOrEmpty
+    }
+
     It 'ignores non-arch checksums that share a prefix' {
         $files = @{ '.github/workflows/demo.yml' = "env:`n  UV_CACHE_SHA256: $('f' * 64)" }
         (Invoke-Check (New-Repo -Files $files)).Findings | Should -BeNullOrEmpty

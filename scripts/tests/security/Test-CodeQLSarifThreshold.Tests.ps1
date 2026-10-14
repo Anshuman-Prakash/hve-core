@@ -479,3 +479,27 @@ Describe 'Tracked exceptions' {
         $gate.ExceptionErrors | Should -Match "'exceptions' list"
     }
 }
+
+Describe 'Main execution outputs' -Tag 'Unit' {
+    It 'writes a gate-error sentinel when gate evaluation throws' {
+        $scriptPath = Join-Path $PSScriptRoot '../../security/Test-CodeQLSarifThreshold.ps1'
+        $outputPath = Join-Path $TestDrive 'gate-output.txt'
+        $previousActions = $env:GITHUB_ACTIONS
+        $previousOutput = $env:GITHUB_OUTPUT
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $env:GITHUB_OUTPUT = $outputPath
+            $sarifPath = Write-Sarif -Name 'gate-output-clean' -DriverRules @(New-SarifRule -Id 'py/plain')
+            $summaryPath = Join-Path $TestDrive 'missing-directory/summary.md'
+
+            & pwsh -NoProfile -File $scriptPath -SarifPath $sarifPath -SummaryPath $summaryPath 2>$null
+
+            $LASTEXITCODE | Should -Be 1
+            Get-Content -Raw -LiteralPath $outputPath | Should -Match '(?m)^gate-error=true\r?$'
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $previousActions
+            $env:GITHUB_OUTPUT = $previousOutput
+        }
+    }
+}

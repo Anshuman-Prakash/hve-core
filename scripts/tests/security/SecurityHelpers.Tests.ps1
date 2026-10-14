@@ -877,6 +877,21 @@ Describe 'Get-WorkflowActionStep' -Tag 'Unit' {
         $steps[0].Inputs.Count | Should -Be 0
     }
 
+    It 'strips comments after a closing quote and preserves hashes inside quotes' {
+        $content = @(
+            'steps:'
+            '  - uses: actions/setup-node@abc123'
+            '    with:'
+            '      cache: "npm" # dependency cache'
+            "      registry-url: 'https://example.invalid/#packages' # registry"
+        ) -join "`n"
+
+        $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^actions/setup-node$')
+
+        $steps[0].Inputs['cache'] | Should -Be 'npm'
+        $steps[0].Inputs['registry-url'] | Should -Be 'https://example.invalid/#packages'
+    }
+
     It 'returns nothing when no step matches' {
         @(Get-WorkflowActionStep -Content "steps:`n  - run: echo hi" -ActionPattern '^actions/') | Should -HaveCount 0
     }

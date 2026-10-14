@@ -30,42 +30,21 @@ jobs:
       contents: read
       pull-requests: read # list the pull request merged by this push
     outputs:
-      merged: ${{ steps.pr.outputs.merged }}
-      base-ref: ${{ steps.pr.outputs.base-ref }}
-      head-ref: ${{ steps.pr.outputs.head-ref }}
-      head-repository: ${{ steps.pr.outputs.head-repository }}
-      head-sha: ${{ steps.pr.outputs.head-sha }}
-      merge-sha: ${{ steps.pr.outputs.merge-sha }}
+      merged: ${{ steps.resolve.outputs.merged }}
+      base-ref: ${{ steps.resolve.outputs.base-ref }}
+      head-ref: ${{ steps.resolve.outputs.head-ref }}
+      head-repository: ${{ steps.resolve.outputs.head-repository }}
+      head-sha: ${{ steps.resolve.outputs.head-sha }}
+      merge-sha: ${{ steps.resolve.outputs.merge-sha }}
     steps:
-      - name: Find the pull request this push merged
-        id: pr
-        env:
-          BASE_BRANCH: ${{ github.ref_name }}
-          EVENT_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          PULLS="$RUNNER_TEMP/pulls.json"
-          gh api "/repos/$REPOSITORY/commits/$EVENT_SHA/pulls" > "$PULLS"
-          MERGED=$(jq -c --arg sha "$EVENT_SHA" --arg base "$BASE_BRANCH" \
-            '[.[] | select(.merged_at != null and .merge_commit_sha == $sha and .base.ref == $base)]' "$PULLS")
-          COUNT=$(jq 'length' <<< "$MERGED")
-          if [ "$COUNT" -eq 0 ]; then
-            echo "::notice::$EVENT_SHA on $BASE_BRANCH is not a pull request merge; nothing to release"
-            echo "merged=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "$COUNT" -ne 1 ]; then
-            echo "::error::$EVENT_SHA is the merge commit of $COUNT pull requests into $BASE_BRANCH"
-            exit 1
-          fi
-          jq -r '.[0] | "merged=true",
-            "base-ref=\(.base.ref)",
-            "head-ref=\(.head.ref)",
-            "head-repository=\(.head.repo.full_name // "")",
-            "head-sha=\(.head.sha)",
-            "merge-sha=\(.merge_commit_sha)"' <<< "$MERGED" >> "$GITHUB_OUTPUT"
+      - name: Resolve the merged pull request
+        id: resolve
+        uses: $/.github/actions/resolve-merged-pr
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          event-sha: ${{ github.sha }}
+          base-branch: ${{ github.ref_name }}
   validate-trigger:
     needs: [resolve-merge]
     name: Validate Stable Release Trigger

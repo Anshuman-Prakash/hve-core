@@ -742,8 +742,9 @@ function Get-WorkflowActionStep {
     .DESCRIPTION
         Line-based and indentation-aware, so it needs no YAML module. A step is
         bounded by its list item; inputs are the direct children of its with:
-        key. Values are unquoted and stripped of trailing comments. Block-scalar
-        inputs (| or >) are returned as their indicator.
+        key. Values are unquoted and stripped of trailing comments only after a
+        matching closing quote. Block-scalar inputs (| or >) are returned as
+        their indicator.
 
     .PARAMETER Content
         File content with LF line endings.
@@ -803,9 +804,15 @@ function Get-WorkflowActionStep {
                 if ($indent -ne $childIndent) { continue }
                 $pair = [regex]::Match($lines[$m], '^\s*(?<key>[A-Za-z0-9_.-]+):\s*(?<value>.*?)\s*$')
                 if (-not $pair.Success) { continue }
-                $value = $pair.Groups['value'].Value
-                if ($value -notmatch '^[''"]') { $value = ($value -replace '\s+#.*$', '') }
-                $inputs[$pair.Groups['key'].Value] = $value.Trim().Trim('''', '"')
+                $value = $pair.Groups['value'].Value.Trim()
+                $quoted = [regex]::Match($value, '^(?<quote>[''"])(?<value>.*)\k<quote>(?:\s+#.*)?$')
+                if ($quoted.Success) {
+                    $value = $quoted.Groups['value'].Value
+                }
+                else {
+                    $value = ($value -replace '\s+#.*$', '')
+                }
+                $inputs[$pair.Groups['key'].Value] = $value.Trim()
             }
             break
         }

@@ -19,17 +19,12 @@
 
       issue-closed     the upstream issue or pull request is closed
       release-newer    the upstream repository's latest release is newer than pinned
-      runner-version   a job on the runner label reported at least the minimum version
       probe-outcome    the named capability probe reported an outcome other than baseline
 
     Each watch reports State 'triggered', 'waiting', or 'unknown' (the condition
     could not be observed). Unknown is reported, never treated as triggered.
     An invalid watches file fails the script.
 
-    Runner versions come from the job logs of the static "Runner probe (<label>)"
-    jobs in gh-code-scanning.yml (-RunId), read from the "Current runner version"
-    line the runner writes at job start. Each runner-version watch needs one such
-    job with a literal runs-on label so the runner policy check can verify it.
     Probe outcomes come from an observations file (-ObservationsPath).
 
     Writes a JSON array to standard output.
@@ -44,12 +39,8 @@
     Watches file. Defaults to security/upstream-watches.yml at the repository root.
 
 .PARAMETER ObservationsPath
-    Optional JSON file with observed probe outcomes and runner versions:
-    {"probes": {"probe-id": "pass"}, "runnerVersions": {"label": "2.336.0"}}.
-
-.PARAMETER RunId
-    Optional workflow run whose "Runner probe (<label>)" jobs supply runner versions.
-    Jobs are listed only when a runner-version watch exists.
+    Optional JSON file with observed probe outcomes:
+    {"probes": {"probe-id": "pass"}}.
 
 .EXAMPLE
     ./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner microsoft -Repo hve-core
@@ -68,11 +59,7 @@ param(
     [string]$WatchesPath,
 
     [Parameter(Mandatory = $false)]
-    [string]$ObservationsPath,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateRange(1, [long]::MaxValue)]
-    [long]$RunId
+    [string]$ObservationsPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,10 +68,8 @@ $script:CommonFields = @('id', 'kind', 'issue', 'action')
 $script:KindFields = @{
     'issue-closed'   = @('url')
     'release-newer'  = @('repo', 'pinned')
-    'runner-version' = @('label', 'minimum')
     'probe-outcome'  = @('probe', 'baseline')
 }
-$script:RunnerProbeJobPattern = 'Runner probe \((?<label>[^()]+)\)$'
 
 function ConvertTo-ComparableVersion {
     <#
@@ -194,14 +179,6 @@ function Read-UpstreamWatch {
                     $entryErrors.Add("'pinned' must be a version")
                 }
             }
-            'runner-version' {
-                if ($item['label'] -and "$($item['label'])" -notmatch '^[A-Za-z0-9._-]+$') {
-                    $entryErrors.Add("'label' must be a runner label")
-                }
-                if ($item['minimum'] -and $null -eq (ConvertTo-ComparableVersion -Text "$($item['minimum'])")) {
-                    $entryErrors.Add("'minimum' must be a version")
-                }
-            }
             'probe-outcome' {
                 if ($item['baseline'] -and "$($item['baseline'])" -cnotin @('pass', 'fail')) {
                     $entryErrors.Add("'baseline' must be pass or fail")
@@ -246,10 +223,6 @@ function Get-UpstreamWatchStatus {
         [Parameter(Mandatory = $false)]
         [hashtable]$LatestReleases = @{},
 
-        # Runner label to observed runner version.
-        [Parameter(Mandatory = $false)]
-        [hashtable]$RunnerVersions = @{},
-
         # Probe id to 'pass' or 'fail'.
         [Parameter(Mandatory = $false)]
         [hashtable]$ProbeOutcomes = @{}
@@ -281,19 +254,6 @@ function Get-UpstreamWatchStatus {
                     $detail = "latest release unavailable, pinned $($watch['pinned'])"
                 }
             }
-            'runner-version' {
-                $subject = [string]$watch['label']
-                $minimum = ConvertTo-ComparableVersion -Text "$($watch['minimum'])"
-                $text = if ($RunnerVersions.ContainsKey($subject)) { [string]$RunnerVersions[$subject] } else { '' }
-                $observed = ConvertTo-ComparableVersion -Text $text
-                if ($null -ne $observed) {
-                    $state = if ($observed -ge $minimum) { 'triggered' } else { 'waiting' }
-                    $detail = "runner $text, minimum $($watch['minimum'])"
-                }
-                else {
-                    $detail = "runner version not observed, minimum $($watch['minimum'])"
-                }
-            }
             'probe-outcome' {
                 $subject = [string]$watch['probe']
                 $observed = if ($ProbeOutcomes.ContainsKey($subject)) { [string]$ProbeOutcomes[$subject] } else { '' }
@@ -320,79 +280,6 @@ function Get-UpstreamWatchStatus {
             })
     }
     return , $records.ToArray()
-}
-
-function Get-RunnerVersionFromLog {
-    <#
-    .SYNOPSIS
-        Extracts the runner version from a job log, or returns $null.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $false)]
-        [AllowEmptyString()]
-        [string]$LogText
-    )
-
-    $match = [regex]::Match("$LogText", "Current runner version: '(?<version>\d+(?:\.\d+)+)'")
-    if ($match.Success) { return $match.Groups['version'].Value }
-    return $null
-}
-
-function Get-RunnerProbeLabel {
-    <#
-    .SYNOPSIS
-        Returns the runner label from a runner probe job name, or $null.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $false)]
-        [AllowEmptyString()]
-        [string]$JobName
-    )
-
-    $match = [regex]::Match("$JobName", $script:RunnerProbeJobPattern)
-    if ($match.Success) { return $match.Groups['label'].Value.Trim() }
-    return $null
-}
-
-function Get-RunnerVersionObservation {
-    <#
-    .SYNOPSIS
-        Reads runner versions from the runner probe jobs of a workflow run.
-    .OUTPUTS
-        Hashtable of runner label to version.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Owner,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Repo,
-
-        [Parameter(Mandatory = $true)]
-        [long]$RunId
-    )
-
-    $versions = @{}
-    $raw = gh api "repos/$Owner/$Repo/actions/runs/$RunId/jobs?per_page=100" --paginate --jq '.jobs[] | {id, name, conclusion}'
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Could not list jobs for run ${RunId}; runner versions are unobserved."
-        return $versions
-    }
-    foreach ($job in @($raw | Where-Object { $_ } | ConvertFrom-Json)) {
-        $label = Get-RunnerProbeLabel -JobName $job.name
-        if (-not $label -or $job.conclusion -ne 'success') { continue }
-        $log = gh api "repos/$Owner/$Repo/actions/jobs/$($job.id)/logs" 2>$null
-        if ($LASTEXITCODE -ne 0) { continue }
-        $version = Get-RunnerVersionFromLog -LogText ($log -join "`n")
-        if ($version) { $versions[$label] = $version }
-    }
-    return $versions
 }
 
 function Get-WatchLookup {
@@ -449,21 +336,13 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         $env:GH_PAGER = ''
         $probeOutcomes = @{}
-        $runnerVersions = @{}
         if ($ObservationsPath) {
             $observations = Get-Content -Raw -LiteralPath $ObservationsPath | ConvertFrom-Json -AsHashtable
             if ($observations['probes'] -is [System.Collections.IDictionary]) { $probeOutcomes = [hashtable]$observations['probes'] }
-            if ($observations['runnerVersions'] -is [System.Collections.IDictionary]) { $runnerVersions = [hashtable]$observations['runnerVersions'] }
-        }
-        $hasRunnerWatch = @($read.Watches | Where-Object { $_['kind'] -eq 'runner-version' }).Count -gt 0
-        if ($RunId -and $hasRunnerWatch) {
-            if (-not $Owner -or -not $Repo) { throw 'Owner and Repo are required with RunId.' }
-            $observed = Get-RunnerVersionObservation -Owner $Owner -Repo $Repo -RunId $RunId
-            foreach ($key in $observed.Keys) { $runnerVersions[$key] = $observed[$key] }
         }
 
         $lookup = Get-WatchLookup -Watches $read.Watches
-        $status = Get-UpstreamWatchStatus -Watches $read.Watches -IssueStates $lookup.IssueStates -LatestReleases $lookup.LatestReleases -RunnerVersions $runnerVersions -ProbeOutcomes $probeOutcomes
+        $status = Get-UpstreamWatchStatus -Watches $read.Watches -IssueStates $lookup.IssueStates -LatestReleases $lookup.LatestReleases -ProbeOutcomes $probeOutcomes
         # The array wrapper keeps the output a JSON array for every result size.
         ConvertTo-Json -InputObject @($status) -Depth 3
         exit 0

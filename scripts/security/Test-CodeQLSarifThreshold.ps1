@@ -86,6 +86,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
 $script:ExceptionFields = @('tool', 'rule', 'path', 'count', 'kind', 'upstream', 'issue', 'owner', 'reason', 'expires')
 $script:ExceptionKinds = @('false-positive', 'generated-code', 'third-party', 'platform-limitation')
 $script:MaxExceptionDays = 90
@@ -590,16 +592,18 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Output $gate.Summary
         if ($env:GITHUB_OUTPUT) {
             # Callers that report without failing (soft-fail) read these instead of raw scanner counts.
-            @(
-                "failing-count=$(@($gate.Failing).Count)"
-                "excepted-count=$(@($gate.Excepted).Count)"
-                "exception-error-count=$(@($gate.ExceptionErrors).Count + @($gate.InputErrors).Count)"
-            ) | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+            Set-CIOutput -Name 'failing-count' -Value "$(@($gate.Failing).Count)"
+            Set-CIOutput -Name 'excepted-count' -Value "$(@($gate.Excepted).Count)"
+            Set-CIOutput -Name 'exception-error-count' -Value "$(@($gate.ExceptionErrors).Count + @($gate.InputErrors).Count)"
+            Set-CIOutput -Name 'gate-error' -Value 'false'
         }
         exit $gate.ExitCode
     }
     catch {
-        Write-Error -ErrorAction Continue "Test-CodeQLSarifThreshold failed: $($_.Exception.Message)"
+        if ($env:GITHUB_OUTPUT) {
+            Set-CIOutput -Name 'gate-error' -Value 'true'
+        }
+        Write-Error -ErrorAction Continue 'Test-CodeQLSarifThreshold failed.'
         exit 1
     }
 }

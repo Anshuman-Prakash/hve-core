@@ -137,7 +137,7 @@ function Get-ContextArchKey {
     )
     $before = $Content.Substring(0, $Index) -split "`n"
     $window = ($before | Select-Object -Last 7) -join "`n"
-    $labels = [regex]::Matches($window, '(?i)\b(x86_64|amd64|x64|aarch64|arm64)\b')
+    $labels = [regex]::Matches($window, '(?i)(?<![A-Za-z0-9])(x86_64|amd64|x64|aarch64|arm64)(?![A-Za-z0-9])')
     if ($labels.Count -eq 0) { return $null }
     return $script:ArchKeyByToken[$labels[$labels.Count - 1].Value.ToUpperInvariant()]
 }

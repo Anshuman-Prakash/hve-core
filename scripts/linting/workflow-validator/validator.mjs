@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMap, isScalar, isSeq, LineCounter, parseDocument } from 'yaml';
-import { CHECK_RULES, fetchTextFromGitHub, getCheckFindings } from './checks.mjs';
+import { CHECK_RULES, fetchTextFromGitHub, getCheckFindings, readCachedRemoteText } from './checks.mjs';
 
 // The parser's JSON schema imports resolve only after the hook above is
 // registered, so the parser is loaded dynamically rather than statically.
@@ -258,7 +258,11 @@ export async function stageGhAwHelpers(entries, contents, options, stagingRoot) 
       }
       const [commit] = commits;
       const key = `${commit}/${name}`;
-      if (!fetched.has(key)) fetched.set(key, readGhAwHelper(commit, name, options));
+      if (!fetched.has(key)) {
+        const cacheFile = options.cacheDir ? join(options.cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', name) : null;
+        const url = `https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/${name}`;
+        fetched.set(key, readCachedRemoteText(options.fetchText, url, cacheFile));
+      }
       const text = await fetched.get(key);
       if (typeof text !== 'string') {
         report(`Could not read setup/sh/${name} from github/gh-aw-actions at ${commit.slice(0, 12)}, so shellcheck could not follow it`);
@@ -271,19 +275,6 @@ export async function stageGhAwHelpers(entries, contents, options, stagingRoot) 
     }
   }
   return { sourcePaths, findings };
-}
-
-async function readGhAwHelper(commit, name, options) {
-  const cacheFile = options.cacheDir ? join(options.cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', name) : null;
-  if (cacheFile && existsSync(cacheFile)) return readFileSync(cacheFile, 'utf8');
-  const text = options.fetchText
-    ? await options.fetchText(`https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/${name}`)
-    : null;
-  if (typeof text === 'string' && cacheFile) {
-    mkdirSync(dirname(cacheFile), { recursive: true });
-    writeFileSync(cacheFile, text);
-  }
-  return text;
 }
 
 /**
@@ -385,7 +376,9 @@ function buildScript(runNode, dialect, lineCounter, sourceLines) {
   const text = maskExpressions(runNode.value);
   const count = text.split('\n').length;
   const lines = [];
-  if (isBlock) {
+  if (runNode.type === 'BLOCK_FOLDED') {
+    for (let index = 0; index < count; index++) lines.push({ line: start.line, column: start.col });
+  } else if (isBlock) {
     let indent = 0;
     for (let index = start.line; index < sourceLines.length; index++) {
       if (sourceLines[index].trim() !== '') {

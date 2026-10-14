@@ -495,25 +495,21 @@ exception waits on is met.
 
 #### Features
 
-* Supports `issue-closed`, `release-newer`, `runner-version`, and
-  `probe-outcome` watches, and fails on an invalid watches file
+* Supports `issue-closed`, `release-newer`, and `probe-outcome` watches, and
+  fails on an invalid watches file
 * Reports each watch as `triggered`, `waiting`, or `unknown`; unknown is
   never treated as triggered
-* Reads runner versions from the job logs of the static `Runner probe (<label>)`
-  jobs in `gh-code-scanning.yml`, only when a `runner-version` watch exists, and
-  probe outcomes from an observations file
+* Reads probe outcomes from an observations file
 * In the weekly scan, the observations come from the unprivileged
   `capability-probes` job, which runs the workflow validator's
   `run-probes.mjs` against the newest `@actions/workflow-parser` release. When
   that job fails, no file is passed and every `probe-outcome` watch reports
   `unknown`
-* Each `runner-version` watch needs a `Runner probe (<label>)` job with a
-  literal `runs-on: <label>` so the runner policy check can verify the label
 
 #### Usage
 
 ```powershell
-./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner microsoft -Repo hve-core -RunId 123
+./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner microsoft -Repo hve-core
 ```
 
 ### `Test-ToolVersionConsistency.ps1`

@@ -119,6 +119,15 @@ describe('extractRunScripts', () => {
     ]);
   });
 
+  it('maps every folded script line to the scalar start', () => {
+    const content = 'on: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: >\n          echo first\n          echo second\n';
+    const [script] = extractRunScripts(content, 'workflow');
+    assert.deepEqual(script.lines, [
+      { line: 6, column: 14 },
+      { line: 6, column: 14 },
+    ]);
+  });
+
   it('resolves the shell from step, job defaults, and workflow defaults', () => {
     const content = [
       'on: push',

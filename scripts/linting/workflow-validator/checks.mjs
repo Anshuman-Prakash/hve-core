@@ -48,11 +48,18 @@ const REMOTE_USES = /^(?<owner>[A-Za-z0-9_.-]+)\/(?<repo>[A-Za-z0-9_.-]+)(?<path
 // One lookup per URL per fetch function, so a missing file is fetched once per
 // run however many workflows reference it.
 const fetchMemo = new WeakMap();
-function memoizedFetch(fetchText, url) {
+export async function readCachedRemoteText(fetchText, url, cacheFile = null) {
+  if (cacheFile && existsSync(cacheFile)) return readFileSync(cacheFile, 'utf8');
+  if (!fetchText) return null;
   if (!fetchMemo.has(fetchText)) fetchMemo.set(fetchText, new Map());
   const memo = fetchMemo.get(fetchText);
   if (!memo.has(url)) memo.set(url, fetchText(url));
-  return memo.get(url);
+  const text = await memo.get(url);
+  if (typeof text === 'string' && cacheFile) {
+    mkdirSync(dirname(cacheFile), { recursive: true });
+    writeFileSync(cacheFile, text);
+  }
+  return text;
 }
 
 /**
@@ -344,15 +351,9 @@ async function readUsedFile(ctx, uses, usesNode, actionFiles) {
   const candidates = actionFiles ? actionFiles.map((name) => (path ? `${path}/${name}` : name)) : [path];
   for (const file of candidates) {
     const cacheFile = cacheDir ? join(cacheDir, owner, repo, ref, file) : null;
-    if (cacheFile && existsSync(cacheFile)) return readFileSync(cacheFile, 'utf8');
-    const text = fetchText ? await memoizedFetch(fetchText, `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${file}`) : null;
-    if (typeof text === 'string') {
-      if (cacheFile) {
-        mkdirSync(dirname(cacheFile), { recursive: true });
-        writeFileSync(cacheFile, text);
-      }
-      return text;
-    }
+    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${file}`;
+    const text = await readCachedRemoteText(fetchText, url, cacheFile);
+    if (typeof text === 'string') return text;
   }
   report(ctx, 'workflow-check/action-metadata-unavailable', usesNode, 0, `Could not read ${candidates.join(' or ')} from ${owner}/${repo} at ${ref.slice(0, 12)}, so its inputs were not verified`);
   return undefined;
@@ -361,19 +362,24 @@ async function readUsedFile(ctx, uses, usesNode, actionFiles) {
 /**
  * Fetches text over HTTPS, returning null for a 404 and throwing for other failures.
  * @param {string} url
+ * @param {{ fetchImpl?: typeof fetch, retryDelay?: (milliseconds: number) => Promise<void> }} options
  */
-export async function fetchTextFromGitHub(url) {
+export async function fetchTextFromGitHub(url, options = {}) {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const retryDelay = options.retryDelay ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+  let failure = 'network error';
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const response = await fetch(url, { redirect: 'error' });
+      const response = await fetchImpl(url, { redirect: 'error' });
       if (response.status === 404) return null;
       if (response.ok) return await response.text();
+      failure = `HTTP status ${response.status}`;
     } catch {
-      // Retried below.
+      failure = 'network error';
     }
-    await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    if (attempt < 3) await retryDelay(attempt * 1000);
   }
-  return null;
+  throw new Error(`Remote workflow metadata fetch failed after 3 attempts (${failure})`);
 }
 
 function report(ctx, ruleId, node, index, message) {
@@ -383,11 +389,12 @@ function report(ctx, ruleId, node, index, message) {
 
 function positionOf(ctx, node, index) {
   const start = ctx.lineCounter.linePos(node.range?.[0] ?? 0);
+  if (node.type === 'BLOCK_FOLDED') return { line: start.line, column: start.col };
   const value = typeof node.value === 'string' ? node.value : '';
   const before = value.slice(0, index);
   const newlines = (before.match(/\n/g) ?? []).length;
   const lastNewline = before.lastIndexOf('\n');
-  if (node.type === 'BLOCK_LITERAL' || node.type === 'BLOCK_FOLDED') {
+  if (node.type === 'BLOCK_LITERAL') {
     const firstContent = ctx.lines.slice(start.line).find((line) => line.trim() !== '') ?? '';
     const indent = firstContent.length - firstContent.trimStart().length;
     return { line: start.line + 1 + newlines, column: indent + 1 + (index - lastNewline - 1) };

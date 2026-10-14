@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import { filterPatternProblem, getCheckFindings } from '../checks.mjs';
+import { fetchTextFromGitHub, filterPatternProblem, getCheckFindings, readCachedRemoteText } from '../checks.mjs';
 
 const SHA = 'b'.repeat(40);
 
@@ -176,6 +176,74 @@ describe('run scripts and env', () => {
   it('reports invalid env names at every level', async () => {
     const content = 'on: push\nenv:\n  GOOD_1: a\n  1BAD: b\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    env:\n      bad-name: c\n    steps:\n      - run: echo hi\n        env:\n          "has space": d\n';
     assert.deepEqual(rules(await check(content)), Array(3).fill('workflow-check/invalid-env-name'));
+  });
+
+  it('reports folded scalar findings at the scalar start', async () => {
+    const content = 'on: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: >\n          echo "${{ github.nope }}"\n          echo done\n';
+    const findings = await check(content);
+    assert.deepEqual(rules(findings), ['workflow-check/unknown-context-property']);
+    assert.deepEqual([findings[0].line, findings[0].column], [6, 14]);
+  });
+});
+
+describe('remote fetches', () => {
+  const noDelay = async () => {};
+
+  it('returns and memoizes a missing result for a 404', async () => {
+    let calls = 0;
+    const fetchImpl = async () => {
+      calls++;
+      return { status: 404, ok: false };
+    };
+    const fetchText = (url) => fetchTextFromGitHub(url, { fetchImpl, retryDelay: noDelay });
+
+    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/missing'), null);
+    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/missing'), null);
+    assert.equal(calls, 1);
+  });
+
+  it('rejects non-404 responses after bounded retries', async () => {
+    for (const status of [302, 429, 500]) {
+      let calls = 0;
+      const fetchImpl = async () => {
+        calls++;
+        return { status, ok: false };
+      };
+
+      await assert.rejects(
+        fetchTextFromGitHub('https://example.invalid/metadata', { fetchImpl, retryDelay: noDelay }),
+        new RegExp(`Remote workflow metadata fetch failed after 3 attempts \\(HTTP status ${status}\\)`),
+      );
+      assert.equal(calls, 3);
+    }
+  });
+
+  it('rejects thrown network errors without forwarding their messages', async () => {
+    let calls = 0;
+    const fetchImpl = async () => {
+      calls++;
+      throw new Error('synthetic-token-should-not-escape');
+    };
+
+    await assert.rejects(
+      fetchTextFromGitHub('https://example.invalid/metadata', { fetchImpl, retryDelay: noDelay }),
+      /^Error: Remote workflow metadata fetch failed after 3 attempts \(network error\)$/,
+    );
+    assert.equal(calls, 3);
+  });
+
+  it('shares memory and disk caching across remote readers', async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'wfv-shared-cache-'));
+    const cacheFile = join(cacheDir, 'metadata.yml');
+    let calls = 0;
+    const fetchText = async () => {
+      calls++;
+      return 'name: cached\n';
+    };
+
+    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/metadata', cacheFile), 'name: cached\n');
+    assert.equal(await readCachedRemoteText(fetchText, 'https://example.invalid/metadata', cacheFile), 'name: cached\n');
+    assert.equal(calls, 1);
   });
 });
 

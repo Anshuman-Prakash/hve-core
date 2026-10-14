@@ -8,8 +8,8 @@
 #
 # Every watch needs id, kind, issue, and action, plus the fields for its kind:
 #
-#   - id: firewall-runner-repo-root-refs   # unique, lowercase kebab-case
-#     kind: runner-version                 # one of the kinds below
+#   - id: workflow-parser-check            # unique, lowercase kebab-case
+#     kind: probe-outcome                  # one of the kinds below
 #     issue: 1234                          # hve-core issue that tracks the workaround
 #     action: one line describing what to change once the watch triggers
 #
@@ -20,9 +20,6 @@
 #   release-newer    repo: org/repo
 #                    pinned: 1.2.3
 #                    Triggers when the latest release is newer than pinned.
-#   runner-version   label: ubuntu-24.04-firewall
-#                    minimum: 2.336.0
-#                    Triggers when a job on label reports at least minimum.
 #   probe-outcome    probe: probe-id
 #                    baseline: fail
 #                    Triggers when the named capability probe reports an
