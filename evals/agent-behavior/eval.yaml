@@ -75,31 +75,25 @@ stimuli:
       pattern: (?i)(wcag|1\.3\.1|2\.1\.1|4\.1\.2|level (a|aa))
 - name: accessibility-framework-assessor-method-adequacy
   prompt: |
-    This is a contained, response-only assessor-contract scenario, not a native
-    subagent invocation. Read `policy/accessibility-framework-assessor.agent.md`
-    for its status rules and the staged accessibility skill for method adequacy.
-    Assess WCAG 2.1.1 keyboard operability and 4.1.3 status messages using only
-    this synthetic source fragment at `src/SearchPanel.tsx`:
-
-    ```tsx
-    <button type="button">Search</button>
-    <p role="status" aria-live="polite"></p>
-    ```
-
-    No visible static barrier, keyboard probe, accessibility-tree result or
-    assistive-technology observation is supplied. Explain in chat what status
-    you assign to each criterion, what source reading can establish, and what
-    deciding evidence is still needed. Do not invoke tools beyond reference
-    reads, write files, or claim runtime verification.
+    Accessibility Reviewer dispatch:
+      - skill: wcag-22
+      - scope: src/
+      - conformance scope filter: WCAG 2.1.1 and 4.1.3
+      - codebase profile: Docusaurus site, React/MDX, WCAG 2.2 AA,
+        keyboard-only target.
+    Only source evidence is available for this run. Return your findings.
   agent_environment:
     files:
     - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
-      dest: policy/accessibility-framework-assessor.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/accessibility-surfaces/search-panel.txt
+      dest: src/SearchPanel.tsx
     skills:
     - ../../.github/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-source-only-method-adequacy
     agent: accessibility-framework-assessor
   graders:
   - type: output-matches
@@ -129,6 +123,19 @@ stimuli:
           });
           process.exit(valid ? 0 : 1);
         } catch { process.exit(1); }
+  - type: system-event
+    name: method-adequacy-read-only
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: method-adequacy-context
+    config:
+      required:
+      - hve.context.composed
 - name: accessibility-framework-assessor-disclaimer-posture
   prompt: |
     This is a response-only contract scenario. Read the staged assessor
@@ -576,49 +583,150 @@ stimuli:
       - hve.context.composed
 - name: accessibility-surface-inventory-config-emission
   prompt: |
-    As the accessibility-surface-inventory subagent, take a codebase profile
-    for a Docusaurus site (React/MDX, routes for home, docs, and search) with
-    a scope path and enabled WCAG framework, and produce the runtime surface
-    inventory. Emit an a11y-runtime.config.json with a base URL, a route list,
-    and a surface inventory of stable IDs, selectors, widget patterns, and
-    interaction states, plus a summary table and open questions for human
-    override.
+    Accessibility Reviewer dispatch: build the runtime surface inventory.
+    Codebase profile: `inventory/codebase-profile.md`. Scope path: `site/`.
+    Enabled frameworks: `wcag-22`.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/accessibility-surfaces/docs-site-profile.txt
+      dest: inventory/codebase-profile.md
+    - src: fixtures/accessibility-surfaces/docusaurus-config.txt
+      dest: site/docusaurus.config.js
+    - src: fixtures/accessibility-surfaces/docs-intro.txt
+      dest: site/docs/intro.md
+    - src: fixtures/accessibility-surfaces/docs-install.txt
+      dest: site/docs/install.md
+    - src: fixtures/accessibility-surfaces/docs-home.txt
+      dest: site/src/pages/index.tsx
+    - src: fixtures/accessibility-surfaces/search-dialog.txt
+      dest: site/src/components/SearchDialog.tsx
+    skills:
+    - ../../.github/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-docusaurus-inventory
     agent: accessibility-surface-inventory
   graders:
-  - type: output-matches
-    name: config-artifact-vocabulary
+  - type: program
+    name: a11y-inventory-config-from-site
     config:
-      pattern: (?i)(a11y-runtime\.config\.json|base ?url|route list|surface inventory|interaction states?)
-  - type: output-matches
-    name: surface-fields-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs'); const path = require('node:path');
+        try {
+          const file = path.join(process.env.EVALUATE_WORKSPACE, 'site/a11y-runtime.config.json');
+          const config = JSON.parse(fs.readFileSync(file, 'utf8').trim());
+          const arrays = ['allowlist', 'routes', 'surfaces', 'probeScoping'].every(key => Array.isArray(config[key]));
+          const fields = arrays && typeof config.baseUrl === 'string' && ['auto', 'served', 'external', 'off'].includes(config.serveMode);
+          const routes = (config.routes || []).map(route => String((route && route.path) || '').replace(/(.)\/$/, '$1'));
+          const covered = ['/', '/docs/intro', '/docs/install'].every(route => routes.includes(route));
+          const scoped = routes.every(route => route.startsWith('/'));
+          const surfaces = config.surfaces || [];
+          const dialog = surfaces.some(surface => /dialog/i.test(String((surface && surface.widgetPattern) || '') + ' ' + String((surface && surface.id) || '')));
+          const states = surfaces.length > 0 && surfaces.every(surface => surface && Array.isArray(surface.states) && surface.states.length > 0);
+          process.exit(fields && covered && scoped && dialog && states ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: a11y-inventory-reports-config-path
     config:
-      pattern: (?i)(selector|widget pattern|surface id|state definition|scope)
-  - type: output-matches
-    name: human-override-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const reported = /\bsite[\\/]a11y-runtime\.config\.json\b/.test(output);
+          const summary = /Discovery Summary[\s\S]*\|\s*\/docs\/intro\/?\s*\|/i.test(output);
+          process.exit(reported && summary ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: a11y-inventory-writes-only-config
     config:
-      pattern: (?i)(summary table|open questions?|human (override|review)|without over-?claiming)
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: a11y-inventory-config-context
+    config:
+      required:
+      - hve.context.composed
 - name: accessibility-surface-inventory-conservative-scope
   prompt: |
-    As the accessibility-surface-inventory subagent, you are given a codebase
-    profile with an unfamiliar UI framework and sparse routing signals. Explain
-    how you scope the runtime surface inventory and the config you emit so that
-    coverage is not overstated, and where you defer to human confirmation.
+    Accessibility Reviewer dispatch: build the runtime surface inventory.
+    Codebase profile: `inventory/codebase-profile.md`. Scope path: `ui/`.
+    Enabled frameworks: `wcag-22`.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/accessibility-surfaces/sparse-profile.txt
+      dest: inventory/codebase-profile.md
+    - src: fixtures/accessibility-surfaces/sparse-index.txt
+      dest: ui/index.html
+    - src: fixtures/accessibility-surfaces/sparse-app.txt
+      dest: ui/app.js
+    skills:
+    - ../../.github/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-unrecognized-framework-inventory
     agent: accessibility-surface-inventory
   graders:
-  - type: output-matches
-    name: conservative-scope-vocabulary
+  - type: program
+    name: a11y-inventory-reports-partial-with-questions
     config:
-      pattern: (?i)(not over-?claim|conservative|uncertain|defer|human (confirmation|override|review)|open questions?)
-  - type: output-matches
-    name: strategy-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const statuses = [...output.matchAll(/^[ \t]*Status:\s*(Complete|Partial|Blocked)\b/gim)].map(match => match[1].toLowerCase());
+          const conservative = statuses.length > 0 && statuses.every(status => status !== 'complete');
+          const questions = /#{2,4}[ \t]*Open Questions[^\n]*\n(?:[ \t\r]*\n)*[ \t]*[-*][ \t]+\S/i.test(output);
+          process.exit(conservative && questions ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: a11y-inventory-no-invented-routes
     config:
-      pattern: (?i)(discovery strategy|framework family|routes?|surfaces?|scope path)
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs'); const path = require('node:path');
+        try {
+          const file = path.join(process.env.EVALUATE_WORKSPACE, 'ui/a11y-runtime.config.json');
+          if (!fs.existsSync(file)) process.exit(0);
+          const config = JSON.parse(fs.readFileSync(file, 'utf8').trim());
+          const allowed = ['/', '/index.html', '/reports'];
+          const routes = Array.isArray(config.routes) ? config.routes : [];
+          process.exit(routes.every(route => allowed.includes(String((route && route.path) || '').replace(/(.)\/$/, '$1'))) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: a11y-inventory-conservative-writes-only-config
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: a11y-inventory-conservative-context
+    config:
+      required:
+      - hve.context.composed
 - name: accessibility-surface-inventory-rejects-unsafe-partial-config
   prompt: |
     This is an isolated behavior-contract scenario. Do not call tools or write
@@ -4135,23 +4243,70 @@ stimuli:
       - hve.context.composed
 - name: codebase-profiler-skill-mapping
   prompt: |
-    Scan the current repository in audit mode and produce a Codebase Profile
-    that maps discovered technology signals (languages, frameworks, IaC,
-    CI/CD) to applicable security skills such as owasp-top-10, owasp-llm,
-    owasp-mcp, owasp-cicd, owasp-infrastructure, and secure-by-design.
+    Security Reviewer dispatch: build the codebase profile for the repository
+    in this workspace and return it to me.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/codebase-profiler.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/llm-server.txt
+      dest: app/server.py
+    - src: fixtures/security-assessors/mcp-server.txt
+      dest: mcp/server.ts
+    - src: fixtures/security-assessors/dockerfile.txt
+      dest: Dockerfile
+    - src: fixtures/security-assessors/release-workflow.txt
+      dest: .github/workflows/release.yml
+    - src: fixtures/security-assessors/storage-bicep.txt
+      dest: infra/main.bicep
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-mixed-stack-profile
     agent: codebase-profiler
   graders:
-  - type: output-matches
-    name: profile-structure-vocabulary
+  - type: program
+    name: profiler-audit-mode
     config:
-      pattern: (?i)(codebase profile|primary languages|frameworks|key directories|applicable skills|technology summary)
-  - type: output-matches
-    name: skill-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const modes = [...output.matchAll(/^[ \t>*-]*Mode:\s*([a-z-]+)/gim)].map(match => match[1].toLowerCase());
+          process.exit(modes.length > 0 && modes.every(mode => mode === 'audit') ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: profiler-maps-staged-signals
     config:
-      pattern: (?i)(owasp[-_](top[-_]?10|llm|mcp|cicd|infrastructure|agentic)|secure[-_]by[-_]design)
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const section = /#{2,4}[ \t]*Applicable Skills[^\n]*\n([\s\S]*?)(?=\n#{2,4}[ \t]|$)/i.exec(output)?.[1] || '';
+          const skills = ['owasp-llm', 'owasp-mcp', 'owasp-cicd', 'owasp-infrastructure', 'mcsb'];
+          process.exit(skills.every(skill => new RegExp('\\b' + skill + '\\b', 'i').test(section)) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: profiler-read-only
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: profiler-context
+    config:
+      required:
+      - hve.context.composed
 - name: codebase-profiler-diff-mode
   prompt: |
     This is a represented diff-profile scenario, not a live repository scan.
@@ -7853,62 +8008,154 @@ stimuli:
       - hve.context.composed
 - name: finding-deep-verifier-verdict-blocks
   prompt: |
-    You are the Finding Deep Verifier subagent. Verify the following two
-    candidate security findings against the codebase context provided, and
-    return one verdict block per finding in a single response:
+    Security Reviewer dispatch: verify these FAIL findings for skill
+    `owasp-top-10` in audit mode. Codebase profile: Python Flask service.
       - finding_id: SEC-001
         title: SQL injection in user lookup
+        status: FAIL
         severity: HIGH
-        location: src/db/users.py#L42
-        claim: Raw f-string interpolation of `user_id` into a SQL query.
+        location: src/db/users.py#L9
+        description: The user lookup builds its SQL query with an f-string.
+        recommendation: Use a parameterized query.
       - finding_id: SEC-002
         title: Hardcoded secret in config loader
+        status: FAIL
         severity: MEDIUM
-        location: src/config.py#L11
-        claim: A literal API token appears in source.
+        location: src/config.py#L3
+        description: A literal API token appears in source.
+        recommendation: Load the token from a secret store.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/finding-deep-verifier.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/users-query.txt
+      dest: src/db/users.py
+    - src: fixtures/security-assessors/env-config.txt
+      dest: src/config.py
+    skills:
+    - ../../.github/skills/security/owasp-top-10
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-confirm-and-disprove
     agent: finding-deep-verifier
   graders:
-  - type: output-matches
-    name: verdict-block-per-finding
-    config:
-      pattern: (?i)##\s*finding:?\s*sec-00[12]
-  - type: output-matches
+  - type: program
     name: finding-deep-verifier-verdict-blocks-verdict-vocabulary
     config:
-      pattern: (?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)
-  - type: output-matches
-    name: required-section-headings
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const blocks = output.split(/^(?=#{1,3}[ \t]*Finding:?[ \t]*SEC-\d{3}\b)/m).filter(text => /^#{1,3}[ \t]*Finding/.test(text)).map(text => ({ id: /SEC-\d{3}/.exec(text)[0], text }));
+          const ids = blocks.map(block => block.id).sort();
+          const verdict = id => {
+            const values = [...blocks.find(block => block.id === id).text.matchAll(/^[ \t]*[-*]?[ \t]*Verdict:\s*(CONFIRMED|DISPROVED|DOWNGRADED)\b/gim)].map(match => match[1].toUpperCase());
+            return values.length > 0 && values.every(value => value === values[0]) ? values[0] : null;
+          };
+          const shaped = ids.length === 2 && ids[0] === 'SEC-001' && ids[1] === 'SEC-002';
+          process.exit(shaped && verdict('SEC-001') === 'CONFIRMED' && verdict('SEC-002') === 'DISPROVED' ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: verifier-links-confirmed-location
     config:
-      pattern: (?i)(original assessment|confirming evidence|updated remediation|example fix)
-  - type: output-matches
-    name: location-link-format
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const block = output.split(/^(?=#{1,3}[ \t]*Finding:?[ \t]*SEC-\d{3}\b)/m).filter(text => /^#{1,3}[ \t]*Finding/.test(text)).find(text => /^#{1,3}[ \t]*Finding:?[ \t]*SEC-001\b/.test(text)) || '';
+          process.exit(/\[[^\]\n]*src\/db\/users\.py#L(?:9|10)\b[^\]\n]*\]\([^)\n]*src\/db\/users\.py#L(?:9|10)\b[^)\n]*\)/.test(block) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: verifier-verdict-blocks-read-only
     config:
-      pattern: (?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: verifier-verdict-blocks-context
+    config:
+      required:
+      - hve.context.composed
 - name: finding-deep-verifier-no-new-findings
   prompt: |
-    You are the Finding Deep Verifier subagent. Verify only this single
-    finding and do not introduce any additional findings:
+    Security Reviewer dispatch: verify this FAIL finding for skill
+    `owasp-top-10` in audit mode. Codebase profile: Python Flask service.
       - finding_id: SEC-010
         title: Missing CSRF protection on form POST
+        status: FAIL
         severity: MEDIUM
-        location: src/web/forms.py#L88
-    Return your verdict block.
+        location: src/web/forms.py#L6
+        description: The profile form accepts POST requests without a CSRF token check.
+        recommendation: Add CSRF protection to the form.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/finding-deep-verifier.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/csrf-app.txt
+      dest: src/web/app.py
+    - src: fixtures/security-assessors/profile-form.txt
+      dest: src/web/forms.py
+    skills:
+    - ../../.github/skills/security/owasp-top-10
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-global-csrf-mitigation
     agent: finding-deep-verifier
   graders:
-  - type: output-matches
-    name: target-finding-present
+  - type: program
+    name: verifier-single-verdict-block
     config:
-      pattern: (?i)sec-010
-  - type: output-matches
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const headings = [...output.matchAll(/^#{1,3}[ \t]*Finding:?[ \t]*([A-Z]+-\d+)/gim)].map(match => match[1].toUpperCase());
+          process.exit(headings.length === 1 && headings[0] === 'SEC-010' ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
     name: finding-deep-verifier-no-new-findings-verdict-vocabulary
     config:
-      pattern: (?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const verdicts = [...output.matchAll(/^[ \t]*[-*]?[ \t]*Verdict:\s*(CONFIRMED|DISPROVED|DOWNGRADED)\b/gim)].map(match => match[1].toUpperCase());
+          const mitigated = verdicts.length > 0 && verdicts.every(value => value === 'DISPROVED' || value === 'DOWNGRADED');
+          process.exit(mitigated && /\bCSRFProtect\b/.test(output) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: verifier-single-finding-read-only
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: verifier-single-finding-context
+    config:
+      required:
+      - hve.context.composed
 - name: functional-planner-frontmatter-name-and-description
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
@@ -10290,27 +10537,72 @@ stimuli:
       - hve.context.composed
 - name: rai-skill-assessor-reference-first-plan-mode
   prompt: |
-    You are the RAI Skill Assessor subagent. Assess only the
-    `nist-ai-rmf-map` framework in plan mode for a proposed AI assistant.
-    Explain the required analysis order, the status vocabulary in the
-    returned report, and whether you may modify repository files.
+    RAI Planner dispatch:
+      - framework: nist-ai-rmf-map
+      - mode: plan
+      - plan document: docs/plans/support-chatbot-design.md
+      - codebase profile: proposed Python service that calls a hosted LLM
+        for customer support.
+    Return your findings.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/support-chatbot-design.txt
+      dest: docs/plans/support-chatbot-design.md
+    skills:
+    - ../../.github/skills/rai/rai-standards
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-chatbot-plan-map
     agent: rai-skill-assessor
   graders:
-  - type: output-matches
-    name: rai-assessor-reference-first
+  - type: program
+    name: rai-assessor-map-ids-from-reference
     config:
-      pattern: (?is)(read|load).{0,100}(rai-standards|reference).{0,160}(before|prior).{0,80}(analysis|analyse|analyze|evaluat)
-  - type: output-matches
-    name: rai-assessor-plan-statuses
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const mapped = rows.filter(cells => /^MP-\d(?:\.\d)?$/.test(cells[0] || ''));
+          const statuses = mapped.map(cells => cells.find(cell => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE|PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)));
+          const planOnly = statuses.every(status => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE)$/.test(status || ''));
+          process.exit(new Set(mapped.map(cells => cells[0])).size >= 5 && planOnly ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: rai-assessor-flags-unconfirmed-refunds
     config:
-      pattern: (?is)(RISK).*(CAUTION).*(COVERED).*(NOT_APPLICABLE)
-  - type: output-matches
-    name: rai-assessor-single-framework-read-only
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const flagged = rows.some(cells => /^MP-\d(?:\.\d)?$/.test(cells[0] || '') && cells.some(cell => /^(?:RISK|CAUTION)$/.test(cell)));
+          process.exit(flagged && /\brefund/i.test(output) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: rai-assessor-read-only
     config:
-      pattern: (?is)(exactly|only|single).{0,80}(framework).{0,200}(do not modify|read-only|must not modify)
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: rai-assessor-context
+    config:
+      required:
+      - hve.context.composed
 - name: report-generator-vuln-report
   prompt: |
     You are a report-generator subagent invocation. Collate verified findings
@@ -10334,11 +10626,14 @@ stimuli:
     files:
     - src: ../../.github/agents/security/subagents/report-generator.agent.md
       dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/prior-security-report.txt
+      dest: .copilot-tracking/security/2026-05-27/security-report-001.md
     skills:
     - ../../.github/skills/security/security-reviewer-formats
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-prior-report-sequence
     agent: report-generator
   graders:
   - type: program
@@ -10351,12 +10646,10 @@ stimuli:
         const fs = require('node:fs'); const path = require('node:path');
         try {
           const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
-          const relative = '.copilot-tracking/security/2026-05-27';
-          const directory = path.join(process.env.EVALUATE_WORKSPACE, relative);
-          const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
-          if (files.length !== 1) process.exit(1);
-          const report = fs.readFileSync(path.join(directory, files[0]), 'utf8');
-          process.exit(report.length > 100 && /Executive Summary/i.test(report) && input.trajectory.output.includes(relative + '/' + files[0]) ? 0 : 1);
+          const relative = '.copilot-tracking/security/2026-05-27/security-report-002.md';
+          const report = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, relative), 'utf8');
+          const output = String(input.trajectory.output || '').replace(/\\/g, '/');
+          process.exit(report.length > 100 && /Executive Summary/i.test(report) && output.includes(relative) ? 0 : 1);
         } catch { process.exit(1); }
   - type: program
     name: severity-ordering-vocabulary
@@ -10367,10 +10660,7 @@ stimuli:
       - |
         const fs = require('node:fs'); const path = require('node:path');
         try {
-          const directory = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27');
-          const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
-          if (files.length !== 1) process.exit(1);
-          const report = fs.readFileSync(path.join(directory, files[0]), 'utf8').replace(/[*`]/g, '');
+          const report = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27/security-report-002.md'), 'utf8').replace(/[*`]/g, '');
           const summary = /###\s+Summary Counts\s*\n([\s\S]*?)(?=\n#{1,3}\s|$)/i.exec(report)?.[1] || '';
           const count = status => [...summary.matchAll(new RegExp('^\\s*\\|\\s*' + status + '\\s*\\|\\s*(\\d+)\\s*\\|', 'gim'))];
           const counts = ['PASS', 'FAIL', 'PARTIAL', 'NOT_ASSESSED'].every(status => count(status).length === 1 && count(status)[0][1] === '1') && count('Total').length === 1 && count('Total')[0][1] === '4';
@@ -10385,6 +10675,19 @@ stimuli:
           }).length === 1) && ['owasp-top-10', 'owasp-cicd'].every(value => findings.includes(value));
           process.exit(counts && ordered && supplied ? 0 : 1);
         } catch { process.exit(1); }
+  - type: system-event
+    name: report-writes-only-next-report
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: report-context
+    config:
+      required:
+      - hve.context.composed
 - name: report-generator-plan-mode
   prompt: |
     As a report-generator subagent in plan mode, produce a PLAN_REPORT_V1
@@ -11227,57 +11530,143 @@ stimuli:
       - hve.context.composed
 - name: skill-assessor-audit-mode-format
   prompt: |
-    You are the Skill Assessor subagent. The Security Reviewer orchestrator
-    hands you this input:
+    Security Reviewer dispatch:
       - mode: audit
       - skill: owasp-top-10
       - scope: src/web/
-    Assess exactly this one skill against the scope and return findings in the
-    audit format with skill metadata and a findings table.
+      - codebase profile: Python Flask web API with SQLite storage.
+    Return your findings.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/skill-assessor.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/users-query.txt
+      dest: src/web/users.py
+    skills:
+    - ../../.github/skills/security/owasp-top-10
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-flask-injection-audit
     agent: skill-assessor
   graders:
-  - type: output-matches
-    name: skill-metadata-fields
-    config:
-      pattern: '(?i)(skill|framework|version|reference)\s*:'
-  - type: output-matches
+  - type: program
     name: skill-assessor-audit-mode-format-findings-table-present
     config:
-      pattern: (?i)(\|.*status.*\||findings table|severity)
-  - type: output-matches
-    name: audit-status-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const ids = rows.map(cells => /^A(0[1-9]|10)(?::2025)?$/.exec(cells[0] || '')?.[1]).filter(Boolean);
+          const hasStatus = rows.filter(cells => /^A(?:0[1-9]|10)(?::2025)?$/.test(cells[0] || '')).every(cells => cells.some(cell => /^(?:PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)));
+          const expected = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
+          const once = expected.every(id => ids.filter(value => value === id).length === 1);
+          const metadata = /Reference:[^\n]*owasp\.org\/Top10\/2025/i.test(output);
+          process.exit(once && hasStatus && metadata ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: assessor-fails-injection-at-source-line
     config:
-      pattern: (?i)\b(pass|fail|partial|not[_ ]assessed)\b
-  - type: output-matches
-    name: location-link-or-sentinel
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const injection = rows.filter(cells => /^A05(?::2025)?$/.test(cells[0] || ''));
+          const failed = injection.length === 1 && injection[0].includes('FAIL') && injection[0].some(cell => /^(?:CRITICAL|HIGH|MEDIUM|LOW)$/.test(cell));
+          process.exit(failed && /src\/web\/users\.py#L(?:9|10)\b/.test(injection[0].join('|')) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: assessor-audit-read-only
     config:
-      pattern: (?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: assessor-audit-context
+    config:
+      required:
+      - hve.context.composed
 - name: skill-assessor-plan-mode-vocabulary
   prompt: |
-    You are the Skill Assessor subagent. The Security Planner orchestrator
-    hands you this input:
+    Security Planner dispatch:
       - mode: plan
       - skill: owasp-llm
-      - plan_text: A design doc describing an LLM chatbot that accepts
-        untrusted user input and forwards it to a tool-calling agent.
-    Assess exactly this one skill against the plan text and return findings in
-    the plan-mode format.
+      - plan document: docs/plans/support-chatbot-design.md
+      - codebase profile: proposed Python service that calls a hosted LLM.
+    Return your findings.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/skill-assessor.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/support-chatbot-design.txt
+      dest: docs/plans/support-chatbot-design.md
+    skills:
+    - ../../.github/skills/security/owasp-llm
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-chatbot-plan-llm
     agent: skill-assessor
   graders:
-  - type: output-matches
+  - type: program
     name: skill-assessor-plan-mode-vocabulary-plan-status-vocabulary
     config:
-      pattern: (?i)\b(risk|caution|covered|not[_ ]applicable)\b
-  - type: output-matches
-    name: mitigation-guidance
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const listed = rows.filter(cells => /^LLM(?:0[1-9]|10)(?::2025)?$/.test(cells[0] || ''));
+          const ids = listed.map(cells => cells[0].slice(3, 5));
+          const expected = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
+          const once = expected.every(id => ids.filter(value => value === id).length === 1);
+          const planOnly = listed.every(cells => cells.some(cell => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE)$/.test(cell)) && !cells.some(cell => /^(?:PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)) && !/#L\d/.test(cells.join('|')));
+          process.exit(once && planOnly ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: plan-assessor-flags-injection-and-agency
     config:
-      pattern: (?i)(mitigation|guidance|recommend)
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          const flagged = id => rows.some(cells => new RegExp('^LLM' + id + '(?::2025)?$').test(cells[0] || '') && cells.some(cell => /^(?:RISK|CAUTION)$/.test(cell)));
+          process.exit(flagged('01') && flagged('06') && /#{2,4}[ \t]*Mitigation Guidance/i.test(output) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: assessor-plan-read-only
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: assessor-plan-context
+    config:
+      required:
+      - hve.context.composed
 - name: sssc-planner-class-recipe
   prompt: |
     Start an SSSC planning session for this repository. Outline the six phases of the supply chain assessment. Write the planning state under `.copilot-tracking/sssc-plans/` and report the path.
@@ -11930,29 +12319,71 @@ stimuli:
       - hve.context.composed
 - name: supply-chain-skill-assessor-posture
   prompt: |
-    As the supply-chain skill assessor, assess a repository's supply-chain
-    posture against the `supply-chain-security` skill. Given a codebase
-    profile that has no SBOM, unpinned GitHub Actions, and no OpenSSF
-    Scorecard workflow, return structured findings with a status and severity
-    for each gap.
+    Security Reviewer dispatch:
+      - skill: supply-chain-security
+      - mode: audit
+      - codebase profile: Node.js library published to npm from GitHub Actions.
+    Return your findings.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/supply-chain-skill-assessor.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-assessors/release-workflow.txt
+      dest: .github/workflows/release.yml
+    skills:
+    - ../../.github/skills/security/supply-chain-security
   tags:
     category: agent-behavior
     advisory: "true"
+    scenario: staged-unpinned-release-workflow
     agent: supply-chain-skill-assessor
   graders:
-  - type: output-matches
-    name: supply-chain-vocabulary
+  - type: program
+    name: supply-chain-flags-unpinned-release-actions
     config:
-      pattern: (?i)(supply[- ]chain|scorecard|SLSA|SBOM|sigstore|pinned|provenance|finding)
-  - type: output-matches
-    name: status-or-severity-vocabulary
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          process.exit(rows.some(cells => cells.some(cell => /^(?:FAIL|PARTIAL)$/.test(cell)) && /\bpin/i.test(cells.join('|')) && /release\.ya?ml\b/.test(cells.join('|'))) ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: program
+    name: supply-chain-flags-missing-sbom
     config:
-      pattern: (?i)(PASS|FAIL|PARTIAL|NOT_ASSESSED|critical|high|medium|low|severity|status)
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+          const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+          process.exit(rows.some(cells => cells.some(cell => /^(?:FAIL|PARTIAL)$/.test(cell)) && /\bSBOM\b/i.test(cells.join('|'))) ? 0 : 1);
+        } catch { process.exit(1); }
   - type: output-matches
     name: supply-chain-skill-assessor-posture-no-source-edit
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+  - type: system-event
+    name: supply-chain-read-only
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: supply-chain-context
+    config:
+      required:
+      - hve.context.composed
 - name: system-architecture-reviewer-class-recipe
   prompt: |
     Review this proposed architecture: "Single Node.js monolith on one VM, SQLite database, no caching, deployed via SSH." Produce a written assessment with strengths and risks. Write the assessment under `.copilot-tracking/` and report the path.

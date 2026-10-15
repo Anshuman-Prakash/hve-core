@@ -4815,3 +4815,317 @@ console.log(JSON.stringify(results));
         @(Get-BatchCMismatches $script:BatchCProgramGraderPath 'ProgramGrader' @($probes) @($cases)) | Should -BeNullOrEmpty
     }
 }
+
+Describe 'Coverage repair batch C advisory re-measures' -Tag 'Unit', 'CoverageRepairBatchC' {
+    BeforeAll {
+        $script:C2RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:C2EvalRoot = Join-Path $script:C2RepoRoot 'evals/agent-behavior'
+        $script:C2Policy = Get-Content -Raw (Join-Path $script:C2EvalRoot 'measurement-policy.json') | ConvertFrom-Json -AsHashtable
+        $inventory = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:C2EvalRoot 'AGENTS.yml')))
+        $script:C2AgentPaths = @{}
+        foreach ($record in $inventory.agents) { $script:C2AgentPaths[[string]$record.slug] = [string]$record.path }
+        $script:C2SlugList = @('accessibility-framework-assessor', 'accessibility-surface-inventory', 'codebase-profiler', 'finding-deep-verifier',
+            'rai-skill-assessor', 'report-generator', 'skill-assessor', 'supply-chain-skill-assessor')
+        $script:C2Stimuli = @{}
+        $script:C2Slugs = @{}
+        foreach ($slug in $script:C2SlugList) {
+            $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:C2EvalRoot "stimuli/$slug.yml")))
+            foreach ($stimulus in $partial.stimuli) {
+                $script:C2Stimuli[$stimulus.name] = $stimulus
+                $script:C2Slugs[$stimulus.name] = $slug
+            }
+        }
+        $script:C2Remeasured = @(
+            'accessibility-surface-inventory-config-emission', 'accessibility-surface-inventory-conservative-scope', 'codebase-profiler-skill-mapping',
+            'finding-deep-verifier-verdict-blocks', 'finding-deep-verifier-no-new-findings', 'rai-skill-assessor-reference-first-plan-mode',
+            'skill-assessor-audit-mode-format', 'skill-assessor-plan-mode-vocabulary', 'supply-chain-skill-assessor-posture',
+            'accessibility-framework-assessor-method-adequacy', 'report-generator-vuln-report'
+        )
+        $script:C2GraderPaths = @{
+            'output-matches' = @((Resolve-Path (Join-Path $script:C2RepoRoot 'node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path, 'OutputMatchesGrader')
+            'program'        = @((Resolve-Path (Join-Path $script:C2RepoRoot 'node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path, 'ProgramGrader')
+        }
+        $script:C2GradeProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const module = await import(pathToFileURL(process.argv[1]).href);
+const Grader = module[process.argv[2]];
+const cases = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const results = [];
+for (const item of cases) results.push((await new Grader().grade(item)).passed);
+console.log(JSON.stringify(results));
+'@
+
+        function script:Get-C2Text([string]$Path) {
+            return [System.IO.File]::ReadAllText((Join-Path $script:C2EvalRoot $Path))
+        }
+
+        # Grades every probe through the installed Vally grader for its type and returns the labels whose verdict differs.
+        function script:Get-C2Mismatches([object[]]$Probes) {
+            $typed = @{}
+            foreach ($probe in $Probes) {
+                $grader = @($script:C2Stimuli[$probe.S].graders | Where-Object { $_.name -eq $probe.G })
+                $grader | Should -HaveCount 1 -Because "$($probe.S) declares $($probe.G)"
+                $prompt = [string]$script:C2Stimuli[$probe.S].prompt
+                $workspace = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+                New-Item -ItemType Directory -Path $workspace -Force | Out-Null
+                $files = if ($probe.ContainsKey('Files')) { $probe.Files } else { @{} }
+                foreach ($relative in $files.Keys) {
+                    $target = Join-Path $workspace $relative
+                    New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+                    [System.IO.File]::WriteAllText($target, ([string]$files[$relative]).Replace('@prompt', $prompt))
+                }
+                $output = if ($probe.ContainsKey('T')) { ([string]$probe.T).Replace('@prompt', $prompt) } else { '' }
+                $case = @{ config = $grader[0].config; trajectory = @{ output = $output; workDir = $workspace; events = @() } }
+                $type = [string]$grader[0].type
+                if (-not $typed.ContainsKey($type)) { $typed[$type] = [System.Collections.Generic.List[object]]::new() }
+                $typed[$type].Add(@{ Probe = $probe; Case = $case })
+            }
+            foreach ($type in $typed.Keys) {
+                $script:C2GraderPaths.ContainsKey($type) | Should -BeTrue -Because "$type graders are probed"
+                $items = $typed[$type]
+                $json = ConvertTo-Json -InputObject @($items | ForEach-Object { $_.Case }) -Depth 20 -Compress
+                $results = @($json | & node --input-type=module --eval $script:C2GradeProbe $script:C2GraderPaths[$type][0] $script:C2GraderPaths[$type][1] | ConvertFrom-Json)
+                $LASTEXITCODE | Should -Be 0
+                $results | Should -HaveCount $items.Count
+                for ($index = 0; $index -lt $items.Count; $index++) {
+                    $probe = $items[$index].Probe
+                    if ($results[$index] -ne $probe.E) { "$($probe.G) [$($probe.L)]" }
+                }
+            }
+        }
+    }
+
+    It 'Re-measures each batch C advisory case in place as a loaded contract with a filesystem boundary' {
+        foreach ($name in $script:C2Remeasured) {
+            $stimulus = $script:C2Stimuli[$name]
+            $stimulus | Should -Not -BeNullOrEmpty -Because $name
+            $slug = $script:C2Slugs[$name]
+            $stimulus.tags['advisory'] | Should -Be 'true' -Because $name
+            $stimulus.tags.Contains('calibration') | Should -BeFalse -Because "$name is re-measured in place and keeps running"
+            $mount = @($stimulus.agent_environment.files | Where-Object { $_.src -eq "../../$($script:C2AgentPaths[$slug])" -and $_.dest -eq '.github/copilot-instructions.md' })
+            $mount | Should -HaveCount 1 -Because "$name stages its own agent source"
+            foreach ($file in @($stimulus.agent_environment.files)) {
+                Test-Path -LiteralPath (Join-Path $script:C2EvalRoot $file.src) -PathType Leaf | Should -BeTrue -Because "$name stages $($file.src)"
+            }
+            foreach ($skill in @($stimulus.agent_environment['skills'] | Where-Object { $null -ne $_ })) {
+                Test-Path -LiteralPath (Join-Path $script:C2EvalRoot $skill) -PathType Container | Should -BeTrue -Because "$name stages $skill"
+            }
+            $entry = $script:C2Policy.stimuli[$name]
+            $entry.class | Should -Be 'agent-contract' -Because $name
+            $entry.measurement | Should -Be 'candidate' -Because $name
+            $entry.authoritative | Should -BeFalse -Because $name
+            $entry.incumbent | Should -Be $name -Because "$name is re-measured under its own identity"
+            $entry.agentSource | Should -Be $script:C2AgentPaths[$slug] -Because $name
+            $script:C2Policy.contextDebt | Should -Not -Contain $name
+            @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.context.composed' }) | Should -HaveCount 1 -Because $name
+            @($stimulus.graders | Where-Object { $_.type -like 'diff*' -or $_.name -like 'diff-*' }) | Should -BeNullOrEmpty -Because "$name uses no diff grader"
+            $staged = @(@($stimulus.agent_environment['skills']) | Where-Object { $null -ne $_ } | ForEach-Object { Split-Path -Path $_ -Leaf })
+            foreach ($skill in @($entry.requiredSkills)) { $staged | Should -Contain $skill -Because $name }
+            $names = @($stimulus.graders | ForEach-Object { $_.name })
+            foreach ($assertion in @($entry.assertions)) { $names | Should -Contain $assertion -Because $name }
+            $boundary = @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.filesystem.passed' })
+            $boundary | Should -HaveCount 1 -Because $name
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.violated'
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.unavailable'
+            foreach ($rule in @($entry.filesystem.allow)) {
+                $rule.change | Should -Be 'create' -Because "$name only creates its contracted artifact"
+                $rule.Contains('path') | Should -BeTrue -Because "$name names its single artifact exactly"
+                $rule.Contains('max') | Should -BeFalse -Because "$name creates one artifact"
+            }
+        }
+    }
+
+    It 'Leaves no context debt in the batch C assessor agents' {
+        foreach ($slug in $script:C2SlugList) {
+            $owned = @($script:C2Stimuli.Keys | Where-Object { $script:C2Slugs[$_] -eq $slug })
+            @($owned | Where-Object { $script:C2Policy.contextDebt -contains $_ }) | Should -BeNullOrEmpty -Because "$slug has no remaining debt case"
+            @($owned | Where-Object { $script:C2Policy.stimuli[$_].measurement -eq 'candidate' }) | Should -Not -BeNullOrEmpty -Because "$slug has a loaded candidate"
+        }
+    }
+
+    It 'Keeps deciding facts in staged files rather than in prompts' {
+        $prompt = { param($name) [string]$script:C2Stimuli[$name].prompt }
+        & $prompt 'accessibility-surface-inventory-config-emission' | Should -Not -Match '(?i)a11y-runtime\.config|/docs/|dialog|github|baseUrl|serveMode'
+        & $prompt 'accessibility-surface-inventory-conservative-scope' | Should -Not -Match '(?i)tessellate|/reports|partial|open question|undetermined'
+        & $prompt 'codebase-profiler-skill-mapping' | Should -Not -Match '(?i)owasp|mcsb|\bmcp\b|openai|bicep|docker|workflow|audit'
+        & $prompt 'finding-deep-verifier-verdict-blocks' | Should -Not -Match '(?i)CONFIRMED|DISPROVED|DOWNGRADED|environ|BILLING_API_TOKEN'
+        & $prompt 'finding-deep-verifier-no-new-findings' | Should -Not -Match '(?i)CSRFProtect|flask_wtf|\beval\b|DISPROVED|additional findings'
+        & $prompt 'rai-skill-assessor-reference-first-plan-mode' | Should -Not -Match '(?i)MP-\d|refund|\bRISK\b|CAUTION|COVERED'
+        & $prompt 'skill-assessor-audit-mode-format' | Should -Not -Match '(?i)A0\d|A10|injection|\bSQL\b|users\.py|owasp\.org'
+        & $prompt 'skill-assessor-plan-mode-vocabulary' | Should -Not -Match '(?i)LLM0|refund|\bRISK\b|CAUTION|forward'
+        & $prompt 'supply-chain-skill-assessor-posture' | Should -Not -Match '(?i)\bpin|SBOM|checkout|write-all|release\.yml|scorecard'
+        & $prompt 'accessibility-framework-assessor-method-adequacy' | Should -Not -Match '(?i)NOT_ASSESSED|informs?\b|probe|screen[- ]reader|assistive'
+        & $prompt 'report-generator-vuln-report' | Should -Not -Match '(?i)security-report-\d|\b00[12]\b'
+        $users = (Get-C2Text 'fixtures/security-assessors/users-query.txt') -split '\r?\n'
+        $users[8] | Should -Match 'f"SELECT .*\{user_id\}' -Because 'the injection sink stays on line 9'
+        Get-C2Text 'fixtures/security-assessors/env-config.txt' | Should -Match 'os\.environ\["BILLING_API_TOKEN"\]'
+        Get-C2Text 'fixtures/security-assessors/csrf-app.txt' | Should -Match 'CSRFProtect\(app\)'
+        $form = (Get-C2Text 'fixtures/security-assessors/profile-form.txt') -split '\r?\n'
+        $form[5] | Should -Match '@bp\.post\("/profile"\)' -Because 'the finding location stays on line 6'
+        ($form -join "`n") | Should -Match 'eval\(request\.form'
+        $workflow = Get-C2Text 'fixtures/security-assessors/release-workflow.txt'
+        $workflow | Should -Match 'uses: actions/checkout@v4\s'
+        $workflow | Should -Match 'permissions: write-all'
+        $workflow | Should -Not -Match '(?i)sbom|cyclonedx|spdx'
+        Get-C2Text 'fixtures/security-assessors/support-chatbot-design.txt' | Should -Match '(?s)forwards each message unmodified.*without human confirmation'
+        Get-C2Text 'fixtures/accessibility-surfaces/docusaurus-config.txt' | Should -Match "href: 'https://github\.com/contoso/docs'"
+        Get-C2Text 'fixtures/accessibility-surfaces/search-dialog.txt' | Should -Match 'role="dialog"'
+        Get-C2Text 'fixtures/accessibility-surfaces/sparse-profile.txt' | Should -Match 'uiFrameworkFamily: undetermined'
+    }
+
+    It 'Grades batch C re-measured graders through the installed Vally graders' {
+        $ci = 'accessibility-surface-inventory-config-emission'; $cs = 'accessibility-surface-inventory-conservative-scope'; $cp = 'codebase-profiler-skill-mapping'
+        $vb = 'finding-deep-verifier-verdict-blocks'; $nf = 'finding-deep-verifier-no-new-findings'; $ra = 'rai-skill-assessor-reference-first-plan-mode'
+        $sa = 'skill-assessor-audit-mode-format'; $sp = 'skill-assessor-plan-mode-vocabulary'; $sc = 'supply-chain-skill-assessor-posture'
+        $ma = 'accessibility-framework-assessor-method-adequacy'; $rg = 'report-generator-vuln-report'
+        $na = "I can't find that file or agent in this workspace, so I can't continue."
+        $config = {
+            param($change)
+            $value = [ordered]@{
+                baseUrl      = 'http://localhost:3000'
+                serveMode    = 'auto'
+                allowlist    = @('http://localhost:3000/**')
+                routes       = @([ordered]@{ path = '/' }, [ordered]@{ path = '/docs/intro/' }, [ordered]@{ path = '/docs/install' })
+                surfaces     = @(
+                    [ordered]@{ id = 'home'; type = 'page'; route = '/'; states = @([ordered]@{ id = 'default' }) }
+                    [ordered]@{ id = 'search-dialog'; type = 'widget'; widgetPattern = 'dialog'; route = '/'; states = @([ordered]@{ id = 'default' }, [ordered]@{ id = 'open' }) }
+                )
+                probeScoping = @([ordered]@{ probe = 'axe'; surfaces = @('home', 'search-dialog') })
+            }
+            if ($change) { & $change $value }
+            $value | ConvertTo-Json -Depth 8
+        }
+        $siteConfig = 'site/a11y-runtime.config.json'; $uiConfig = 'ui/a11y-runtime.config.json'
+        $inventory = "## Surface Inventory Result`n`n**Status:** Complete`n`n### Config Artifact`n`n* Path: ``site/a11y-runtime.config.json```n`n### Discovery Summary`n`n| Route | Surface | States | Notes |`n|---|---|---|---|`n| /docs/intro | docs-intro | default | doc page |"
+        $partial = "## Surface Inventory Result`n`n**Status:** Partial`n`n### Open Questions`n`n* Which router does the console framework use?"
+        $profile = "## Codebase Profile`n`n**Repository:** ticket-tools`n**Mode:** audit`n`n### Technology Summary`n`nFlask, MCP and Bicep.`n`n### Applicable Skills`n`n- owasp-top-10: Flask routes`n- owasp-llm: OpenAI calls`n- owasp-mcp: MCP server`n- owasp-cicd: release workflow`n- owasp-infrastructure: Dockerfile`n- mcsb: Bicep storage account`n`n### Accessibility Profile`n`nnone"
+        $sec1 = "## Finding: SEC-001: SQL injection in user lookup`n`n### Vulnerable Location`n- **File:** [src/db/users.py#L9](src/db/users.py#L9)`n`n### Verdict`n- **Verdict:** CONFIRMED`n- **Verified Status:** FAIL`n"
+        $sec2 = "## Finding: SEC-002: Hardcoded secret in config loader`n`n### Vulnerable Location`n- **File:** —`n`n### Verdict`n- **Verdict:** DISPROVED`n- **Verified Status:** PASS`n"
+        $sec10 = "## Finding: SEC-010: Missing CSRF protection on form POST`n`n### Contradicting Evidence`n- src/web/app.py#L10 enables CSRFProtect(app) for every POST view.`n`n### Verdict`n- **Verdict:** DISPROVED`n"
+        $mapRows = { param($rows) "| ID | Title | Status | Severity | Location | Finding | Recommendation |`n|---|---|---|---|---|---|---|`n" + (($rows | ForEach-Object { "| $($_[0]) | t | $($_[1]) | $($_[2]) | — | f | r |" }) -join "`n") }
+        $mapGood = & $mapRows @(@('MP-1.1', 'COVERED', '—'), @('MP-2.2', 'RISK', 'HIGH'), @('MP-3.5', 'RISK', 'HIGH'), @('MP-4.2', 'CAUTION', 'MEDIUM'), @('MP-5.1', 'NOT_APPLICABLE', '—'))
+        $top10 = {
+            param($change)
+            $rows = [ordered]@{}
+            foreach ($id in '01', '02', '03', '04', '06', '07', '08', '09', '10') { $rows["A$id"] = "| A$($id):2025 | t | PASS | — | — | f | r |" }
+            $rows['A05'] = '| A05:2025 | Injection | FAIL | HIGH | [src/web/users.py#L9](src/web/users.py#L9) | f-string query | parameterize |'
+            if ($change) { & $change $rows }
+            "- **Skill:** owasp-top-10`n- **Reference:** https://owasp.org/Top10/2025/`n`n| ID | Title | Status | Severity | Location | Finding | Recommendation |`n|---|---|---|---|---|---|---|`n" + ($rows.Values -join "`n")
+        }
+        $llm = {
+            param($change)
+            $rows = [ordered]@{}
+            foreach ($id in '02', '03', '04', '05', '07', '08', '09', '10') { $rows["LLM$id"] = "| LLM$($id):2025 | t | NOT_APPLICABLE | — | — | f | r |" }
+            $rows['LLM01'] = '| LLM01:2025 | Prompt Injection | RISK | HIGH | — | unfiltered | filter |'
+            $rows['LLM06'] = '| LLM06:2025 | Excessive Agency | CAUTION | HIGH | — | refunds | confirm |'
+            if ($change) { & $change $rows }
+            "| ID | Title | Status | Severity | Location | Finding | Recommendation |`n|---|---|---|---|---|---|---|`n" + ($rows.Values -join "`n") + "`n`n### Mitigation Guidance`n`nRequire confirmation."
+        }
+        $pinRow = '| PD-1 | Pinned-Dependencies | FAIL | MEDIUM | [.github/workflows/release.yml#L10](.github/workflows/release.yml#L10) | actions pinned by tag | Pin to a full SHA |'
+        $sbomRow = '| SBOM-1 | SBOM generation | FAIL | HIGH | — | release ships no SBOM | Generate an SPDX SBOM |'
+        $adequate = "| 2.1.1 | Keyboard | NOT_ASSESSED | — | — | Static source only informs keyboard behavior | Run a keyboard interaction-state probe |`n| 4.1.3 | Status Messages | NOT_ASSESSED | — | — | Source cannot establish announcement correctness | Validate with a screen-reader pass |"
+        $report = "# Security Report`n`n## Executive Summary`n`nTwo skills were collated: one failing authorization check, one partial review gate, one pass and one unassessed runtime check.`n`n### Summary Counts`n`n| Status | Count |`n|---|---|`n| PASS | 1 |`n| FAIL | 1 |`n| PARTIAL | 1 |`n| NOT_ASSESSED | 1 |`n| Total | 4 |`n`n## Findings by Framework`n`n| ID | Skill | Status | Severity |`n|---|---|---|---|`n| SYN-A | owasp-top-10 | FAIL | HIGH |`n| SYN-B | owasp-cicd | PARTIAL | LOW |`n| SYN-C | owasp-top-10 | PASS | N/A |`n| SYN-D | owasp-cicd | NOT_ASSESSED | N/A |`n`n## Detailed Remediation Guidance`n`n### HIGH`n`nSYN-A: require authorization.`n`n### LOW`n`nSYN-B: require approval.`n"
+        $prior = Get-C2Text 'fixtures/security-assessors/prior-security-report.txt'
+        $first = '.copilot-tracking/security/2026-05-27/security-report-001.md'; $second = '.copilot-tracking/security/2026-05-27/security-report-002.md'
+        $probes = @(
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'valid'; Files = @{ $siteConfig = (& $config $null) }; E = $true }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'missing file'; Files = @{}; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'root location'; Files = @{ 'a11y-runtime.config.json' = (& $config $null) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'missing install route'; Files = @{ $siteConfig = (& $config { param($c) $c.routes = @($c.routes[0], $c.routes[1]) }) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'external route'; Files = @{ $siteConfig = (& $config { param($c) $c.routes += [ordered]@{ path = 'https://github.com/contoso/docs' } }) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'no dialog surface'; Files = @{ $siteConfig = (& $config { param($c) $c.surfaces = @($c.surfaces[0]) }) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'stateless surface'; Files = @{ $siteConfig = (& $config { param($c) $c.surfaces[0].states = @() }) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'missing probe scoping'; Files = @{ $siteConfig = (& $config { param($c) $c.Remove('probeScoping') }) }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-config-from-site'; L = 'prompt echo file'; Files = @{ $siteConfig = '@prompt' }; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-reports-config-path'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-reports-config-path'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $ci; G = 'a11y-inventory-reports-config-path'; L = 'contract reply'; T = $inventory; E = $true }
+            @{ S = $ci; G = 'a11y-inventory-reports-config-path'; L = 'root path'; T = $inventory.Replace('site/a11y', 'a11y'); E = $false }
+            @{ S = $ci; G = 'a11y-inventory-reports-config-path'; L = 'no summary row'; T = $inventory.Replace('| /docs/intro |', '| / |'); E = $false }
+            @{ S = $cs; G = 'a11y-inventory-reports-partial-with-questions'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $cs; G = 'a11y-inventory-reports-partial-with-questions'; L = 'partial'; T = $partial; E = $true }
+            @{ S = $cs; G = 'a11y-inventory-reports-partial-with-questions'; L = 'blocked'; T = $partial.Replace('Partial', 'Blocked'); E = $true }
+            @{ S = $cs; G = 'a11y-inventory-reports-partial-with-questions'; L = 'complete'; T = $partial.Replace('Partial', 'Complete'); E = $false }
+            @{ S = $cs; G = 'a11y-inventory-reports-partial-with-questions'; L = 'no questions'; T = "**Status:** Partial`n`n### Open Questions`n`nNone."; E = $false }
+            @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'no config'; Files = @{}; E = $true }
+            @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'observed routes'; Files = @{ $uiConfig = '{"baseUrl":"http://localhost:8080","routes":[{"path":"/"},{"path":"/reports/"}]}' }; E = $true }
+            @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'invented route'; Files = @{ $uiConfig = '{"baseUrl":"http://localhost:8080","routes":[{"path":"/"},{"path":"/settings"}]}' }; E = $false }
+            @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'malformed'; Files = @{ $uiConfig = '{"routes":' }; E = $false }
+            @{ S = $cp; G = 'profiler-audit-mode'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $cp; G = 'profiler-audit-mode'; L = 'audit'; T = $profile; E = $true }
+            @{ S = $cp; G = 'profiler-audit-mode'; L = 'diff'; T = $profile.Replace('audit', 'diff'); E = $false }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'mapped'; T = $profile; E = $true }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'missing mcsb'; T = $profile.Replace('- mcsb: Bicep storage account', ''); E = $false }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'outside section'; T = "### Technology Summary`n`nowasp-llm owasp-mcp owasp-cicd owasp-infrastructure mcsb`n`n### Applicable Skills`n`n- owasp-top-10"; E = $false }
+            @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'contract'; T = "$sec1`n$sec2"; E = $true }
+            @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'both confirmed'; T = "$sec1`n$($sec2.Replace('DISPROVED', 'CONFIRMED'))"; E = $false }
+            @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'secret missing'; T = $sec1; E = $false }
+            @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'contradictory verdicts'; T = "$sec1- **Verdict:** DOWNGRADED`n$sec2"; E = $false }
+            @{ S = $vb; G = 'verifier-links-confirmed-location'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $vb; G = 'verifier-links-confirmed-location'; L = 'link'; T = "$sec1`n$sec2"; E = $true }
+            @{ S = $vb; G = 'verifier-links-confirmed-location'; L = 'plain path'; T = $sec1.Replace('[src/db/users.py#L9](src/db/users.py#L9)', 'src/db/users.py#L9'); E = $false }
+            @{ S = $vb; G = 'verifier-links-confirmed-location'; L = 'stale line'; T = $sec1.Replace('#L9', '#L42'); E = $false }
+            @{ S = $nf; G = 'verifier-single-verdict-block'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $nf; G = 'verifier-single-verdict-block'; L = 'single'; T = $sec10; E = $true }
+            @{ S = $nf; G = 'verifier-single-verdict-block'; L = 'new finding'; T = "$sec10`n## Finding: SEC-011: Code injection via eval`n"; E = $false }
+            @{ S = $nf; G = 'finding-deep-verifier-no-new-findings-verdict-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $nf; G = 'finding-deep-verifier-no-new-findings-verdict-vocabulary'; L = 'disproved'; T = $sec10; E = $true }
+            @{ S = $nf; G = 'finding-deep-verifier-no-new-findings-verdict-vocabulary'; L = 'downgraded'; T = $sec10.Replace('DISPROVED', 'DOWNGRADED'); E = $true }
+            @{ S = $nf; G = 'finding-deep-verifier-no-new-findings-verdict-vocabulary'; L = 'confirmed'; T = $sec10.Replace('DISPROVED', 'CONFIRMED'); E = $false }
+            @{ S = $nf; G = 'finding-deep-verifier-no-new-findings-verdict-vocabulary'; L = 'no evidence'; T = $sec10.Replace('CSRFProtect(app)', 'a guard'); E = $false }
+            @{ S = $ra; G = 'rai-assessor-map-ids-from-reference'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ra; G = 'rai-assessor-map-ids-from-reference'; L = 'reference ids'; T = $mapGood; E = $true }
+            @{ S = $ra; G = 'rai-assessor-map-ids-from-reference'; L = 'four ids'; T = (& $mapRows @(@('MP-1.1', 'COVERED', '—'), @('MP-2.2', 'RISK', 'HIGH'), @('MP-3.5', 'RISK', 'HIGH'), @('MP-4.2', 'CAUTION', 'MEDIUM'))); E = $false }
+            @{ S = $ra; G = 'rai-assessor-map-ids-from-reference'; L = 'audit status'; T = $mapGood.Replace('| COVERED |', '| PASS |'); E = $false }
+            @{ S = $ra; G = 'rai-assessor-map-ids-from-reference'; L = 'nist ids'; T = $mapGood -replace 'MP-(\d)\.(\d)', 'MAP $1.$2'; E = $false }
+            @{ S = $ra; G = 'rai-assessor-flags-unconfirmed-refunds'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ra; G = 'rai-assessor-flags-unconfirmed-refunds'; L = 'flagged'; T = "$mapGood`n`nUnconfirmed refunds need a human approver."; E = $true }
+            @{ S = $ra; G = 'rai-assessor-flags-unconfirmed-refunds'; L = 'no refund'; T = $mapGood; E = $false }
+            @{ S = $ra; G = 'rai-assessor-flags-unconfirmed-refunds'; L = 'all covered'; T = "$($mapGood -replace '\| (RISK|CAUTION) \|', '| COVERED |')`n`nRefunds are fine."; E = $false }
+            @{ S = $sa; G = 'skill-assessor-audit-mode-format-findings-table-present'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sa; G = 'skill-assessor-audit-mode-format-findings-table-present'; L = 'complete'; T = (& $top10 $null); E = $true }
+            @{ S = $sa; G = 'skill-assessor-audit-mode-format-findings-table-present'; L = 'missing id'; T = (& $top10 { param($r) $r.Remove('A07') }); E = $false }
+            @{ S = $sa; G = 'skill-assessor-audit-mode-format-findings-table-present'; L = 'duplicate id'; T = (& $top10 { param($r) $r['extra'] = '| A05:2025 | Injection | PASS | — | — | f | r |' }); E = $false }
+            @{ S = $sa; G = 'skill-assessor-audit-mode-format-findings-table-present'; L = 'no reference'; T = (& $top10 $null).Replace('https://owasp.org/Top10/2025/', 'n/a'); E = $false }
+            @{ S = $sa; G = 'assessor-fails-injection-at-source-line'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sa; G = 'assessor-fails-injection-at-source-line'; L = 'failed at line'; T = (& $top10 $null); E = $true }
+            @{ S = $sa; G = 'assessor-fails-injection-at-source-line'; L = 'wrong line'; T = (& $top10 $null).Replace('#L9', '#L42'); E = $false }
+            @{ S = $sa; G = 'assessor-fails-injection-at-source-line'; L = 'passed'; T = (& $top10 $null).Replace('| FAIL | HIGH |', '| PASS | — |'); E = $false }
+            @{ S = $sp; G = 'skill-assessor-plan-mode-vocabulary-plan-status-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sp; G = 'skill-assessor-plan-mode-vocabulary-plan-status-vocabulary'; L = 'complete'; T = (& $llm $null); E = $true }
+            @{ S = $sp; G = 'skill-assessor-plan-mode-vocabulary-plan-status-vocabulary'; L = 'audit status'; T = (& $llm { param($r) $r['LLM02'] = '| LLM02:2025 | t | FAIL | HIGH | — | f | r |' }); E = $false }
+            @{ S = $sp; G = 'skill-assessor-plan-mode-vocabulary-plan-status-vocabulary'; L = 'code location'; T = (& $llm { param($r) $r['LLM02'] = '| LLM02:2025 | t | CAUTION | LOW | [app.py#L3](app.py#L3) | f | r |' }); E = $false }
+            @{ S = $sp; G = 'skill-assessor-plan-mode-vocabulary-plan-status-vocabulary'; L = 'missing id'; T = (& $llm { param($r) $r.Remove('LLM10') }); E = $false }
+            @{ S = $sp; G = 'plan-assessor-flags-injection-and-agency'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sp; G = 'plan-assessor-flags-injection-and-agency'; L = 'flagged'; T = (& $llm $null); E = $true }
+            @{ S = $sp; G = 'plan-assessor-flags-injection-and-agency'; L = 'agency covered'; T = (& $llm $null).Replace('| CAUTION | HIGH |', '| COVERED | — |'); E = $false }
+            @{ S = $sp; G = 'plan-assessor-flags-injection-and-agency'; L = 'no guidance'; T = (& $llm $null).Replace('### Mitigation Guidance', 'Notes'); E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-unpinned-release-actions'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-unpinned-release-actions'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-unpinned-release-actions'; L = 'flagged'; T = $pinRow; E = $true }
+            @{ S = $sc; G = 'supply-chain-flags-unpinned-release-actions'; L = 'passed'; T = $pinRow.Replace('| FAIL |', '| PASS |'); E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-unpinned-release-actions'; L = 'no location'; T = $pinRow.Replace('[.github/workflows/release.yml#L10](.github/workflows/release.yml#L10)', '—'); E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-missing-sbom'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sc; G = 'supply-chain-flags-missing-sbom'; L = 'flagged'; T = $sbomRow; E = $true }
+            @{ S = $sc; G = 'supply-chain-flags-missing-sbom'; L = 'not assessed'; T = $sbomRow.Replace('| FAIL |', '| NOT_ASSESSED |'); E = $false }
+            @{ S = $ma; G = 'method-adequacy-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ma; G = 'method-adequacy-vocabulary'; L = 'informs'; T = $adequate; E = $true }
+            @{ S = $ma; G = 'escalation-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ma; G = 'escalation-vocabulary'; L = 'deciding evidence'; T = $adequate; E = $true }
+            @{ S = $ma; G = 'conservative-status-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ma; G = 'conservative-status-vocabulary'; L = 'not assessed'; T = $adequate; E = $true }
+            @{ S = $ma; G = 'conservative-status-vocabulary'; L = 'static pass'; T = $adequate.Replace('| 2.1.1 | Keyboard | NOT_ASSESSED |', '| 2.1.1 | Keyboard | PASS |'); E = $false }
+            @{ S = $rg; G = 'report-output-path'; L = 'next sequence'; Files = @{ $first = $prior; $second = $report }; T = "Report written to $second"; E = $true }
+            @{ S = $rg; G = 'report-output-path'; L = 'windows separators'; Files = @{ $first = $prior; $second = $report }; T = "Report written to $($second.Replace('/', '\'))"; E = $true }
+            @{ S = $rg; G = 'report-output-path'; L = 'overwrote prior'; Files = @{ $first = $report }; T = "Report written to $first"; E = $false }
+            @{ S = $rg; G = 'report-output-path'; L = 'unreported path'; Files = @{ $first = $prior; $second = $report }; T = 'Report written.'; E = $false }
+            @{ S = $rg; G = 'severity-ordering-vocabulary'; L = 'next sequence'; Files = @{ $first = $prior; $second = $report }; E = $true }
+            @{ S = $rg; G = 'severity-ordering-vocabulary'; L = 'overwrote prior'; Files = @{ $first = $report }; E = $false }
+        )
+        @(Get-C2Mismatches $probes) | Should -BeNullOrEmpty
+    }
+}

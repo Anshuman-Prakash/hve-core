@@ -6,8 +6,6 @@
   "contextDebt": [
     "accessibility-planner-class-recipe",
     "accessibility-reviewer-class-recipe",
-    "accessibility-surface-inventory-config-emission",
-    "accessibility-surface-inventory-conservative-scope",
     "adr-creation-class-recipe",
     "agentic-workflows-class-recipe",
     "backlog-grooming-assesses-large-inventory-advisory-only",
@@ -25,7 +23,6 @@
     "code-review-walkback-investigation",
     "code-review-standards-merge-happy-no-conflict",
     "code-review-standards-stacked-coverage",
-    "codebase-profiler-skill-mapping",
     "council-arbiter-user-approved-reconciliation",
     "council-arbiter-untrusted-proposal-confinement",
     "council-critic-independent-evidence-review",
@@ -40,8 +37,6 @@
     "engagement-report-reviewer-grounding-and-privacy",
     "engagement-report-reviewer-untrusted-handoff-confinement",
     "experiment-designer-class-recipe",
-    "finding-deep-verifier-verdict-blocks",
-    "finding-deep-verifier-no-new-findings",
     "hve-demo-material-class-recipe",
     "issue-triage-class-recipe",
     "meeting-analyst-class-recipe",
@@ -59,13 +54,9 @@
     "privacy-reviewer-class-recipe",
     "rai-planner-class-recipe",
     "rai-reviewer-class-recipe",
-    "rai-skill-assessor-reference-first-plan-mode",
     "security-planner-class-recipe",
     "security-reviewer-class-recipe",
-    "skill-assessor-audit-mode-format",
-    "skill-assessor-plan-mode-vocabulary",
     "sssc-planner-class-recipe",
-    "supply-chain-skill-assessor-posture",
     "system-architecture-reviewer-class-recipe",
     "vally-test-author-safety-refusal"
   ],
@@ -76,9 +67,22 @@
       "measurement": "legacy"
     },
     "accessibility-framework-assessor-method-adequacy": {
-      "class": "artifact-reference",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "accessibility-framework-assessor-method-adequacy",
+      "agentSource": ".github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md",
+      "requiredSkills": [
+        "accessibility"
+      ],
+      "assertions": [
+        "method-adequacy-vocabulary",
+        "escalation-vocabulary",
+        "conservative-status-vocabulary"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "accessibility-framework-assessor-disclaimer-posture": {
       "class": "artifact-reference",
@@ -184,14 +188,48 @@
       "measurement": "legacy"
     },
     "accessibility-surface-inventory-config-emission": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "accessibility-surface-inventory-config-emission",
+      "agentSource": ".github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md",
+      "requiredSkills": [
+        "accessibility"
+      ],
+      "assertions": [
+        "a11y-inventory-config-from-site",
+        "a11y-inventory-reports-config-path"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": "site/a11y-runtime.config.json"
+          }
+        ]
+      }
     },
     "accessibility-surface-inventory-conservative-scope": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "accessibility-surface-inventory-conservative-scope",
+      "agentSource": ".github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md",
+      "requiredSkills": [
+        "accessibility"
+      ],
+      "assertions": [
+        "a11y-inventory-reports-partial-with-questions",
+        "a11y-inventory-no-invented-routes"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": "ui/a11y-runtime.config.json"
+          }
+        ]
+      }
     },
     "accessibility-surface-inventory-rejects-unsafe-partial-config": {
       "class": "agent-contract",
@@ -951,9 +989,19 @@
       }
     },
     "codebase-profiler-skill-mapping": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "codebase-profiler-skill-mapping",
+      "agentSource": ".github/agents/security/subagents/codebase-profiler.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "profiler-audit-mode",
+        "profiler-maps-staged-signals"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "codebase-profiler-diff-mode": {
       "class": "artifact-reference",
@@ -1791,14 +1839,38 @@
       "measurement": "legacy"
     },
     "finding-deep-verifier-verdict-blocks": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "finding-deep-verifier-verdict-blocks",
+      "agentSource": ".github/agents/security/subagents/finding-deep-verifier.agent.md",
+      "requiredSkills": [
+        "owasp-top-10"
+      ],
+      "assertions": [
+        "finding-deep-verifier-verdict-blocks-verdict-vocabulary",
+        "verifier-links-confirmed-location"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "finding-deep-verifier-no-new-findings": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "finding-deep-verifier-no-new-findings",
+      "agentSource": ".github/agents/security/subagents/finding-deep-verifier.agent.md",
+      "requiredSkills": [
+        "owasp-top-10"
+      ],
+      "assertions": [
+        "verifier-single-verdict-block",
+        "finding-deep-verifier-no-new-findings-verdict-vocabulary"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "functional-planner-frontmatter-name-and-description": {
       "class": "artifact-reference",
@@ -2319,14 +2391,43 @@
       "measurement": "legacy"
     },
     "rai-skill-assessor-reference-first-plan-mode": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "rai-skill-assessor-reference-first-plan-mode",
+      "agentSource": ".github/agents/rai-planning/subagents/rai-skill-assessor.agent.md",
+      "requiredSkills": [
+        "rai-standards"
+      ],
+      "assertions": [
+        "rai-assessor-map-ids-from-reference",
+        "rai-assessor-flags-unconfirmed-refunds"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "report-generator-vuln-report": {
       "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "report-generator-vuln-report",
+      "agentSource": ".github/agents/security/subagents/report-generator.agent.md",
+      "requiredSkills": [
+        "security-reviewer-formats"
+      ],
+      "assertions": [
+        "report-output-path",
+        "severity-ordering-vocabulary"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "path": ".copilot-tracking/security/2026-05-27/security-report-002.md"
+          }
+        ]
+      }
     },
     "report-generator-plan-mode": {
       "class": "agent-contract",
@@ -2540,14 +2641,38 @@
       "measurement": "legacy"
     },
     "skill-assessor-audit-mode-format": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "skill-assessor-audit-mode-format",
+      "agentSource": ".github/agents/security/subagents/skill-assessor.agent.md",
+      "requiredSkills": [
+        "owasp-top-10"
+      ],
+      "assertions": [
+        "skill-assessor-audit-mode-format-findings-table-present",
+        "assessor-fails-injection-at-source-line"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "skill-assessor-plan-mode-vocabulary": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "skill-assessor-plan-mode-vocabulary",
+      "agentSource": ".github/agents/security/subagents/skill-assessor.agent.md",
+      "requiredSkills": [
+        "owasp-llm"
+      ],
+      "assertions": [
+        "skill-assessor-plan-mode-vocabulary-plan-status-vocabulary",
+        "plan-assessor-flags-injection-and-agency"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "sssc-planner-class-recipe": {
       "class": "base-model",
@@ -2636,9 +2761,21 @@
       "measurement": "legacy"
     },
     "supply-chain-skill-assessor-posture": {
-      "class": "base-model",
+      "class": "agent-contract",
       "authoritative": false,
-      "measurement": "legacy"
+      "measurement": "candidate",
+      "incumbent": "supply-chain-skill-assessor-posture",
+      "agentSource": ".github/agents/security/subagents/supply-chain-skill-assessor.agent.md",
+      "requiredSkills": [
+        "supply-chain-security"
+      ],
+      "assertions": [
+        "supply-chain-flags-unpinned-release-actions",
+        "supply-chain-flags-missing-sbom"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "system-architecture-reviewer-class-recipe": {
       "class": "base-model",
