@@ -1391,7 +1391,7 @@ function Get-VallyAgentBehaviorRuntime {
     $suite = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'evals/agent-behavior/eval.yaml'))
     if (-not [string]::Equals([IO.Path]::GetFullPath($SpecPath), $suite, [StringComparison]::OrdinalIgnoreCase)) { return $null }
 
-    $pluginPath = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'scripts/evals/agent-behavior-executor.mts'))
+    $pluginPath = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'scripts/evals/agent-behavior-executor.mjs'))
     $policyPath = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'evals/agent-behavior/measurement-policy.json'))
     foreach ($required in @($pluginPath, $policyPath)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Agent-behavior runtime file '$required' is missing." }

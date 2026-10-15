@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
@@ -666,7 +666,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 
   It 'Bounds <Scenario> to supplied source and absent runtime evidence' -ForEach @(
     @{ Scenario = 'accessibility-framework-assessor-structured-findings' }
-    @{ Scenario = 'accessibility-framework-assessor-method-adequacy' }
   ) {
     $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/accessibility-framework-assessor.yml'))
     $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
@@ -1048,17 +1047,17 @@ console.log(JSON.stringify(results));
         '```regex' + "`n" + '(?is).*' + "`n" + '```', '```regex' + "`n" + '[invalid' + "`n" + '```')
     }
     @{
-      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'method-adequacy-vocabulary'; Count = 3
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'method-adequacy-vocabulary'; Count = 5
       Accept = @('Static source only informs keyboard behavior and announcements; runtime evidence is needed.', 'Markup is insufficient to verify interaction or announcements.')
       Reject = @('Static analysis decides both criteria as PASS. Manual tests are unnecessary; do not use NOT_ASSESSED.', 'Method adequacy, source, decide.')
     }
     @{
-      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'escalation-vocabulary'; Count = 3
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'escalation-vocabulary'; Count = 5
       Accept = 'A keyboard interaction probe and a screen-reader announcement test are required as deciding evidence.'
       Reject = @('Manual tests are unnecessary.', 'A keyboard test is required, nothing else.')
     }
     @{
-      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'conservative-status-vocabulary'; Count = 3
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'conservative-status-vocabulary'; Count = 5
       Accept = @("2.1.1: NOT_ASSESSED, pending keyboard evidence.`n4.1.3: NOT_ASSESSED, pending announcement evidence.", "| 2.1.1 | Keyboard | NOT_ASSESSED |`n| 4.1.3 | Status | NOT_ASSESSED |")
       Reject = @('Static analysis decides both criteria as PASS. Do not use NOT_ASSESSED.', "2.1.1: PASS`n4.1.3: NOT_ASSESSED", '2.1.1: NOT_ASSESSED')
     }
@@ -2263,7 +2262,7 @@ console.log(JSON.stringify(await new DiffMatchGrader(input.type).grade(input)));
   }
 
   It 'Observes written report counts and severity order for <Mode>' -Tag 'ReportRepair' -ForEach @(
-    @{ Mode = 'audit'; File = 'security-report-001.md'; Header = 'Summary Counts'; Section = 'Detailed Remediation Guidance'; Statuses = @('PASS','FAIL','PARTIAL','NOT_ASSESSED'); PathGrader = 'report-output-path'; ContentGrader = 'severity-ordering-vocabulary' }
+    @{ Mode = 'audit'; File = 'security-report-002.md'; Header = 'Summary Counts'; Section = 'Detailed Remediation Guidance'; Statuses = @('PASS','FAIL','PARTIAL','NOT_ASSESSED'); PathGrader = 'report-output-path'; ContentGrader = 'severity-ordering-vocabulary' }
     @{ Mode = 'plan'; File = 'plan-risk-assessment-001.md'; Header = 'Risk Summary'; Section = 'Mitigation Guidance'; Statuses = @('RISK','CAUTION','COVERED','NOT_APPLICABLE'); PathGrader = 'plan-report-path'; ContentGrader = 'report-generator-plan-mode-plan-status-vocabulary' }
   ) {
     $workspace = Join-Path $TestDrive "report-$Mode"
@@ -4999,7 +4998,7 @@ console.log(JSON.stringify(results));
         $siteConfig = 'site/a11y-runtime.config.json'; $uiConfig = 'ui/a11y-runtime.config.json'
         $inventory = "## Surface Inventory Result`n`n**Status:** Complete`n`n### Config Artifact`n`n* Path: ``site/a11y-runtime.config.json```n`n### Discovery Summary`n`n| Route | Surface | States | Notes |`n|---|---|---|---|`n| /docs/intro | docs-intro | default | doc page |"
         $partial = "## Surface Inventory Result`n`n**Status:** Partial`n`n### Open Questions`n`n* Which router does the console framework use?"
-        $profile = "## Codebase Profile`n`n**Repository:** ticket-tools`n**Mode:** audit`n`n### Technology Summary`n`nFlask, MCP and Bicep.`n`n### Applicable Skills`n`n- owasp-top-10: Flask routes`n- owasp-llm: OpenAI calls`n- owasp-mcp: MCP server`n- owasp-cicd: release workflow`n- owasp-infrastructure: Dockerfile`n- mcsb: Bicep storage account`n`n### Accessibility Profile`n`nnone"
+        $codebaseProfile = "## Codebase Profile`n`n**Repository:** ticket-tools`n**Mode:** audit`n`n### Technology Summary`n`nFlask, MCP and Bicep.`n`n### Applicable Skills`n`n- owasp-top-10: Flask routes`n- owasp-llm: OpenAI calls`n- owasp-mcp: MCP server`n- owasp-cicd: release workflow`n- owasp-infrastructure: Dockerfile`n- mcsb: Bicep storage account`n`n### Accessibility Profile`n`nnone"
         $sec1 = "## Finding: SEC-001: SQL injection in user lookup`n`n### Vulnerable Location`n- **File:** [src/db/users.py#L9](src/db/users.py#L9)`n`n### Verdict`n- **Verdict:** CONFIRMED`n- **Verified Status:** FAIL`n"
         $sec2 = "## Finding: SEC-002: Hardcoded secret in config loader`n`n### Vulnerable Location`n- **File:** —`n`n### Verdict`n- **Verdict:** DISPROVED`n- **Verified Status:** PASS`n"
         $sec10 = "## Finding: SEC-010: Missing CSRF protection on form POST`n`n### Contradicting Evidence`n- src/web/app.py#L10 enables CSRFProtect(app) for every POST view.`n`n### Verdict`n- **Verdict:** DISPROVED`n"
@@ -5053,12 +5052,12 @@ console.log(JSON.stringify(results));
             @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'invented route'; Files = @{ $uiConfig = '{"baseUrl":"http://localhost:8080","routes":[{"path":"/"},{"path":"/settings"}]}' }; E = $false }
             @{ S = $cs; G = 'a11y-inventory-no-invented-routes'; L = 'malformed'; Files = @{ $uiConfig = '{"routes":' }; E = $false }
             @{ S = $cp; G = 'profiler-audit-mode'; L = 'echo'; T = '@prompt'; E = $false }
-            @{ S = $cp; G = 'profiler-audit-mode'; L = 'audit'; T = $profile; E = $true }
-            @{ S = $cp; G = 'profiler-audit-mode'; L = 'diff'; T = $profile.Replace('audit', 'diff'); E = $false }
+            @{ S = $cp; G = 'profiler-audit-mode'; L = 'audit'; T = $codebaseProfile; E = $true }
+            @{ S = $cp; G = 'profiler-audit-mode'; L = 'diff'; T = $codebaseProfile.Replace('audit', 'diff'); E = $false }
             @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'echo'; T = '@prompt'; E = $false }
             @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'unavailable'; T = $na; E = $false }
-            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'mapped'; T = $profile; E = $true }
-            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'missing mcsb'; T = $profile.Replace('- mcsb: Bicep storage account', ''); E = $false }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'mapped'; T = $codebaseProfile; E = $true }
+            @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'missing mcsb'; T = $codebaseProfile.Replace('- mcsb: Bicep storage account', ''); E = $false }
             @{ S = $cp; G = 'profiler-maps-staged-signals'; L = 'outside section'; T = "### Technology Summary`n`nowasp-llm owasp-mcp owasp-cicd owasp-infrastructure mcsb`n`n### Applicable Skills`n`n- owasp-top-10"; E = $false }
             @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'echo'; T = '@prompt'; E = $false }
             @{ S = $vb; G = 'finding-deep-verifier-verdict-blocks-verdict-vocabulary'; L = 'contract'; T = "$sec1`n$sec2"; E = $true }

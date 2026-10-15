@@ -1016,7 +1016,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $runtime = Get-VallyAgentBehaviorRuntime -SpecPath $suite
 
-            $runtime.arguments | Should -Be @('--executor-plugin', (Join-Path $script:RepositoryRoot 'scripts/evals/agent-behavior-executor.mts'), '--executor', 'hve-agent-behavior')
+            $runtime.arguments | Should -Be @('--executor-plugin', (Join-Path $script:RepositoryRoot 'scripts/evals/agent-behavior-executor.mjs'), '--executor', 'hve-agent-behavior')
             $runtime.policySha256 | Should -Be (Get-FileHash -Algorithm SHA256 (Join-Path $script:RepositoryRoot 'evals/agent-behavior/measurement-policy.json')).Hash.ToLowerInvariant()
             $runtime.stimuli['dt-coach-denied-board-intent-candidate'].requires | Should -Be @('context', 'filesystem')
             $runtime.stimuli['dt-coach-denied-board-intent-candidate'].gating | Should -BeFalse

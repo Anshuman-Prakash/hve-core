@@ -70,7 +70,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
 
         It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
-            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+ --executor-plugin scripts/evals/agent-behavior-executor\.mts --executor hve-agent-behavior$'
+            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+ --executor-plugin scripts/evals/agent-behavior-executor\.mjs --executor hve-agent-behavior$'
             $first | Should -Match '--model gpt-6-luna '
         }
     }

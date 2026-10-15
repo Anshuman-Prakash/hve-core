@@ -217,7 +217,7 @@ function Get-PlannedCommand {
         [Parameter(Mandatory)] [string]$Slug,
         [Parameter(Mandatory)] [string]$Model
     )
-    return "npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=$Slug --model $Model --executor-plugin scripts/evals/agent-behavior-executor.mts --executor hve-agent-behavior"
+    return "npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=$Slug --model $Model --executor-plugin scripts/evals/agent-behavior-executor.mjs --executor hve-agent-behavior"
 }
 
 function Resolve-NpxExecutable {
