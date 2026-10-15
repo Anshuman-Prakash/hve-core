@@ -4454,3 +4454,364 @@ console.log(JSON.stringify(results));
         @(Get-BatchBMismatches $script:BatchBToolGraderPath 'ToolCallGrader' $probes $cases) | Should -BeNullOrEmpty
     }
 }
+
+Describe 'Coverage repair batch C loaded contracts' -Tag 'Unit', 'CoverageRepairBatchC' {
+    BeforeAll {
+        $script:BatchCRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:BatchCEvalRoot = Join-Path $script:BatchCRepoRoot 'evals/agent-behavior'
+        $script:BatchCPolicy = Get-Content -Raw (Join-Path $script:BatchCEvalRoot 'measurement-policy.json') | ConvertFrom-Json -AsHashtable
+        $inventory = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:BatchCEvalRoot 'AGENTS.yml')))
+        $script:BatchCAgentPaths = @{}
+        foreach ($record in $inventory.agents) { $script:BatchCAgentPaths[[string]$record.slug] = [string]$record.path }
+        $script:BatchCSlugList = @('accessibility-planner', 'accessibility-reviewer', 'cve-analyzer', 'dependency-reviewer', 'privacy-planner', 'privacy-reviewer',
+            'rai-planner', 'rai-reviewer', 'security-planner', 'security-reviewer', 'sssc-planner')
+        $script:BatchCStimuli = @{}
+        $script:BatchCSlugs = @{}
+        foreach ($slug in $script:BatchCSlugList) {
+            $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText((Join-Path $script:BatchCEvalRoot "stimuli/$slug.yml")))
+            foreach ($stimulus in $partial.stimuli) {
+                $script:BatchCStimuli[$stimulus.name] = $stimulus
+                $script:BatchCSlugs[$stimulus.name] = $slug
+            }
+        }
+        $script:BatchCCandidates = [ordered]@{
+            'accessibility-planner-class-recipe-candidate'            = 'accessibility-planner-class-recipe'
+            'accessibility-reviewer-class-recipe-candidate'           = 'accessibility-reviewer-class-recipe'
+            'cve-analyzer-assesses-single-cve-reachability-candidate' = 'cve-analyzer-assesses-single-cve-reachability'
+            'dependency-reviewer-class-recipe-candidate'              = 'dependency-reviewer-class-recipe'
+            'privacy-planner-class-recipe-candidate'                  = 'privacy-planner-class-recipe'
+            'privacy-reviewer-class-recipe-candidate'                 = 'privacy-reviewer-class-recipe'
+            'rai-planner-class-recipe-candidate'                      = 'rai-planner-class-recipe'
+            'rai-reviewer-class-recipe-candidate'                     = 'rai-reviewer-class-recipe'
+            'security-planner-class-recipe-candidate'                 = 'security-planner-class-recipe'
+            'security-reviewer-class-recipe-candidate'                = 'security-reviewer-class-recipe'
+            'sssc-planner-class-recipe-candidate'                     = 'sssc-planner-class-recipe'
+        }
+        $script:BatchCOutputGraderPath = (Resolve-Path (Join-Path $script:BatchCRepoRoot 'node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
+        $script:BatchCProgramGraderPath = (Resolve-Path (Join-Path $script:BatchCRepoRoot 'node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path
+        $script:BatchCGradeProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const module = await import(pathToFileURL(process.argv[1]).href);
+const Grader = module[process.argv[2]];
+const cases = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const results = [];
+for (const item of cases) results.push((await new Grader().grade(item)).passed);
+console.log(JSON.stringify(results));
+'@
+
+        function script:Get-BatchCGrader([string]$Stimulus, [string]$Name) {
+            $grader = @($script:BatchCStimuli[$Stimulus].graders | Where-Object { $_.name -eq $Name })
+            $grader | Should -HaveCount 1 -Because "$Stimulus declares $Name"
+            return $grader[0]
+        }
+
+        function script:Get-BatchCText([string]$Path) {
+            return [System.IO.File]::ReadAllText((Join-Path $script:BatchCEvalRoot $Path))
+        }
+
+        function script:Get-BatchCFlat([string]$Text) {
+            return ($Text -replace '\s+', ' ').Trim()
+        }
+
+        # Grades each case in one node process and returns the probe labels whose verdict differs.
+        function script:Get-BatchCMismatches([string]$Module, [string]$Export, [object[]]$Probes, [object[]]$Cases) {
+            $json = ConvertTo-Json -InputObject @($Cases) -Depth 20 -Compress
+            $results = @($json | & node --input-type=module --eval $script:BatchCGradeProbe $Module $Export | ConvertFrom-Json)
+            $LASTEXITCODE | Should -Be 0
+            $results | Should -HaveCount $Probes.Count
+            for ($index = 0; $index -lt $Probes.Count; $index++) {
+                if ($results[$index] -ne $Probes[$index].E) { "$($Probes[$index].G) [$($Probes[$index].L)]" }
+            }
+        }
+
+        function script:New-BatchCWorkspace {
+            $workspace = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $workspace -Force | Out-Null
+            return $workspace
+        }
+
+        function script:Set-BatchCFile([string]$Workspace, [string]$Relative, [string]$Content) {
+            $target = Join-Path $Workspace $Relative
+            New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+            [System.IO.File]::WriteAllText($target, $Content)
+        }
+    }
+
+    It 'Mounts each batch C copy as an advisory loaded contract with a filesystem boundary' {
+        foreach ($name in $script:BatchCCandidates.Keys) {
+            $stimulus = $script:BatchCStimuli[$name]
+            $stimulus | Should -Not -BeNullOrEmpty -Because $name
+            $slug = $script:BatchCSlugs[$name]
+            $stimulus.tags['advisory'] | Should -Be 'true' -Because $name
+            $stimulus.tags.Contains('calibration') | Should -BeFalse -Because "$name leaves calibration tagging to a later task"
+            $mount = @($stimulus.agent_environment.files | Where-Object { $_.src -eq "../../$($script:BatchCAgentPaths[$slug])" -and $_.dest -eq '.github/copilot-instructions.md' })
+            $mount | Should -HaveCount 1 -Because "$name stages its own agent source"
+            foreach ($file in @($stimulus.agent_environment.files)) {
+                Test-Path -LiteralPath (Join-Path $script:BatchCEvalRoot $file.src) -PathType Leaf | Should -BeTrue -Because "$name stages $($file.src)"
+            }
+            foreach ($skill in @($stimulus.agent_environment['skills'] | Where-Object { $null -ne $_ })) {
+                Test-Path -LiteralPath (Join-Path $script:BatchCEvalRoot $skill) -PathType Container | Should -BeTrue -Because "$name stages $skill"
+            }
+            $entry = $script:BatchCPolicy.stimuli[$name]
+            $entry.class | Should -Be 'agent-contract' -Because $name
+            $entry.measurement | Should -Be 'candidate' -Because $name
+            $entry.authoritative | Should -BeFalse -Because $name
+            $entry.agentSource | Should -Be $script:BatchCAgentPaths[$slug] -Because $name
+            $entry.incumbent | Should -Be $script:BatchCCandidates[$name] -Because $name
+            $entry.Contains('coverageGap') | Should -BeFalse -Because $name
+            $script:BatchCPolicy.stimuli[$entry.incumbent].authoritative | Should -BeTrue -Because "$name replaces an authoritative incumbent"
+            $script:BatchCSlugs[$entry.incumbent] | Should -Be $slug -Because "$name copies an incumbent of the same agent"
+            @($stimulus.graders | Where-Object { $_.name -notlike '*-cand' }) | Should -BeNullOrEmpty -Because "$name suffixes every grader"
+            $script:BatchCPolicy.contextDebt | Should -Not -Contain $name
+            @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.context.composed' }) | Should -HaveCount 1 -Because $name
+            @($stimulus.graders | Where-Object { $_.type -like 'diff*' -or $_.name -like 'diff-*' }) | Should -BeNullOrEmpty -Because "$name uses no diff grader"
+            $staged = @(@($stimulus.agent_environment['skills']) | Where-Object { $null -ne $_ } | ForEach-Object { Split-Path -Path $_ -Leaf })
+            foreach ($skill in @($entry.requiredSkills)) { $staged | Should -Contain $skill -Because $name }
+            $names = @($stimulus.graders | ForEach-Object { $_.name })
+            foreach ($assertion in @($entry.assertions)) { $names | Should -Contain $assertion -Because $name }
+            $boundary = @($stimulus.graders | Where-Object { $_.type -eq 'system-event' -and $_.config.required -contains 'hve.filesystem.passed' })
+            $boundary | Should -HaveCount 1 -Because $name
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.violated'
+            $boundary[0].config.disallowed | Should -Contain 'hve.filesystem.unavailable'
+            foreach ($rule in @($entry.filesystem.allow)) {
+                $rule.change | Should -Be 'create' -Because "$name only creates tracking artifacts"
+                $rule.pattern | Should -Match '^\^\\\.copilot-tracking/.*\$$' -Because "$name anchors its patterns under the tracking root"
+                $rule.max | Should -BeLessOrEqual 6 -Because "$name bounds its creations"
+            }
+        }
+    }
+
+    It 'Routes every batch C context-debt case through its loaded copy' {
+        foreach ($slug in $script:BatchCSlugList) {
+            $owned = @($script:BatchCStimuli.Keys | Where-Object { $script:BatchCSlugs[$_] -eq $slug })
+            $debt = @($owned | Where-Object { $script:BatchCPolicy.contextDebt -contains $_ })
+            $debt | Should -Not -BeNullOrEmpty -Because "$slug entered batch C with context debt"
+            foreach ($name in $debt) {
+                $script:BatchCPolicy.stimuli[$name].authoritative | Should -BeTrue -Because "$name stays in debt only until its copy is promoted"
+                $script:BatchCCandidates.Contains("$name-candidate") | Should -BeTrue -Because "$name is repaired by its loaded copy"
+            }
+        }
+    }
+
+    It 'Keeps each copy on its incumbent task' {
+        foreach ($name in 'accessibility-planner-class-recipe-candidate', 'privacy-planner-class-recipe-candidate', 'rai-planner-class-recipe-candidate',
+            'security-planner-class-recipe-candidate', 'sssc-planner-class-recipe-candidate') {
+            $script:BatchCStimuli[$name].prompt | Should -BeExactly $script:BatchCStimuli[$script:BatchCCandidates[$name]].prompt
+        }
+        $shared = @{
+            'accessibility-reviewer-class-recipe-candidate'           = 'Summarize the accessibility findings with severity, citing the relevant success criteria.'
+            'cve-analyzer-assesses-single-cve-reachability-candidate' = 'Produce a structured reachability writeup: state whether the vulnerable code is reachable in the product, cite the evidence you relied on, and name the OpenVEX status and justification code you would recommend.'
+            'dependency-reviewer-class-recipe-candidate'              = 'Report at least one finding with an explicit severity and recommendation'
+            'privacy-reviewer-class-recipe-candidate'                 = 'Summarize candidate privacy findings with severity in chat, citing relevant frameworks (NIST Privacy Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and DPIA considerations. Distinguish inferred risks from verified findings.'
+            'rai-reviewer-class-recipe-candidate'                     = 'Summarize candidate RAI findings with severity in chat, citing relevant frameworks (NIST AI RMF, the AI STRIDE overlay, or the EU AI Act). Distinguish risks inferred from the supplied description from verified findings.'
+            'security-reviewer-class-recipe-candidate'                = 'for security issues with severity levels'
+        }
+        foreach ($name in $shared.Keys) {
+            (Get-BatchCFlat $script:BatchCStimuli[$name].prompt).Contains($shared[$name]) | Should -BeTrue -Because "$name keeps the incumbent request"
+            (Get-BatchCFlat $script:BatchCStimuli[$script:BatchCCandidates[$name]].prompt).Contains($shared[$name]) | Should -BeTrue -Because "$name quotes its incumbent"
+        }
+        $server = Get-BatchCText 'fixtures/security-intake/flask-debug-server.txt'
+        foreach ($fact in 'exec(request.args.get(', 'debug=True', 'request.args.get(') {
+            $server.Contains($fact) | Should -BeTrue -Because "the staged server keeps $fact"
+            ([string]$script:BatchCStimuli['security-reviewer-class-recipe'].prompt).Contains($fact) | Should -BeTrue -Because "the incumbent supplies $fact"
+        }
+        $diff = Get-BatchCText 'fixtures/security-intake/dependency-change.txt'
+        foreach ($fact in '-    "lodash": "^4.17.21"', '+    "lodash": "^3.0.0"') { $diff.Contains($fact) | Should -BeTrue }
+        (Get-BatchCText 'fixtures/security-intake/billing-importer.txt') | Should -Match 'from example\.parser import parse_untrusted'
+        (Get-BatchCText 'fixtures/security-intake/mobile-app-data-practices.txt') | Should -Match '(?s)location.*advertising identifier.*third-party analytics SDKs'
+        (Get-BatchCText 'fixtures/security-intake/billing-assistant.txt') | Should -Match '(?s)billing questions.*transcripts'
+        (Get-BatchCText 'fixtures/security-intake/checkout-dialog.txt') | Should -Match '(?s)<button class="icon-button"[^>]*>\s*<svg.*class="modal"'
+    }
+
+    It 'Keeps deciding facts in staged files rather than in prompts' {
+        $prompt = { param($name) [string]$script:BatchCStimuli[$name].prompt }
+        & $prompt 'privacy-planner-class-recipe-candidate' | Should -Not -Match '(?i)data\s+mapping|risk\s*\+|protection\s+officers|state\.json'
+        & $prompt 'rai-planner-class-recipe-candidate' | Should -Not -Match '(?i)risk\s+classification|impact\s+assessment|ethics|state\.json'
+        & $prompt 'security-planner-class-recipe-candidate' | Should -Not -Match '(?i)bucket|backlog\s+generation|security\s+model|penetration|state\.json'
+        & $prompt 'sssc-planner-class-recipe-candidate' | Should -Not -Match '(?i)gap\s+analysis|standards\s+mapping|backlog\s+generation|OpenSSF|SLSA|state\.json'
+        & $prompt 'accessibility-planner-class-recipe-candidate' | Should -Not -Match '(?i)framework[- ]selection|standards[- ]mapping|VPAT|state\.json'
+        & $prompt 'cve-analyzer-assesses-single-cve-reachability-candidate' | Should -Not -Match '(?i)under_investigation|not_affected|feature\s+flag|environment|BILLING_LEGACY|disabled'
+        (Get-BatchCText 'fixtures/security-intake/billing-importer.txt') | Should -Match 'os\.environ\.get\("BILLING_LEGACY_IMPORT"\)'
+        & $prompt 'dependency-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)lodash|checkout|\bSHA\b|\bpin|REQUEST_CHANGES'
+        (Get-BatchCText 'fixtures/security-intake/dependency-change.txt') | Should -Match '\+\s+- uses: actions/checkout@v4'
+        & $prompt 'privacy-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)background|consent|retention|deletion|geolocation|advertising|privacy-review-\d'
+        & $prompt 'rai-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)transcript|disclos|machine-generated|escalat|rai-report|plan-assessment'
+        & $prompt 'security-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)exec|debug|0\.0\.0\.0|qualified'
+        & $prompt 'accessibility-reviewer-class-recipe-candidate' | Should -Not -Match '(?i)unlabeled|focus|dialog|modal|button|VPAT'
+        (Get-BatchCText 'fixtures/security-intake/checkout-dialog.txt') | Should -Not -Match '(?i)aria-label|role="dialog"|unlabeled'
+    }
+
+    It 'Grades batch C lexical probes through the installed output grader' {
+        $ap = 'accessibility-planner-class-recipe-candidate'; $ar = 'accessibility-reviewer-class-recipe-candidate'; $cv = 'cve-analyzer-assesses-single-cve-reachability-candidate'
+        $dr = 'dependency-reviewer-class-recipe-candidate'; $pp = 'privacy-planner-class-recipe-candidate'; $pr = 'privacy-reviewer-class-recipe-candidate'
+        $rp = 'rai-planner-class-recipe-candidate'; $rr = 'rai-reviewer-class-recipe-candidate'; $sp = 'security-planner-class-recipe-candidate'
+        $sr = 'security-reviewer-class-recipe-candidate'; $sc = 'sssc-planner-class-recipe-candidate'
+        $na = "I can't find that file or agent in this workspace, so I can't continue."
+        $probes = @(
+            @{ S = $pp; G = 'privacy-disclaimer-shown-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pp; G = 'privacy-disclaimer-shown-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $pp; G = 'privacy-disclaimer-shown-cand'; L = 'canonical'; T = '> **Disclaimer:** It does not replace privacy counsel, data protection officers, compliance teams, or other qualified human reviewers. Outputs from this tool do not constitute legal approval, privacy certification, or regulatory sign-off.'; E = $true }
+            @{ S = $pp; G = 'privacy-disclaimer-shown-cand'; L = 'omission'; T = 'Privacy plan started.'; E = $false }
+            @{ S = $pp; G = 'privacy-dpia-in-risk-phase-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pp; G = 'privacy-dpia-in-risk-phase-cand'; L = 'phase list'; T = '1. Capture 2. Data Mapping 3. Risk + DPIA (threshold gate) 4. Controls 5. Impact 6. Handoff'; E = $true }
+            @{ S = $pp; G = 'privacy-dpia-in-risk-phase-cand'; L = 'equivalent'; T = "Phase 3, Risk and DPIA, follows data mapping."; E = $true }
+            @{ S = $pp; G = 'privacy-dpia-in-risk-phase-cand'; L = 'wrong phase'; T = '1. Capture 2. Data Mapping (DPIA threshold gate) 3. Risk Assessment 4. Controls'; E = $false }
+            @{ S = $pp; G = 'privacy-dpia-in-risk-phase-cand'; L = 'omission'; T = 'Phases: Capture, Controls, Handoff.'; E = $false }
+            @{ S = $pp; G = 'privacy-reports-state-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pp; G = 'privacy-reports-state-path-cand'; L = 'path'; T = 'State: .copilot-tracking/privacy-plans/customer-analytics/state.json'; E = $true }
+            @{ S = $pp; G = 'privacy-reports-state-path-cand'; L = 'windows path'; T = 'State: .copilot-tracking\privacy-plans\customer-analytics\state.json'; E = $true }
+            @{ S = $pp; G = 'privacy-reports-state-path-cand'; L = 'root only'; T = 'State is under .copilot-tracking/privacy-plans/.'; E = $false }
+            @{ S = $rp; G = 'rai-disclaimer-shown-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rp; G = 'rai-disclaimer-shown-cand'; L = 'canonical'; T = 'It does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers.'; E = $true }
+            @{ S = $rp; G = 'rai-disclaimer-shown-cand'; L = 'omission'; T = 'RAI session started.'; E = $false }
+            @{ S = $rp; G = 'rai-next-phases-named-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rp; G = 'rai-next-phases-named-cand'; L = 'canonical'; T = 'Next: Phase 2 Risk Classification, Phase 3 RAI Standards Mapping, Phase 4 RAI Security Model Analysis, Phase 5 RAI Impact Assessment, Phase 6 Review and Handoff.'; E = $true }
+            @{ S = $rp; G = 'rai-next-phases-named-cand'; L = 'generic'; T = 'Next phases: discovery, design review, testing and launch.'; E = $false }
+            @{ S = $rp; G = 'rai-next-phases-named-cand'; L = 'partial'; T = 'Risk classification, then an impact assessment.'; E = $false }
+            @{ S = $rp; G = 'rai-reports-state-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rp; G = 'rai-reports-state-path-cand'; L = 'path'; T = 'Wrote .copilot-tracking/rai-plans/support-reply-drafts/state.json'; E = $true }
+            @{ S = $sp; G = 'security-disclaimer-shown-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sp; G = 'security-disclaimer-shown-cand'; L = 'canonical'; T = 'It does not replace professional security review boards, penetration testing teams, compliance auditors, legal counsel, or other qualified human reviewers. Outputs from this tool do not constitute security approval, compliance certification, or regulatory sign-off.'; E = $true }
+            @{ S = $sp; G = 'security-disclaimer-shown-cand'; L = 'omission'; T = 'Security planning started.'; E = $false }
+            @{ S = $sp; G = 'security-six-phases-named-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sp; G = 'security-six-phases-named-cand'; L = 'canonical'; T = '1. Scoping 2. Bucket Analysis 3. Standards Mapping 4. Security Model Analysis 5. Backlog Generation 6. Review and Handoff'; E = $true }
+            @{ S = $sp; G = 'security-six-phases-named-cand'; L = 'generic stride'; T = '1. Scope 2. Threat modeling 3. Security model 4. Controls 5. Testing 6. Sign-off'; E = $false }
+            @{ S = $sp; G = 'security-reports-state-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sp; G = 'security-reports-state-path-cand'; L = 'path'; T = 'State saved to `.copilot-tracking/security-plans/public-rest-api/state.json`.'; E = $true }
+            @{ S = $sc; G = 'sssc-disclaimer-shown-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sc; G = 'sssc-disclaimer-shown-cand'; L = 'canonical'; T = 'It does not replace professional supply chain security review boards, OpenSSF Scorecard evaluators, SLSA auditors, legal counsel, or other qualified human reviewers.'; E = $true }
+            @{ S = $sc; G = 'sssc-disclaimer-shown-cand'; L = 'omission'; T = 'SSSC session started.'; E = $false }
+            @{ S = $sc; G = 'sssc-six-phases-named-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sc; G = 'sssc-six-phases-named-cand'; L = 'canonical'; T = 'Scoping, Supply Chain Assessment, Standards Mapping, Gap Analysis, Backlog Generation, Review and Handoff.'; E = $true }
+            @{ S = $sc; G = 'sssc-six-phases-named-cand'; L = 'generic'; T = 'Inventory, SBOM generation, signing and provenance.'; E = $false }
+            @{ S = $sc; G = 'sssc-reports-state-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sc; G = 'sssc-reports-state-path-cand'; L = 'path'; T = '.copilot-tracking/sssc-plans/hve-core/state.json'; E = $true }
+            @{ S = $ap; G = 'a11y-plan-disclaimer-shown-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ap; G = 'a11y-plan-disclaimer-shown-cand'; L = 'canonical'; T = 'It does not replace accessibility specialists, accessibility review boards, VPAT auditors, ACR signers, or EAA conformance assessors.'; E = $true }
+            @{ S = $ap; G = 'a11y-plan-disclaimer-shown-cand'; L = 'omission'; T = 'Accessibility planning started.'; E = $false }
+            @{ S = $ap; G = 'a11y-next-phases-named-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ap; G = 'a11y-next-phases-named-cand'; L = 'phase ids'; T = 'discovery -> framework-selection -> standards-mapping -> plan-risk-assessment -> impact-evidence -> backlog-handoff'; E = $true }
+            @{ S = $ap; G = 'a11y-next-phases-named-cand'; L = 'titles'; T = 'Next: Framework Selection, Standards Mapping, Impact Evidence.'; E = $true }
+            @{ S = $ap; G = 'a11y-next-phases-named-cand'; L = 'generic'; T = 'Next: audit, remediation and retest.'; E = $false }
+            @{ S = $ap; G = 'a11y-reports-state-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ap; G = 'a11y-reports-state-path-cand'; L = 'path'; T = '.copilot-tracking/accessibility/customer-portal/state.json'; E = $true }
+            @{ S = $pr; G = 'privacy-review-disclaimer-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pr; G = 'privacy-review-disclaimer-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $pr; G = 'privacy-review-disclaimer-cand'; L = 'canonical'; T = 'All findings must be independently reviewed and validated by a qualified privacy reviewer before acting on them.'; E = $true }
+            @{ S = $pr; G = 'privacy-review-report-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pr; G = 'privacy-review-report-path-cand'; L = 'dated path'; T = 'Intended report: .copilot-tracking/privacy-reviews/2026-10-14/privacy-review-001.md'; E = $true }
+            @{ S = $pr; G = 'privacy-review-report-path-cand'; L = 'undated'; T = 'Intended report: .copilot-tracking/privacy-reviews/mobile-app.md'; E = $false }
+            @{ S = $pr; G = 'privacy-review-cites-staged-practices-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $pr; G = 'privacy-review-cites-staged-practices-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $pr; G = 'privacy-review-cites-staged-practices-cand'; L = 'findings'; T = 'High: precise location every five minutes, without consent. Medium: location history has no deletion schedule.'; E = $true }
+            @{ S = $pr; G = 'privacy-review-cites-staged-practices-cand'; L = 'equivalent'; T = 'Background collection lacks an opt-in, and retention is indefinite.'; E = $true }
+            @{ S = $pr; G = 'privacy-review-cites-staged-practices-cand'; L = 'omission'; T = 'High: identifiers are shared with third-party SDKs.'; E = $false }
+            @{ S = $rr; G = 'rai-review-disclaimer-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rr; G = 'rai-review-disclaimer-cand'; L = 'canonical'; T = 'It does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers.'; E = $true }
+            @{ S = $rr; G = 'rai-review-report-path-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rr; G = 'rai-review-report-path-cand'; L = 'plan path'; T = '.copilot-tracking/rai-reviews/2026-10-14/rai-plan-assessment-billing-assistant-20261014.md'; E = $true }
+            @{ S = $rr; G = 'rai-review-report-path-cand'; L = 'audit path'; T = '.copilot-tracking\rai-reviews\2026-10-14\rai-report-contoso-20261014.md'; E = $true }
+            @{ S = $rr; G = 'rai-review-report-path-cand'; L = 'undated'; T = '.copilot-tracking/rai-reviews/billing.md'; E = $false }
+            @{ S = $rr; G = 'rai-review-flags-undisclosed-ai-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $rr; G = 'rai-review-flags-undisclosed-ai-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $rr; G = 'rai-review-flags-undisclosed-ai-cand'; L = 'finding'; T = 'High: customers are not told the replies are machine-generated.'; E = $true }
+            @{ S = $rr; G = 'rai-review-flags-undisclosed-ai-cand'; L = 'equivalent'; T = 'Medium - Transparency: there is no AI disclosure.'; E = $true }
+            @{ S = $rr; G = 'rai-review-flags-undisclosed-ai-cand'; L = 'omission'; T = 'High: transcripts are retained for seven years.'; E = $false }
+            @{ S = $sr; G = 'sec-review-flags-exec-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sr; G = 'sec-review-flags-exec-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $sr; G = 'sec-review-flags-exec-cand'; L = 'critical'; T = 'Critical: exec() runs attacker-supplied code.'; E = $true }
+            @{ S = $sr; G = 'sec-review-flags-exec-cand'; L = 'table'; T = '| High | exec on request input | app/server.py |'; E = $true }
+            @{ S = $sr; G = 'sec-review-flags-exec-cand'; L = 'understated'; T = 'Low: exec is called on a query parameter.'; E = $false }
+            @{ S = $sr; G = 'sec-review-flags-debug-mode-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sr; G = 'sec-review-flags-debug-mode-cand'; L = 'finding'; T = 'Debug mode is enabled, exposing the Werkzeug debugger.'; E = $true }
+            @{ S = $sr; G = 'sec-review-flags-debug-mode-cand'; L = 'omission'; T = 'Critical: exec runs request input.'; E = $false }
+            @{ S = $sr; G = 'sec-review-disclaimer-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $sr; G = 'sec-review-disclaimer-cand'; L = 'canonical'; T = 'All findings must be independently reviewed and validated by a qualified security reviewer before acting on them.'; E = $true }
+            @{ S = $sr; G = 'sec-review-no-unsolicited-plan-drift-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $sr; G = 'sec-review-no-unsolicited-plan-drift-cand'; L = 'findings only'; T = 'Critical: exec runs request input.'; E = $true }
+            @{ S = $sr; G = 'sec-review-no-unsolicited-plan-drift-cand'; L = 'drift section'; T = '## Security Plan Drift'; E = $false }
+            @{ S = $ar; G = 'a11y-review-disclaimer-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ar; G = 'a11y-review-disclaimer-cand'; L = 'review block'; T = 'It does not replace professional accessibility audits, assistive-technology user testing, or other qualified human reviewers.'; E = $true }
+            @{ S = $ar; G = 'a11y-review-disclaimer-cand'; L = 'planning block'; T = 'It does not replace accessibility specialists, VPAT auditors, ACR signers.'; E = $true }
+            @{ S = $ar; G = 'a11y-review-cites-staged-barriers-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $ar; G = 'a11y-review-cites-staged-barriers-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $ar; G = 'a11y-review-cites-staged-barriers-cand'; L = 'criteria'; T = 'High: the icon button has no accessible name (4.1.2). High: the promo dialog has no focus management (2.4.3).'; E = $true }
+            @{ S = $ar; G = 'a11y-review-cites-staged-barriers-cand'; L = 'equivalent'; T = 'Non-text content (1.1.1) fails for the icon; the close control is not keyboard operable (2.1.1).'; E = $true }
+            @{ S = $ar; G = 'a11y-review-cites-staged-barriers-cand'; L = 'omission'; T = 'High: the icon button fails 4.1.2.'; E = $false }
+            @{ S = $cv; G = 'cve-recommends-under-investigation-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $cv; G = 'cve-recommends-under-investigation-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $cv; G = 'cve-recommends-under-investigation-cand'; L = 'format'; T = "### Determination`n- **Recommended status:** under_investigation"; E = $true }
+            @{ S = $cv; G = 'cve-recommends-under-investigation-cand'; L = 'sentence'; T = 'I recommend under_investigation until deployment settings are confirmed.'; E = $true }
+            @{ S = $cv; G = 'cve-recommends-under-investigation-cand'; L = 'not affected'; T = '- **Recommended status:** not_affected'; E = $false }
+            @{ S = $cv; G = 'cve-no-not-affected-status-cand'; L = 'echo'; T = '@prompt'; E = $true }
+            @{ S = $cv; G = 'cve-no-not-affected-status-cand'; L = 'denied'; T = '- **Recommended status:** under_investigation (not `not_affected`)'; E = $true }
+            @{ S = $cv; G = 'cve-no-not-affected-status-cand'; L = 'asserted'; T = '- **Recommended status:** `not_affected`'; E = $false }
+            @{ S = $cv; G = 'cve-cites-runtime-override-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $cv; G = 'cve-cites-runtime-override-cand'; L = 'variable'; T = 'service/importer.py reads BILLING_LEGACY_IMPORT, so the legacy path can be enabled at runtime.'; E = $true }
+            @{ S = $cv; G = 'cve-cites-runtime-override-cand'; L = 'equivalent'; T = 'In service/importer.py an environment variable can turn the parser on.'; E = $true }
+            @{ S = $cv; G = 'cve-cites-runtime-override-cand'; L = 'flag only'; T = 'service/importer.py keeps the legacy import off, so the parser is unreachable.'; E = $false }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'unavailable'; T = $na; E = $false }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'finding'; T = 'actions/checkout@v4 is no longer pinned to a full commit SHA.'; E = $true }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'recommendation'; T = 'Pin actions/checkout to its SHA again.'; E = $true }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'missed'; T = 'actions/checkout is already SHA pinned.'; E = $false }
+            @{ S = $dr; G = 'dep-flags-unpinned-action-cand'; L = 'omission'; T = 'lodash is downgraded to 3.0.0.'; E = $false }
+            @{ S = $dr; G = 'dep-requests-changes-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $dr; G = 'dep-requests-changes-cand'; L = 'verdict'; T = 'Verdict: REQUEST_CHANGES'; E = $true }
+            @{ S = $dr; G = 'dep-requests-changes-cand'; L = 'comment only'; T = 'Verdict: COMMENT'; E = $false }
+            @{ S = $dr; G = 'dep-flags-lodash-downgrade-cand'; L = 'echo'; T = '@prompt'; E = $false }
+            @{ S = $dr; G = 'dep-flags-lodash-downgrade-cand'; L = 'downgrade'; T = 'High: lodash is downgraded from 4.17.21 to 3.0.0.'; E = $true }
+            @{ S = $dr; G = 'dep-flags-lodash-downgrade-cand'; L = 'equivalent'; T = 'A major version downgrade of lodash may break callers.'; E = $true }
+            @{ S = $dr; G = 'dep-flags-lodash-downgrade-cand'; L = 'omission'; T = 'Pin actions/checkout to its SHA.'; E = $false }
+        )
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchCGrader $probe.S $probe.G
+            $grader.type | Should -Be 'output-matches' -Because $probe.G
+            @{ config = $grader.config; trajectory = @{ output = $probe.T.Replace('@prompt', [string]$script:BatchCStimuli[$probe.S].prompt); workDir = '.' } }
+        }
+        @(Get-BatchCMismatches $script:BatchCOutputGraderPath 'OutputMatchesGrader' $probes $cases) | Should -BeNullOrEmpty
+    }
+
+    It 'Grades batch C planner state programs through the installed program grader' {
+        $planners = @(
+            @{ S = 'privacy-planner-class-recipe-candidate'; G = 'privacy-state-initialized-cand'; Root = 'privacy-plans'; Slug = 'customer-analytics' }
+            @{ S = 'rai-planner-class-recipe-candidate'; G = 'rai-state-initialized-cand'; Root = 'rai-plans'; Slug = 'support-reply-drafts' }
+            @{ S = 'security-planner-class-recipe-candidate'; G = 'security-state-initialized-cand'; Root = 'security-plans'; Slug = 'public-rest-api' }
+            @{ S = 'sssc-planner-class-recipe-candidate'; G = 'sssc-state-initialized-cand'; Root = 'sssc-plans'; Slug = 'hve-core' }
+        )
+        $state = { param($slug, $change) $value = [ordered]@{ projectSlug = $slug; currentPhase = 1; entryMode = 'capture'; disclaimerShownAt = '2026-10-14T09:00:00Z' }; if ($change) { & $change $value }; $value | ConvertTo-Json }
+        $probes = foreach ($planner in $planners) {
+            $path = ".copilot-tracking/$($planner.Root)/$($planner.Slug)/state.json"
+            $other = ".copilot-tracking/$($planner.Root)/second-project/state.json"
+            @{ S = $planner.S; G = $planner.G; L = 'initialized'; Files = @{ $path = (& $state $planner.Slug $null) }; E = $true }
+            @{ S = $planner.S; G = $planner.G; L = 'with references folder'; Files = @{ $path = (& $state $planner.Slug $null); ".copilot-tracking/$($planner.Root)/references/notes.md" = 'x' }; E = $true }
+            @{ S = $planner.S; G = $planner.G; L = 'missing state'; Files = @{}; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'two projects'; Files = @{ $path = (& $state $planner.Slug $null); $other = (& $state 'second-project' $null) }; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'disclaimer not stamped'; Files = @{ $path = (& $state $planner.Slug { param($s) $s.disclaimerShownAt = $null }) }; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'advanced phase'; Files = @{ $path = (& $state $planner.Slug { param($s) $s.currentPhase = 2 }) }; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'wrong entry mode'; Files = @{ $path = (& $state $planner.Slug { param($s) $s.entryMode = 'from-prd' }) }; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'slug mismatch'; Files = @{ $path = (& $state 'other-slug' $null) }; E = $false }
+            @{ S = $planner.S; G = $planner.G; L = 'prompt echo state'; Files = @{ $path = '@prompt' }; E = $false }
+        }
+        $a11y = 'accessibility-planner-class-recipe-candidate'; $a11yPath = '.copilot-tracking/accessibility/customer-portal/state.json'
+        $a11yState = { param($change) $value = [ordered]@{ project = [ordered]@{ entryMode = 'capture' }; phase = 'discovery'; disclaimerShownAt = '2026-10-14T09:00:00Z' }; if ($change) { & $change $value }; $value | ConvertTo-Json -Depth 5 }
+        $probes += @(
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'initialized'; Files = @{ $a11yPath = (& $a11yState $null) }; E = $true }
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'missing state'; Files = @{}; E = $false }
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'advanced phase'; Files = @{ $a11yPath = (& $a11yState { param($s) $s.phase = 'framework-selection' }) }; E = $false }
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'top-level entry mode'; Files = @{ $a11yPath = (& $a11yState { param($s) $s.Remove('project'); $s.entryMode = 'capture' }) }; E = $false }
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'disclaimer not stamped'; Files = @{ $a11yPath = (& $a11yState { param($s) $s.disclaimerShownAt = $null }) }; E = $false }
+            @{ S = $a11y; G = 'a11y-state-initialized-cand'; L = 'prompt echo state'; Files = @{ $a11yPath = '@prompt' }; E = $false }
+        )
+        $cases = foreach ($probe in $probes) {
+            $grader = Get-BatchCGrader $probe.S $probe.G
+            $grader.type | Should -Be 'program' -Because $probe.G
+            $prompt = [string]$script:BatchCStimuli[$probe.S].prompt
+            $workspace = New-BatchCWorkspace
+            foreach ($relative in $probe.Files.Keys) { Set-BatchCFile $workspace $relative ([string]$probe.Files[$relative]).Replace('@prompt', $prompt) }
+            @{ config = $grader.config; trajectory = @{ output = ''; workDir = $workspace; events = @() } }
+        }
+        @(Get-BatchCMismatches $script:BatchCProgramGraderPath 'ProgramGrader' @($probes) @($cases)) | Should -BeNullOrEmpty
+    }
+}

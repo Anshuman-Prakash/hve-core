@@ -349,6 +349,66 @@ stimuli:
         when it reports a completed handoff, discards the successful draft,
         or describes the simulated result as observed native execution.
       threshold: 0.7
+- name: accessibility-planner-class-recipe-candidate
+  prompt: |
+    Begin an accessibility planning session for a public-facing customer portal that must conform to WCAG 2.2 and Section 508. List the next phases of the assessment. Write the planning state under `.copilot-tracking/accessibility/` and report the path you wrote it to.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/accessibility/accessibility
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: accessibility-session-bootstrap
+    agent: accessibility-planner
+  graders:
+  - type: output-matches
+    name: a11y-plan-disclaimer-shown-cand
+    config:
+      pattern: (?is)\bVPAT\s+auditors\b.{0,40}\bACR\s+signers\b
+  - type: output-matches
+    name: a11y-next-phases-named-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\bframework[- ]selection\b)(?=[\s\S]*\bstandards[- ]mapping\b)(?=[\s\S]*\b(?:impact[- ]evidence|plan[- ]risk[- ]assessment|backlog[- ]handoff)\b)
+  - type: output-matches
+    name: a11y-reports-state-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]accessibility[/\\][\w.-]+[/\\]state\.json
+  - type: program
+    name: a11y-state-initialized-cand
+    config:
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        const path = require('node:path');
+        try {
+          const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/accessibility');
+          const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+          if (slugs.length !== 1) process.exit(1);
+          const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+          if (text.length > 262144) process.exit(1);
+          const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+          const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+          const project = state.project && typeof state.project === 'object' ? state.project : {};
+          process.exit(stamped && state.phase === 'discovery' && project.entryMode === 'capture' ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: a11y-bootstrap-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: a11y-bootstrap-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: accessibility-reviewer-class-recipe
   prompt: |
     Run an accessibility audit of a web UI that includes an unlabeled icon button and a modal dialog without focus management. Summarize the accessibility findings with severity, citing the relevant success criteria.
@@ -474,6 +534,46 @@ stimuli:
         claims the audit or report is complete, fabricates a path, or describes
         the simulated result as native execution.
       threshold: 0.7
+- name: accessibility-reviewer-class-recipe-candidate
+  prompt: |
+    Run an accessibility audit of the web UI in `web/checkout.html`. Summarize
+    the accessibility findings with severity, citing the relevant success
+    criteria.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/checkout-dialog.txt
+      dest: web/checkout.html
+    skills:
+    - ../../.github/skills/accessibility/accessibility
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: accessibility-review-staged-page
+    agent: accessibility-reviewer
+  graders:
+  - type: output-matches
+    name: a11y-review-disclaimer-cand
+    config:
+      pattern: (?is)\bVPAT\s+auditors\b|\bassistive-technology\s+user\s+testing\b
+  - type: output-matches
+    name: a11y-review-cites-staged-barriers-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*(?:\b4\.1\.2\b|\b1\.1\.1\b|\bname,?\s+role,?\s+value\b|\bnon-text\s+content\b|\baccessible\s+name\b))(?=[\s\S]*(?:\b2\.1\.1\b|\b2\.4\.3\b|\bfocus\s+order\b|\bfocus\s+management\b|\brole="?dialog\b|\bdialog\s+role\b))
+  - type: system-event
+    name: a11y-review-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: a11y-review-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: accessibility-surface-inventory-config-emission
   prompt: |
     As the accessibility-surface-inventory subagent, take a codebase profile
@@ -4222,6 +4322,62 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)\b
       negate: true
+- name: cve-analyzer-assesses-single-cve-reachability-candidate
+  prompt: |
+    You are operating in an isolated sandbox with no subagents available. Do
+    not attempt to clone, create, or set up a repository, and do not delegate
+    to subagents. Assess the single CVE below against the code in `service/`
+    and report a reachability conclusion.
+
+    Enriched CVE profile:
+    - CVE-2026-22222 affects the dependency pkg:pypi/example@3.1.0.
+    - Vulnerable symbol: `example.parser.parse_untrusted`.
+    - CVSS base score 8.1 (High).
+
+    Produce a structured reachability writeup: state whether the vulnerable code
+    is reachable in the product, cite the evidence you relied on, and name the
+    OpenVEX status and justification code you would recommend. Do not modify
+    any source files. Limit the work to one pass.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/subagents/cve-analyzer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/billing-importer.txt
+      dest: service/importer.py
+    skills:
+    - ../../.github/skills/security/vex
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: cve-reachability-runtime-override
+    agent: cve-analyzer
+  graders:
+  - type: output-matches
+    name: cve-recommends-under-investigation-cand
+    config:
+      pattern: (?im)^\W*(?:recommended\s+)?(?:openvex\s+)?status\W*under_investigation\b|\brecommend\w*\b[^.\n]{0,40}\bunder_investigation\b
+  - type: output-matches
+    name: cve-no-not-affected-status-cand
+    config:
+      pattern: (?im)^\W*(?:recommended\s+)?(?:openvex\s+)?status\W*not_affected\b
+      negate: true
+  - type: output-matches
+    name: cve-cites-runtime-override-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\bservice/importer\.py\b)(?=[\s\S]*(?:\bBILLING_LEGACY_IMPORT\b|\benvironment\s+variable\b|\bos\.environ\b|\benv(?:ironment)?\s+override\b))
+  - type: system-event
+    name: cve-workspace-unchanged-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: cve-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: data-science-engineering-coach-initialize-and-select
   prompt: |
     Start a new Data Science and Engineering Coach session for project slug
@@ -5818,6 +5974,47 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+- name: dependency-reviewer-class-recipe-candidate
+  prompt: |
+    Review the dependency change in `changes/dependency.diff`. Report at least
+    one finding with an explicit severity and recommendation.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/dependency-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/dependency-change.txt
+      dest: changes/dependency.diff
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: dependency-review-unpinned-action
+    agent: dependency-reviewer
+  graders:
+  - type: output-matches
+    name: dep-flags-unpinned-action-cand
+    config:
+      pattern: (?is)^(?![\s\S]*\b(?:already|correctly|properly)\s+(?:SHA[- ])?pinned\b)(?=[\s\S]*\bactions/checkout\b)(?=[\s\S]*\bSHA\b)(?=[\s\S]*\bpin\w*)
+  - type: output-matches
+    name: dep-requests-changes-cand
+    config:
+      pattern: '\bREQUEST_CHANGES\b'
+  - type: output-matches
+    name: dep-flags-lodash-downgrade-cand
+    config:
+      pattern: (?is)\blodash\b[\s\S]{0,300}\b(?:downgrad\w*|major\s+version|breaking|older|3\.0\.0)\b|\b(?:downgrad\w*|major\s+version|3\.0\.0)\b[\s\S]{0,300}\blodash\b
+  - type: system-event
+    name: dep-workspace-unchanged-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: dep-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: documentation-audit-class-recipe
   prompt: |
     Plan a documentation coverage audit for the small synthetic `docs/` tree
@@ -9273,6 +9470,65 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+- name: privacy-planner-class-recipe-candidate
+  prompt: |
+    Start a privacy planning session for a customer analytics service that ingests account profiles and usage events. Outline the six phases of the privacy assessment, including where the DPIA threshold gate applies. Write the planning state under `.copilot-tracking/privacy-plans/` and report the path.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/privacy/privacy-planner.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/privacy-standards
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: privacy-session-bootstrap
+    agent: privacy-planner
+  graders:
+  - type: output-matches
+    name: privacy-disclaimer-shown-cand
+    config:
+      pattern: (?is)\bdata\s+protection\s+officers\b.{0,600}\bprivacy\s+certification\b
+  - type: output-matches
+    name: privacy-dpia-in-risk-phase-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\bdata\s+mapping\b)(?=[\s\S]*\brisk\s*(?:\+|and|&|/)\s*DPIA\b)
+  - type: output-matches
+    name: privacy-reports-state-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]privacy-plans[/\\][\w.-]+[/\\]state\.json
+  - type: program
+    name: privacy-state-initialized-cand
+    config:
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        const path = require('node:path');
+        try {
+          const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/privacy-plans');
+          const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+          if (slugs.length !== 1) process.exit(1);
+          const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+          if (text.length > 262144) process.exit(1);
+          const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+          const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+          process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: privacy-bootstrap-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: privacy-bootstrap-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: privacy-reviewer-class-recipe
   prompt: |
     This is a prompt-visible smoke scenario, not a native privacy audit. A
@@ -9300,6 +9556,55 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+- name: privacy-reviewer-class-recipe-candidate
+  prompt: |
+    This is a prompt-visible smoke scenario, not a native privacy audit. The
+    data practices of a customer-facing mobile app are described in
+    `docs/mobile-app-data-practices.md`. Summarize candidate privacy findings
+    with severity in chat, citing relevant frameworks (NIST Privacy
+    Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and DPIA considerations.
+    Distinguish inferred risks from verified findings. Show the intended report
+    path under `.copilot-tracking/privacy-reviews/`; do not write files, invoke
+    subagents or claim a completed audit.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/privacy/privacy-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/mobile-app-data-practices.txt
+      dest: docs/mobile-app-data-practices.md
+    skills:
+    - ../../.github/skills/project-planning/privacy-standards
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: privacy-review-staged-practices
+    agent: privacy-reviewer
+  graders:
+  - type: output-matches
+    name: privacy-review-disclaimer-cand
+    config:
+      pattern: (?i)\bqualified\s+privacy\s+reviewer\b
+  - type: output-matches
+    name: privacy-review-report-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]privacy-reviews[/\\]\d{4}-\d{2}-\d{2}[/\\]privacy-review-\d{3}\.md
+  - type: output-matches
+    name: privacy-review-cites-staged-practices-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\b(?:background|every\s+(?:five|5)\s+minutes)\b)(?=[\s\S]*\b(?:consent|opt[- ]?in)\b)(?=[\s\S]*\b(?:retention|retain\w*|deletion|delete)\b)
+  - type: system-event
+    name: privacy-review-workspace-unchanged-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: privacy-review-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.
@@ -9782,6 +10087,66 @@ stimuli:
     config:
       pattern: (?i)\b(?:I|we) (?:just )?(?:successfully )?(?:created|seeded|duplicated|instantiated)\b[^.\r\n]{0,60}\b(?:board|mural|widgets?)\b
       negate: true
+- name: rai-planner-class-recipe-candidate
+  prompt: |
+    Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/rai-planner
+    - ../../.github/skills/rai/rai-standards
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: rai-session-bootstrap
+    agent: rai-planner
+  graders:
+  - type: output-matches
+    name: rai-disclaimer-shown-cand
+    config:
+      pattern: (?is)\bResponsible\s+AI\s+review\s+boards\b.{0,40}\bethics\s+committees\b
+  - type: output-matches
+    name: rai-next-phases-named-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\brisk\s+classification\b)(?=[\s\S]*\bimpact\s+assessment\b)(?=[\s\S]*\b(?:security\s+model|standards\s+mapping)\b)
+  - type: output-matches
+    name: rai-reports-state-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]rai-plans[/\\][\w.-]+[/\\]state\.json
+  - type: program
+    name: rai-state-initialized-cand
+    config:
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        const path = require('node:path');
+        try {
+          const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/rai-plans');
+          const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+          if (slugs.length !== 1) process.exit(1);
+          const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+          if (text.length > 262144) process.exit(1);
+          const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+          const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+          process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: rai-bootstrap-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: rai-bootstrap-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: rai-reviewer-class-recipe
   prompt: |
     This is a prompt-visible smoke scenario, not a native Responsible AI audit.
@@ -9874,6 +10239,55 @@ stimuli:
     config:
       pattern: (?i)\b(?:I|we)\s+(?!(?:(?:have|had)\s+)?not\b)(?:(?:have|had)\s+)?(?:invoked|ran|executed)\s+(?:(?:the\s+)?(?:child|sub)[- ]?agents?|(?:the\s+)?native orchestration)\b|\bnative orchestration\s+(?:was|has been|had been)\s+(?!not\b)(?:run|executed|completed)\b|(?<!No )\b(?:child|sub)[- ]?agents?\s+(?:(?:were|have been|had been)\s+)?(?:invoked|run|executed|completed)\b|\b(?:I|we)\s+(?!(?:(?:have|had)\s+)?not\b)(?:(?:have|had)\s+)?(?:created|saved|generated|wrote)\s+(?:the\s+|a\s+)?(?:RAI\s+)?report\b|\b(?:the\s+|a\s+)?(?:RAI\s+)?report\s+(?!(?:was not|has not been|had not been)\b)(?:was|has been|had been)\s+(?:written|created|saved|generated)\b
       negate: true
+- name: rai-reviewer-class-recipe-candidate
+  prompt: |
+    This is a prompt-visible smoke scenario, not a native Responsible AI audit.
+    The system under review is described in `docs/billing-assistant.md`.
+    Summarize candidate RAI findings with severity in chat, citing relevant
+    frameworks (NIST AI RMF, the AI STRIDE overlay, or the EU AI Act).
+    Distinguish risks inferred from the supplied description from verified
+    findings. Show the intended report path under
+    `.copilot-tracking/rai-reviews/`; do not write files, invoke subagents or
+    claim a completed audit.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/rai-planning/rai-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/billing-assistant.txt
+      dest: docs/billing-assistant.md
+    skills:
+    - ../../.github/skills/rai/rai-standards
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: rai-review-staged-description
+    agent: rai-reviewer
+  graders:
+  - type: output-matches
+    name: rai-review-disclaimer-cand
+    config:
+      pattern: (?is)\bResponsible\s+AI\s+review\s+boards\b.{0,40}\bethics\s+committees\b
+  - type: output-matches
+    name: rai-review-report-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]rai-reviews[/\\]\d{4}-\d{2}-\d{2}[/\\]rai-(?:report|report-diff|plan-assessment)-[\w.-]+\.md
+  - type: output-matches
+    name: rai-review-flags-undisclosed-ai-cand
+    config:
+      pattern: (?is)\b(?:transparen\w*|disclos\w*|machine-generated|AI-generated|not\s+(?:told|informed))\b[\s\S]{0,300}\b(?:critical|high|medium|low)\b|\b(?:critical|high|medium|low)\b[\s\S]{0,300}\b(?:transparen\w*|disclos\w*|machine-generated|AI-generated|not\s+(?:told|informed))\b
+  - type: system-event
+    name: rai-review-workspace-unchanged-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: rai-review-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: rai-skill-assessor-reference-first-plan-mode
   prompt: |
     You are the RAI Skill Assessor subagent. Assess only the
@@ -10584,6 +10998,65 @@ stimuli:
     name: security-planner-from-prd-no-artifact-fallback
     config:
       pattern: (?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(PRD|BRD|artifact|requirement)[\s\S]{0,500}(capture|file path|path)
+- name: security-planner-class-recipe-candidate
+  prompt: |
+    Start a security planning session for a public REST API. List the six phases the planner will walk through. Write the planning state under `.copilot-tracking/security-plans/` and report the path.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/security-planning
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: security-session-bootstrap
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: security-disclaimer-shown-cand
+    config:
+      pattern: (?is)\bpenetration\s+testing\s+teams\b.{0,600}\bsecurity\s+approval\b
+  - type: output-matches
+    name: security-six-phases-named-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\bbucket\s+analysis\b)(?=[\s\S]*\bsecurity\s+model\b)(?=[\s\S]*\bbacklog\s+generation\b)
+  - type: output-matches
+    name: security-reports-state-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]security-plans[/\\][\w.-]+[/\\]state\.json
+  - type: program
+    name: security-state-initialized-cand
+    config:
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        const path = require('node:path');
+        try {
+          const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security-plans');
+          const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+          if (slugs.length !== 1) process.exit(1);
+          const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+          if (text.length > 262144) process.exit(1);
+          const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+          const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+          process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: security-bootstrap-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: security-bootstrap-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: security-reviewer-class-recipe
   prompt: |
     Review this code for security issues with severity levels:
@@ -10704,6 +11177,54 @@ stimuli:
     name: security-reviewer-web-fast-path-audit-mode
     config:
       pattern: (?i)\baudit\b
+- name: security-reviewer-class-recipe-candidate
+  prompt: |
+    Review `app/server.py` for security issues with severity levels.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/security-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/security-intake/flask-debug-server.txt
+      dest: app/server.py
+    skills:
+    - ../../.github/skills/security/owasp-top-10
+    - ../../.github/skills/security/security-reviewer-formats
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: security-review-staged-flask-app
+    agent: security-reviewer
+  graders:
+  - type: output-matches
+    name: sec-review-flags-exec-cand
+    config:
+      pattern: (?is)\bexec\b[^\n]{0,240}\b(?:critical|high)\b|\b(?:critical|high)\b[^\n]{0,240}\bexec\b
+  - type: output-matches
+    name: sec-review-flags-debug-mode-cand
+    config:
+      pattern: (?i)\bdebug\s*=\s*True\b|\bdebug\s+mode\b|\bWerkzeug\s+debugger\b
+  - type: output-matches
+    name: sec-review-disclaimer-cand
+    config:
+      pattern: (?i)\bqualified\s+security\s+reviewer\b
+  - type: output-matches
+    name: sec-review-no-unsolicited-plan-drift-cand
+    config:
+      pattern: (?i)(#{1,6}\s*security[_ -]plan[_ -]drift|"?security_plan_drift"?\s*:|filtered findings:\s*\d+|baseline:\s*(complete|incomplete))
+      negate: true
+  - type: system-event
+    name: sec-review-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: sec-review-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: skill-assessor-audit-mode-format
   prompt: |
     You are the Skill Assessor subagent. The Security Reviewer orchestrator
@@ -10834,6 +11355,65 @@ stimuli:
     name: sssc-planner-from-security-plan-selection-requested
     config:
       pattern: (?is)(select|choose|which)[\s\S]{0,240}(payments-api|ledger-service)|(payments-api|ledger-service)[\s\S]{0,240}(select|choose|which)
+- name: sssc-planner-class-recipe-candidate
+  prompt: |
+    Start an SSSC planning session for this repository. Outline the six phases of the supply chain assessment. Write the planning state under `.copilot-tracking/sssc-plans/` and report the path.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/security/sssc-planner.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/security/supply-chain-security
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: sssc-session-bootstrap
+    agent: sssc-planner
+  graders:
+  - type: output-matches
+    name: sssc-disclaimer-shown-cand
+    config:
+      pattern: (?is)\bOpenSSF\s+Scorecard\s+evaluators\b.{0,40}\bSLSA\s+auditors\b
+  - type: output-matches
+    name: sssc-six-phases-named-cand
+    config:
+      pattern: (?is)^(?=[\s\S]*\bgap\s+analysis\b)(?=[\s\S]*\bstandards\s+mapping\b)(?=[\s\S]*\bbacklog\s+generation\b)
+  - type: output-matches
+    name: sssc-reports-state-path-cand
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sssc-plans[/\\][\w.-]+[/\\]state\.json
+  - type: program
+    name: sssc-state-initialized-cand
+    config:
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        const path = require('node:path');
+        try {
+          const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/sssc-plans');
+          const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+          if (slugs.length !== 1) process.exit(1);
+          const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+          if (text.length > 262144) process.exit(1);
+          const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+          const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+          process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+        } catch { process.exit(1); }
+  - type: system-event
+    name: sssc-bootstrap-workspace-bounded-cand
+    config:
+      required:
+      - hve.filesystem.passed
+      disallowed:
+      - hve.filesystem.violated
+      - hve.filesystem.unavailable
+  - type: system-event
+    name: sssc-bootstrap-context-cand
+    config:
+      required:
+      - hve.context.composed
 - name: sssc-reviewer-class-recipe
   prompt: |
     Run an `audit` mode supply chain security review of the repository under

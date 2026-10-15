@@ -105,6 +105,31 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "accessibility-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "accessibility-planner-class-recipe",
+      "agentSource": ".github/agents/accessibility/accessibility-planner.agent.md",
+      "requiredSkills": [
+        "accessibility"
+      ],
+      "assertions": [
+        "a11y-plan-disclaimer-shown-cand",
+        "a11y-next-phases-named-cand",
+        "a11y-reports-state-path-cand",
+        "a11y-state-initialized-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/accessibility/[^/]+/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
+    },
     "accessibility-planner-malformed-state-and-blocked-research": {
       "class": "agent-contract",
       "authoritative": false,
@@ -119,6 +144,29 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "accessibility-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "accessibility-reviewer-class-recipe",
+      "agentSource": ".github/agents/accessibility/accessibility-reviewer.agent.md",
+      "requiredSkills": [
+        "accessibility"
+      ],
+      "assertions": [
+        "a11y-review-disclaimer-cand",
+        "a11y-review-cites-staged-barriers-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/accessibility/\\d{4}-\\d{2}-\\d{2}/[^/]+\\.(?:json|md)$",
+            "max": 6
+          }
+        ]
+      }
     },
     "accessibility-reviewer-required-probe-failure": {
       "class": "agent-contract",
@@ -937,6 +985,24 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "cve-analyzer-assesses-single-cve-reachability-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "cve-analyzer-assesses-single-cve-reachability",
+      "agentSource": ".github/agents/security/subagents/cve-analyzer.agent.md",
+      "requiredSkills": [
+        "vex"
+      ],
+      "assertions": [
+        "cve-recommends-under-investigation-cand",
+        "cve-no-not-affected-status-cand",
+        "cve-cites-runtime-override-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "data-science-engineering-coach-initialize-and-select": {
       "class": "agent-contract",
       "authoritative": false,
@@ -1428,6 +1494,22 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "dependency-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "dependency-reviewer-class-recipe",
+      "agentSource": ".github/agents/dependency-reviewer.agent.md",
+      "requiredSkills": [],
+      "assertions": [
+        "dep-flags-unpinned-action-cand",
+        "dep-requests-changes-cand",
+        "dep-flags-lodash-downgrade-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "documentation-audit-class-recipe": {
       "class": "base-model",
@@ -2089,15 +2171,83 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "privacy-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "privacy-planner-class-recipe",
+      "agentSource": ".github/agents/privacy/privacy-planner.agent.md",
+      "requiredSkills": [
+        "privacy-standards"
+      ],
+      "assertions": [
+        "privacy-disclaimer-shown-cand",
+        "privacy-dpia-in-risk-phase-cand",
+        "privacy-reports-state-path-cand",
+        "privacy-state-initialized-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/privacy-plans/[^/]+/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
+    },
     "privacy-reviewer-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
     },
+    "privacy-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "privacy-reviewer-class-recipe",
+      "agentSource": ".github/agents/privacy/privacy-reviewer.agent.md",
+      "requiredSkills": [
+        "privacy-standards"
+      ],
+      "assertions": [
+        "privacy-review-disclaimer-cand",
+        "privacy-review-report-path-cand",
+        "privacy-review-cites-staged-practices-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
+    },
     "rai-planner-class-recipe": {
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "rai-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "rai-planner-class-recipe",
+      "agentSource": ".github/agents/rai-planning/rai-planner.agent.md",
+      "requiredSkills": [
+        "rai-planner"
+      ],
+      "assertions": [
+        "rai-disclaimer-shown-cand",
+        "rai-next-phases-named-cand",
+        "rai-reports-state-path-cand",
+        "rai-state-initialized-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/rai-plans/[^/]+/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
     },
     "rai-planner-disclaimer-startup": {
       "class": "base-model",
@@ -2143,6 +2293,24 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "rai-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "rai-reviewer-class-recipe",
+      "agentSource": ".github/agents/rai-planning/rai-reviewer.agent.md",
+      "requiredSkills": [
+        "rai-standards"
+      ],
+      "assertions": [
+        "rai-review-disclaimer-cand",
+        "rai-review-report-path-cand",
+        "rai-review-flags-undisclosed-ai-cand"
+      ],
+      "filesystem": {
+        "allow": []
+      }
     },
     "rai-reviewer-audit-completion-contract": {
       "class": "fixture-contract",
@@ -2265,6 +2433,31 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "security-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "security-planner-class-recipe",
+      "agentSource": ".github/agents/security/security-planner.agent.md",
+      "requiredSkills": [
+        "security-planning"
+      ],
+      "assertions": [
+        "security-disclaimer-shown-cand",
+        "security-six-phases-named-cand",
+        "security-reports-state-path-cand",
+        "security-state-initialized-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/security-plans/[^/]+/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
+    },
     "security-planner-disclaimer-null-state": {
       "class": "agent-contract",
       "authoritative": true,
@@ -2305,6 +2498,32 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "security-reviewer-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "security-reviewer-class-recipe",
+      "agentSource": ".github/agents/security/security-reviewer.agent.md",
+      "requiredSkills": [
+        "owasp-top-10",
+        "security-reviewer-formats"
+      ],
+      "assertions": [
+        "sec-review-flags-exec-cand",
+        "sec-review-flags-debug-mode-cand",
+        "sec-review-disclaimer-cand",
+        "sec-review-no-unsolicited-plan-drift-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/security/\\d{4}-\\d{2}-\\d{2}/[^/]+\\.(?:json|md)$",
+            "max": 6
+          }
+        ]
+      }
+    },
     "security-reviewer-plan-drift": {
       "class": "agent-contract",
       "authoritative": true,
@@ -2334,6 +2553,31 @@
       "class": "base-model",
       "authoritative": true,
       "measurement": "legacy"
+    },
+    "sssc-planner-class-recipe-candidate": {
+      "class": "agent-contract",
+      "authoritative": false,
+      "measurement": "candidate",
+      "incumbent": "sssc-planner-class-recipe",
+      "agentSource": ".github/agents/security/sssc-planner.agent.md",
+      "requiredSkills": [
+        "supply-chain-security"
+      ],
+      "assertions": [
+        "sssc-disclaimer-shown-cand",
+        "sssc-six-phases-named-cand",
+        "sssc-reports-state-path-cand",
+        "sssc-state-initialized-cand"
+      ],
+      "filesystem": {
+        "allow": [
+          {
+            "change": "create",
+            "pattern": "^\\.copilot-tracking/sssc-plans/[^/]+/[^/]+\\.(?:json|md)$",
+            "max": 3
+          }
+        ]
+      }
     },
     "sssc-planner-disclaimer-startup": {
       "class": "base-model",
