@@ -12,7 +12,7 @@
 // a filesystem boundary it compares the whole workspace before and after the
 // agent runs. Both results are recorded as host system events.
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type {
@@ -104,11 +104,17 @@ function prepareContext(
         throw new Error(`Policy entry '${stimulus.name}' is ${entry.measurement} but declares no agentSource`);
     }
     const mounted = path.join(workDir, INSTRUCTIONS_PATH);
-    if (!existsSync(mounted)) {
-        throw new Error(`Stimulus '${stimulus.name}' did not stage ${INSTRUCTIONS_PATH}`);
+    let staged: Buffer;
+    try {
+        staged = readFileSync(mounted);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            throw new Error(`Stimulus '${stimulus.name}' did not stage ${INSTRUCTIONS_PATH}`);
+        }
+        throw error;
     }
     const composed = composeContext(repoRoot, entry.agentSource);
-    if (sha256(readFileSync(mounted)) !== composed.agent.sha256) {
+    if (sha256(staged) !== composed.agent.sha256) {
         throw new Error(`Stimulus '${stimulus.name}' staged ${INSTRUCTIONS_PATH} that differs from '${entry.agentSource}'`);
     }
     writeFileSync(mounted, composed.text);

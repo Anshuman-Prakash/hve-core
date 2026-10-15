@@ -700,6 +700,46 @@
       "authoritative": true,
       "measurement": "legacy"
     },
+    "code-review-business-alignment-context": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-no-business-context-default": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-alignment-self-edit": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-alignment-stale-source": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-alignment-supersession-reroute": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-source-revision-identity": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-alignment-unreadable-base-fallback": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
+    "code-review-business-alignment-possible-drift-shape": {
+      "class": "agent-contract",
+      "authoritative": true,
+      "measurement": "legacy"
+    },
     "code-review-pull-request-standard-profile": {
       "class": "agent-contract",
       "authoritative": true,

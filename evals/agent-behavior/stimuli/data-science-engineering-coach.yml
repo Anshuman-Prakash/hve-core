@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore declin rescan bpaus bresum resum generat cnotin thon cand
+# cspell:ignore declin rescan bpaus bresum resum generat cnotin thon cand contex
 stimuli:
   - name: data-science-engineering-coach-initialize-and-select
     prompt: |
