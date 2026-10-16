@@ -44,7 +44,7 @@ The comparison pass:
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
 
-Inspect existing review state first. Continue a `started` review from its saved record, and reuse a finished review unless the user asks for a new one. An existing record uses its latest participation event.
+Inspect existing review state first, as the skill's Flow step 4 defines. An existing record uses its latest participation event.
 
 For a new Review, activate skills whose descriptions say they are used during review and fit the task as scoped review criteria. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Initialize the record, persist opening state with review execution `started`, and append the participation event before comparing. When parent state exists, record the review path.
 
@@ -167,9 +167,7 @@ After the evidence body is written, decide:
 * Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
 * Standalone advisory or parent-orchestrated continuation
 
-Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. When parent state exists, store the review path plus derived `next_action` and accepted follow-up projections.
-
-Do not duplicate decision payloads in state, redo the comparison, or rewrite findings to fit a preferred outcome.
+Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. Do not duplicate decision payloads in state, redo the comparison, or rewrite findings to fit a preferred outcome.
 
 Parent Decision Record is the recovery authority. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events. The latest event for a subject is current. On recovery, rebuild stale or missing state projections from the record; when state conflicts, the record governs and the corrected projection must persist before transition.
 

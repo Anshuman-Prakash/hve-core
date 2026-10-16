@@ -6,7 +6,7 @@ description: Full walkthrough protocol for the rpi-walkthrough skill, covering t
 
 This reference expands the `rpi-walkthrough` SKILL with the operational detail for a guided, conversational walkthrough. Conversation context owns the target refinement, detail level, segment pacing, current position, and follow-up depth. Use [../templates/walkthrough.md](../templates/walkthrough.md) only when a material user decision or requested change requires the optional ledger at `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md`.
 
-Follow the shared conventions in `copilot-tracking.instructions.md`. References inside `.copilot-tracking` artifacts use plain workspace-relative paths; references shown to the user in the conversation use markdown links with line numbers.
+References inside `.copilot-tracking` artifacts use plain workspace-relative paths; references shown to the user in the conversation use markdown links with line numbers.
 
 ## Target resolution
 
@@ -39,7 +39,7 @@ Turn the reviewed target into an ordered list of segments that each cover one co
 * UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive them.
 * Artifact: follow the document's own section order, pairing each decision with its rationale and evidence.
 
-Keep the segment list, coverage, and current position in the conversation. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
+Keep the segment list, coverage, and current position in the conversation, and size the segment count as the skill's Constraints describe.
 
 ## Conversation markdown format
 
