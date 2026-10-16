@@ -56,17 +56,13 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 * Use [references/implementation.md](references/implementation.md) for the changes-record contract, plan-update rules, material-discovery handling, questions, resumption, and rendered conversation mechanics.
 * Do not expand active scope. Place unrelated work in an explicit follow-up item.
 * Do not use line numbers or separate legacy log artifacts.
-* In the plan and changes record, wrap code, commands, and symbols in backticks and link existing files and folders with the workspace-relative path as the link text and a path relative to the artifact file as the destination. Keep a not-yet-created path in backticks.
-* Keep `.copilot-tracking/` references out of production code, code comments, documentation strings, and commit messages.
+* In the plan and changes record, wrap code, commands, and symbols in backticks and link existing files and folders with the workspace-relative path as the link text and a path relative to the artifact file as the destination. Keep a not-yet-created path in backticks and convert it to a link once the file exists.
+* Keep `.copilot-tracking/` references out of production code, code comments, documentation strings, and commit messages; keep shipped references durable and self-contained.
 
 ## Conversation guidance
 
-* Follow the detailed opening, continual-update, pre-question, and closeout protocol in [references/implementation.md](references/implementation.md). That reference is the authority for the rendered message templates.
+* Follow the opening, continual-update, and pre-question protocol in [references/implementation.md](references/implementation.md), which is the authority for the rendered message templates. Closeout follows Return to Caller.
 * Persist canonical state before the opening, any material update, decision question, handoff, or closeout. Chat is a concise projection of that state, never a second history or delivery log.
-* At closeout, report implementation execution status separately from review readiness. Qualify every status by the declared scope and list remaining active-plan markers so bounded completion is not mistaken for task completion.
-* Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` as the optional next step only when review prerequisites are met. In an active confirmed automatic RPI Agent context, return current artifacts and scope facts to the parent for eligible continuation.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
@@ -77,4 +73,9 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 
 ## Return to Caller
 
-Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
+* Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers with their owner and clearing action, current plan updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Include results, material updates, and decisions.
+* Report implementation execution status separately from review readiness. Qualify every status by the declared scope and list all remaining active-plan markers, including later work outside the declared scope, so bounded completion is not mistaken for task completion.
+* In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` as the optional next step only when review prerequisites are met; otherwise state the current no-handoff reason. In an active confirmed automatic RPI Agent context, return current artifacts and scope facts to the parent, which owns eligible continuation after its gates and required confirmations pass.
+* Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section.
+* End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command.
