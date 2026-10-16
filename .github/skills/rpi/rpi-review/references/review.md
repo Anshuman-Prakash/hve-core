@@ -35,7 +35,7 @@ The skill's Flow step 6 runs one comparison pass. The parent compares the portio
 2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
 3. Check critique finding dispositions when a critique ran, and whether significant changes preserved confirmed intent before affected work continued.
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
-5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
+5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift. When business sources are cited or Business Alignment entries exist, include the comparison in `business-alignment.md`.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
 
 ## Optional helpers
@@ -160,6 +160,8 @@ Use the host's question tool, such as `vscode_askQuestions`, when available, wit
 * `Finish review decisions`
 
 The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the question tool is unavailable, present the same choices in chat and wait.
+
+For an alignment finding routed as residual work, offer to draft a note to the source owner only when the finding records meaningful drift or a confirmed divergence. Do not offer a note for a stale-source or source-gap alert without a separate demonstrated drift result. `business-alignment.md` defines the action text, how the user keeps the follow-up without the note, and what an accepted note contains.
 
 Append each response as an `RD-xxx` event with its finding, route, owner, rationale, evidence need, and outcome effect before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision, or changes the route to the appropriate evidence owner, and assigns the smallest evidence action. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 

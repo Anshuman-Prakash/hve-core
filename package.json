@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "test:ps": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1",
+    "labels:sync": "pwsh -NoProfile -File scripts/ci/Sync-RepositoryLabels.ps1",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
@@ -117,9 +118,9 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.3.6",
-    "@microsoft/vally-cli": "0.17.0",
-    "@modelcontextprotocol/server": "2.3.0",
-    "@types/node": "24.19.1",
+    "@microsoft/vally-cli": "0.18.0",
+    "@modelcontextprotocol/server": "2.3.1",
+    "@types/node": "26.6.4",
     "@vscode/vsce": "4.0.0",
     "audit-ci": "7.1.0",
     "cspell": "10.3.6",
