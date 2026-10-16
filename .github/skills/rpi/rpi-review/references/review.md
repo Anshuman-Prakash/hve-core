@@ -96,7 +96,7 @@ Record relevant validation as passed, failed, skipped, or unavailable. Failed ch
 
 ## Conversation protocol
 
-Before comparison, initialize the one review record and persist its canonical opening state in Scope and Evidence plus Opening Review State. Record the interpreted review goal, scope, depth and provenance, evidence readiness, acceptance basis, comparison boundary, decision authority, and initial blockers. Then send one opening message:
+The opening state that the skill's Flow step 5 persists records the interpreted review goal, scope, depth and provenance, evidence readiness, acceptance basis, comparison boundary, decision authority, and initial blockers. After persisting it, send one opening message:
 
 ```markdown
 ## RPI Review: [Task] | [Full task, Pxx, or Pxx-Txx scope]
@@ -137,9 +137,9 @@ Use `✅` only for evidence-backed conformance, a completed comparison, or passe
 
 ## Parent decision protocol
 
-Decision History within `## Parent Decision Record` holds every parent decision as an event: participation, walkthrough, final execution and outcome, each route's accepted, rejected, deferred, or changed disposition, and continuation. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events; the latest event for a subject is current. Do not redo the comparison or rewrite findings to fit a preferred outcome.
+Give each Decision History event a stable `RD-xxx` ID and subject; the latest event for a subject is current. Record each route's disposition as accepted, rejected, deferred, or changed, and record continuation as an event alongside the decisions the skill's Flow step 8 lists. Do not redo the comparison or rewrite findings to fit a preferred outcome.
 
-Current Disposition is a readable projection of the latest events: final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal. Append events first, then refresh the projection before closeout or handoff.
+Current Disposition shows final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal. Append events first, then refresh Current Disposition before closeout or handoff.
 
 Parent Decision Record is the recovery authority. On recovery, rebuild stale or missing state projections from its events; when state conflicts, the record governs and the corrected projection must persist before transition.
 
