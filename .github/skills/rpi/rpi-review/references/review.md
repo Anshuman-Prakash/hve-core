@@ -137,7 +137,7 @@ Use `✅` only for evidence-backed conformance, a completed comparison, or passe
 
 ## Parent decision protocol
 
-Give each Decision History event a stable `RD-xxx` ID and subject; the latest event for a subject is current. Record each route's disposition as accepted, rejected, deferred, or changed, and record continuation as an event alongside the decisions the skill's Flow step 8 lists. Do not redo the comparison or rewrite findings to fit a preferred outcome.
+Give each Decision History event a stable `RD-xxx` ID and subject; the latest event for a subject is current. Record each route's disposition as accepted, rejected, deferred, or changed. Do not redo the comparison or rewrite findings to fit a preferred outcome.
 
 Current Disposition shows final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal. Append events first, then refresh Current Disposition before closeout or handoff.
 
