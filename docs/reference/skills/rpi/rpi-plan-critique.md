@@ -46,7 +46,7 @@ name a level for specific lenses. A single-phase plan, a host without subagents,
 the same lens questions in one pass. The critique parent then verifies every candidate itself, so the total
 time also depends on the reasoning effort of the session that runs the critique.
 
-A plan gets one critique. Corrections, implementation-time updates, and replanning do not start
+A plan gets at most one critique. Corrections, implementation-time updates, and replanning do not start
 another; a follow-up critique runs only when you ask for one. When a correction changes
 requirements, scope, or architecture, the planner says so at closeout so you can decide. When a
 follow-up runs, it receives the earlier critique and the changed plan sections, marks each earlier
