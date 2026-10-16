@@ -44,9 +44,9 @@ A representative assignment from an `rpi-review` run:
 ```text
 Compare the Requirements: blocks in .copilot-tracking/plans/2026-09-11/example-plan.md
 phases P02 and P03 against the completion and validation evidence in
-.copilot-tracking/changes/2026-09-11/example-changes.md. Report any requirement
-without matching evidence and any validation recorded as skipped. Read only those
-two files.
+.copilot-tracking/changes/2026-09-11/example-changes.md. This decides whether those
+phases meet their acceptance basis. Report any requirement without matching evidence
+and any validation recorded as skipped. Read only those two files.
 ```
 
 The helper returns, for example, two candidate findings: a P03 requirement whose changes entry cites a test that the validation section records as skipped, and a P02 requirement with no changes entry at all. The parent reads both locations, confirms the first as a defect routed to `rpi-implement`, and finds the second was completed under a renamed task, so it records that one as consistent instead. The helper's consistent entries name their locations, so the parent checks them the same way.

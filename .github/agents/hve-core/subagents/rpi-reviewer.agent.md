@@ -28,6 +28,7 @@ A compact return that lets the parent locate each candidate finding quickly, und
 ## Inputs
 
 * One bounded review assignment: the question to answer or the comparison to make, in the parent's words
+* The purpose of the assignment, meaning which acceptance decision depends on it, so you can judge what matters most
 * The evidence to read: workspace-relative paths to the plan, changes record, critique, research, source, validation output, or other artifacts in scope, with the sections or markers that matter when the parent knows them
 * The acceptance basis to compare against when the assignment needs one: requirements, acceptance criteria, confirmed decisions, or intended behavior
 * Scope and non-goals: permitted paths, exclusions, and anything the parent has already verified

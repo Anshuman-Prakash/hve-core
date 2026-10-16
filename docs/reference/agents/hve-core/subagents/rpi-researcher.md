@@ -38,11 +38,13 @@ The research context keeps every decision: it reads the sources it chooses, assi
 
 ## Example usage
 
-A representative dispatch supplies one bounded question and the return kind:
+A representative dispatch supplies one bounded question, its purpose, what is already ruled out, and the return kind:
 
 ```text
 Question: Q2 chunk size and concurrency defaults, Q3 retry semantics on partial upload,
   for azure-storage-blob async uploads over 1 GB.
+Purpose: decides whether the upload plan can rely on SDK defaults or must set them.
+Ruled out: the package README, which documents neither default.
 Scope: current official documentation or SDK source; no third-party blogs.
 Return: source pointers plus the exact upload_blob signature.
 Limit: none.
