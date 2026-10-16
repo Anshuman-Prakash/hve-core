@@ -6,7 +6,7 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Critique execution: {{Complete_Partial_Blocked_or_not_produced}}
+* Critique execution: {{Complete_Partial_Blocked_or_Not_produced}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Critique type: {{initial_or_follow_up}}

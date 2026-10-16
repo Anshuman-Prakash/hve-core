@@ -4,10 +4,6 @@ description: "Reference protocol for splitting an RPI plan critique into paralle
 
 # Lens Assessment Reference
 
-## When to split
-
-Split the assessment into lens assessments as the skill's Flow step 3 describes. When you assess a lens yourself, use the same lens questions.
-
 ## Lenses
 
 | Lens           | Question                                                                                                                                                                                            | Reads                                                      | Default effort |
@@ -32,7 +28,7 @@ Select each lens's reasoning effort when you dispatch it. Agent frontmatter does
 
 ## Dispatch
 
-Scope the lenses from the plan's phase, task, and requirement IDs without assessing the plan first; the lenses do the assessment. Fill in this assignment for each lens, then send every dispatch to `RPI Plan Critic` in one parallel batch before reading any return:
+Fill in this assignment for each lens, then send every dispatch to `RPI Plan Critic` in one parallel batch before reading any return:
 
 ```text
 Lens: <name>. <question from the Lenses table>
