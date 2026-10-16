@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-10-16
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -222,7 +222,7 @@ P01-T01 and P01-T02 have completion evidence; P01 is checked.
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
-If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; a follow-up critique is optional. Ordinary local judgment and non-material updates remain in Implement.
+If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; a follow-up critique runs only when you ask for one. Ordinary local judgment and non-material updates remain in Implement.
 
 When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
@@ -408,7 +408,7 @@ Choose the entry surface that best fits the task.
 
 `RPI Agent` starts in manual mode: it stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. Choose **Full Auto** to request an automatic session. The agent asks whether it should resolve ordinary Research and Plan decisions itself or pause for you to retain decisions in either phase, then continues through Review without routine approval prompts. It still stops for blockers, required human review, and any destructive or externally visible action.
 
-After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
+After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. The session's one critique and Review have already run, so the child skips both unless you ask for them. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 

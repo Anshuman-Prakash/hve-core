@@ -39,9 +39,9 @@ with explicit contrasting text colors.
 Planning owns two internal steps. It activates [rpi-research](rpi-research) only for a demonstrated
 readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) by default once the plan is
 implementation-ready. You can skip the critique; the planner records it as skipped rather than
-failed. A follow-up critique after corrections is optional, and the planner runs one only when you
-ask or when the fix for a Critical or High finding changed requirements, scope, or architecture, at
-most once per plan unless you ask for another. Set `critique-effort=` to choose the reasoning effort
+failed. A plan gets at most one critique: corrections and later plan changes do not start another,
+and a follow-up critique runs only when you ask. When a correction changes requirements, scope, or
+architecture, the planner says so at closeout so you can decide whether to ask for one. Set `critique-effort=` to choose the reasoning effort
 of the critique's lens assessments; otherwise the critique picks it per lens. Pass `subagents=none` to plan and critique
 without subagents. Confirmed user
 direction outranks critique advice.

@@ -46,11 +46,11 @@ name a level for specific lenses. A single-phase plan, a host without subagents,
 the same lens questions in one pass. The critique parent then verifies every candidate itself, so the total
 time also depends on the reasoning effort of the session that runs the critique.
 
-After corrections, a follow-up critique is optional. The planner runs one only when you ask, or
-when the fix for a Critical or High finding changed requirements, scope, or architecture, and runs
-at most one per plan unless you ask for another. When one
-runs, it receives the earlier critique, marks each earlier finding resolved, still open, or
-superseded, and checks the changed text for new gaps. It writes to a numbered output path, such as
+A plan gets one critique. Corrections, implementation-time updates, and replanning do not start
+another; a follow-up critique runs only when you ask for one. When a correction changes
+requirements, scope, or architecture, the planner says so at closeout so you can decide. When a
+follow-up runs, it receives the earlier critique and the changed plan sections, marks each earlier
+finding resolved, still open, or superseded, and checks the changed text for new gaps. It writes to a numbered output path, such as
 `blob-storage-plan-critique-2.md`, so earlier critiques stay intact.
 
 The critique considers requirements across the supplied plan. Tasks need not repeat established requirements solely for restatement, and an abbreviated excerpt does not prove the full plan omits a detail. Explicitly missing tests, conflicting task instructions and material evidence gaps still warrant findings; stating a requirement does not by itself prove implementation coverage.
@@ -63,7 +63,7 @@ The critique considers requirements across the supplied plan. Tasks need not rep
 Reach for a different asset when:
 
 * The plan does not exist yet. Run [rpi-plan](rpi-plan), which runs the critique for you unless you skip it.
-* A critique already exists for the task. Revise the plan from its findings through [rpi-plan](rpi-plan), which decides whether a follow-up critique is warranted.
+* A critique already exists for the task. Revise the plan from its findings through [rpi-plan](rpi-plan), and ask for a follow-up critique only if you want the revision checked again.
 * You want to assess implementation rather than the plan. Run [rpi-review](rpi-review).
 
 ## Example usage
