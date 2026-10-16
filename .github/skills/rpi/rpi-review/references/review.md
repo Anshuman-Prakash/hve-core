@@ -13,7 +13,7 @@ Review one task set using these paths:
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-The plan critique is present only when one ran. A new review of the same task adds a numbered suffix to the review path, such as `{{task_slug}}-review-2.md`. Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
+The plan critique is present only when one ran. Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
 
 ## Review document contract
 
@@ -27,15 +27,9 @@ Use `templates/review-log.md` for one record that a person can review and a late
 * Use prose and short lists for explanation, tables for compact coverage and decisions, and backticks for code, commands, and symbols. Keep paths plain-text and workspace-relative under the shared tracking convention. Include a Mermaid diagram only when it clarifies a material relationship or drift, distinguishing intended from observed behavior.
 * When no substantive findings exist, say so within the assessed boundary. Retain validation limits and residual work without inventing `RV-xxx` entries or implying unassessed scope passed.
 
-The parent maintains Current Disposition inside Parent Decision Record as a readable projection of the latest Decision History events. Show final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal.
-
-Append events first, then refresh the projection before closeout or handoff. On recovery, events govern any stale projection. Parent Decision Record holds only decisions; the evidence body is never rewritten to fit a decision.
-
 ## Review method
 
-The review parent resolves scope, acceptance basis, depth, and artifact readiness, initializes the canonical review record, and performs one marker-driven comparison pass, comparing the portions it keeps itself and reconciling lane returns for the rest. It owns the evidence body, the findings, every decision in `## Parent Decision Record`, parent state, conversation, and continuation.
-
-The comparison pass:
+The skill's Flow step 6 runs one comparison pass. The parent compares the portions it keeps itself and reconciles lane returns for the rest. The comparison pass:
 
 1. Compare plan requirements and each task's `Requirements:` block with completed `Pxx` and `Pxx-Txx` evidence.
 2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
@@ -43,10 +37,6 @@ The comparison pass:
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
-
-Inspect existing review state first, as the skill's Flow step 4 defines. An existing record uses its latest participation event.
-
-For a new Review, activate skills whose descriptions say they are used during review and fit the task as scoped review criteria. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Initialize the record, persist opening state with review execution `started`, and append the participation event before comparing. When parent state exists, record the review path.
 
 ## Optional helpers
 
@@ -70,17 +60,6 @@ Pass the level through the dispatch tool's reasoning-effort parameter, such as `
 ### Using lane returns
 
 Treat each return as suggestions. Read the cited evidence yourself, go deeper on any candidate that needs it, record an `RV-xxx` finding only when you confirm it, and assign IDs, execution status, outcome, and routes yourself. Count a requirement as consistent only when the lane cites where it is met, and read that location yourself before a material requirement supports a conformant outcome. Treat a requirement reported consistent without a location as not assessed, and compare it yourself. Helpers do not write the review record, ask the user, or decide anything. Record each lane in Scope and Evidence with its question, its reasoning effort and that effort's source (selected, user- or caller-set, frontmatter default, or host default), and what was verified.
-
-## Review depth
-
-| Depth      | Selection rule        | Behavior                                                                                                                                                                                                                    |
-|------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `standard` | Default               | Completely assess every material acceptance contract once as quickly as evidence permits, follow markers and direct evidence, and omit restatement, cosmetics, exhaustive strengths, low-impact suggestions, and narration. |
-| `deep`     | Explicit user request | Trace the same supplied boundary more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns without open-ended research or another pass.                                        |
-
-Do not infer deep review from task size, complexity, uncertainty, or risk. Standard review minimizes elapsed work without reducing complete coverage of material acceptance evidence.
-
-Before comparison, confirm plan markers and task-local context, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
 
 ## Separate execution from outcome
 
@@ -156,30 +135,15 @@ Next review action: [next comparison, validation assessment, focused question, r
 
 Use `✅` only for evidence-backed conformance, a completed comparison, or passed validation. Use `⚠️` for a substantive finding, residual work, failed, skipped, or unavailable validation, or a decision or evidence gap. Use `⛔` when review progress is blocked. Markers are optional and must be paired with text.
 
-Use the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent uses agent-owned decisions by default and skips the walkthrough unless the user explicitly retains Review decisions.
-
 ## Parent decision protocol
 
-After the evidence body is written, decide:
+Decision History within `## Parent Decision Record` holds every parent decision as an event: participation, walkthrough, final execution and outcome, each route's accepted, rejected, deferred, or changed disposition, and continuation. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events; the latest event for a subject is current. Do not redo the comparison or rewrite findings to fit a preferred outcome.
 
-* Final review execution status and outcome
-* Accepted, rejected, deferred, or changed disposition for every proposed route
-* Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
-* Standalone advisory or parent-orchestrated continuation
+Current Disposition is a readable projection of the latest events: final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal. Append events first, then refresh the projection before closeout or handoff.
 
-Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. Do not duplicate decision payloads in state, redo the comparison, or rewrite findings to fit a preferred outcome.
-
-Parent Decision Record is the recovery authority. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events. The latest event for a subject is current. On recovery, rebuild stale or missing state projections from the record; when state conflicts, the record governs and the corrected projection must persist before transition.
+Parent Decision Record is the recovery authority. On recovery, rebuild stale or missing state projections from its events; when state conflicts, the record governs and the corrected projection must persist before transition.
 
 ## Review Item Walkthrough
-
-Resolve decision participation before route disposition:
-
-| Context                                                     | Mode            | Behavior                                                                                                           |
-|-------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------|
-| Standalone or manual RPI Review                             | `user-owned`    | Walk through each actionable finding separately and persist the answer before the next item.                       |
-| Confirmed automatic RPI Agent                               | `agent-owned`   | Skip item questions and decide proposed routes from evidence before the separate post-Review follow-up checkpoint. |
-| Automatic RPI Agent with explicit retained Review decisions | `user-retained` | Keep the session automatic, walk through findings, then resume after decisions are recorded.                       |
 
 For each user-owned or user-retained `RV-xxx`, first persist the pending item. Then present the review record and cited evidence as Markdown links and explain in approachable language:
 
@@ -188,15 +152,15 @@ For each user-owned or user-retained `RV-xxx`, first persist the pending item. T
 * The proposed destination and the suggested answer
 * Material uncertainty and whether more evidence could change the decision
 
-Use the question tool when available with one finding per turn. Configure freeform input and offer:
+Use the host's question tool, such as `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
 
 * `Use suggested action: [plain-language action]`, marked recommended
 * `Gather more information`
 * `Skip this item`
 * `Finish review decisions`
 
-The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request.
+The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the question tool is unavailable, present the same choices in chat and wait.
 
-Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
+Append each response as an `RD-xxx` event with its finding, route, owner, rationale, evidence need, and outcome effect before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision, or changes the route to the appropriate evidence owner, and assigns the smallest evidence action. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 
-Material skipped or deferred findings prevent `Conformant` and `Conformant with justified divergence`. A credible completed review may still use Defects found or Residual work; reserve Not accepted for blocked evidence or unresolved critical boundaries that prevent acceptance. Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
+Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
