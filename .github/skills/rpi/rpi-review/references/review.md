@@ -109,7 +109,7 @@ Each `RV-xxx` finding names severity, the binding requirement or accepted direct
 * Route material evidence gaps to `rpi-research`.
 * Route non-blocking residual work to a distinct follow-up item with a clear owner or next action.
 
-Route an unresolved plan follow-up item to its distinct follow-up work owner or next action. It is not a defect or a new active plan task merely because review found it still open. Do not convert residual work into a defect merely to force implementation, and do not create a new active plan revision during review.
+Route an unresolved plan follow-up item to its distinct follow-up work owner or next action. It is not a defect or a new active plan task merely because review found it still open. Do not convert residual work into a defect merely to force implementation, and do not create a new active plan revision during review. When findings fall into more than one category, state each distinct destination rather than selecting one aggregate route.
 
 ## Validation evidence
 
@@ -158,10 +158,6 @@ Use `✅` only for evidence-backed conformance, a completed comparison, or passe
 
 Use the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent uses agent-owned decisions by default and skips the walkthrough unless the user explicitly retains Review decisions.
 
-At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-
-For standalone review, remain read-only and advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it and do not require a second Review after later implementation. Otherwise state the no-handoff reason. In confirmed automatic RPI Agent mode, return the record to the parent as the task's one Review result. For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, follow-up choice, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
-
 ## Parent decision protocol
 
 After the evidence body is written, decide:
@@ -194,23 +190,15 @@ For each user-owned or user-retained `RV-xxx`, first persist the pending item. T
 * The proposed destination and the suggested answer
 * Material uncertainty and whether more evidence could change the decision
 
-Use `vscode_askQuestions` when available with one finding per turn. Configure freeform input and offer:
+Use the question tool when available with one finding per turn. Configure freeform input and offer:
 
 * `Use suggested action: [plain-language action]`, marked recommended
 * `Gather more information`
 * `Skip this item`
 * `Finish review decisions`
 
-The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the tool is unavailable, show the same options in chat and wait.
+The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request.
 
 Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 
 Material skipped or deferred findings prevent `Conformant` and `Conformant with justified divergence`. A credible completed review may still use Defects found or Residual work; reserve Not accepted for blocked evidence or unresolved critical boundaries that prevent acceptance. Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
-
-## Review Closeout Projection
-
-At closeout, project final review execution status, final outcome, validation coverage, blockers, and the disposition for every actionable finding. Keep Complete, Partial, or Blocked execution separate from Conformant, Conformant with justified divergence, Defects found, Residual work, or Not accepted outcome.
-
-Preserve the four-destination matrix: implementation defects go to `rpi-implement`; decision gaps and invalid assumptions go to `rpi-plan`; material evidence gaps go to `rpi-research`; and non-blocking residual work goes to a distinct follow-up owner. Do not describe residual work as a defect. When more than one category occurs, state each distinct destination rather than selecting one aggregate route.
-
-For standalone use, provide only the eligible advisory command or no-handoff reason. In parent contexts, return the same projection to the parent, which owns continuation. The linked-artifact table follows this projection, immediately before the final `## Next Steps` section.
