@@ -68,10 +68,6 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * In standard mode, suppress continual updates unless a blocker prevents completion. In deep mode, provide concise updates only at meaningful boundaries. Explain the assessment action and why it matters, material findings, blockers, and relevant artifact links without narrating low-level actions.
 * Do not ask the user questions during critique. Record any significant or divergent decision need in its finding and return it to the planning parent or standalone caller for disposition.
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
-* At closeout, separate substantive execution (Complete, Partial or Blocked) from verdict (Pass, Revise or Blocked). When no assessment was produced, state the execution limitation and unavailable verdict instead. Identify the highest-impact finding when present, its owner, next action and user-response need. A planner-owned revision does not require user input.
-* Advise `/compact` only when stale tool output or completed assessment detail outweighs useful current context and the plan and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* When run from `rpi-plan`, return the verdict to the planning parent and do not ask the user to invoke planning again. In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent. Otherwise state the explicit stop or no-handoff reason. In an active confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
@@ -82,8 +78,15 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 
 ## Handoff
 
-Return critique depth and provenance, execution status, verdict, output path, critique type (initial or follow-up), severity summary, highest-impact finding, action owner, smallest next action, and user-response status to the planning parent. When `rpi-plan` ran the critique, the parent revises directly, obtains a significant or divergent user decision when required, and decides whether a follow-up critique is warranted. A standalone critique may advise `/rpi-plan` for needed revision but does not invoke it.
+* When `rpi-plan` ran the critique, return the verdict to the planning parent and do not ask the user to invoke planning again. The parent revises directly, obtains a significant or divergent user decision when required, and decides whether a follow-up critique is warranted.
+* In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent; otherwise state the explicit stop or no-handoff reason.
+* In an active confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
 
 ## Final response contract
 
-Return depth and provenance, execution status and verdict (unavailable when no assessment was produced), output path, severity counts and highest-impact finding when present, owner, next action and user-response need. Do not invent a finding or verdict for a failed run. Keep the response compact and follow Conversation guidance for parent return, standalone advice, artifact links and next steps.
+* Return depth and provenance, critique type (initial or follow-up), execution status and verdict (unavailable when no assessment was produced), output path, severity counts and the highest-impact finding when present, its action owner, the smallest next action, and whether a user response is required. Do not invent a finding or verdict for a failed run, and keep the response compact.
+* Keep substantive execution (Complete, Partial, or Blocked) separate from the verdict (Pass, Revise, or Blocked). When no assessment was produced, state the execution limitation and the unavailable verdict instead. A planner-owned revision does not require user input.
+* Give continuation as Handoff describes.
+* Advise `/compact` only when stale tool output or completed assessment detail outweighs useful current context and the plan and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section.
+* End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command.

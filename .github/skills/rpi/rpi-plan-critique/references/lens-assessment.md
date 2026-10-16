@@ -6,7 +6,7 @@ description: "Reference protocol for splitting an RPI plan critique into paralle
 
 ## When to split
 
-Split the assessment into lens assessments when a dispatch tool is available, the user's direction allows subagents, and the plan has more than one phase. Assess a single-phase plan, any plan when no dispatch tool is available, or any plan when the user directs no subagents, yourself, one lens at a time, using the same lens questions.
+Split the assessment into lens assessments as the skill's Flow step 3 describes. When you assess a lens yourself, use the same lens questions.
 
 ## Lenses
 
