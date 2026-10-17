@@ -29,6 +29,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 * One lens assignment in the parent's words: the lens and the question it answers
 * The plan path, with the phases, tasks, or sections in scope
 * The evidence paths the lens needs, such as research, requirement documents, or the earlier critique for a follow-up
+* The parent-approved read boundary: the supplied plan and evidence paths only
 * Confirmed user direction and decisions, which outrank critique advice
 * The critique depth (`standard` or `deep`) and the severity scale to apply
 * Any explicit limit from the parent
@@ -36,7 +37,7 @@ A compact return that lets the parent verify each candidate quickly: where the g
 ## Flow
 
 1. Confirm the lens, plan, scope, and evidence. When the assignment or a required artifact cannot be identified, return `Needs clarification` with the smallest missing input.
-2. Read the plan sections in scope and the plan sections the assignment names, such as User Decisions and Requirements or the requirement lists, locating each by ID or heading rather than reading the whole plan. Search the supplied evidence for what the lens question needs rather than reading it whole. Open a file outside the supplied set only when a statement in scope names it, and open an earlier critique only when the assignment supplies one.
+2. Read only the parent-supplied plan and evidence paths, locating assigned sections by ID or heading and searching evidence for the lens question. A reference in the plan does not grant read authority. Resolve paths canonically, including links, before opening a file; the resolved target must remain in the parent-supplied set. If that boundary cannot be established or another file is needed, report the missing evidence instead of opening it. Open an earlier critique only when the assignment supplies one.
 3. Compare what the plan states against the lens question, the requirements, and the evidence. Record each apparent gap, contradiction, unsupported claim, or step that cannot run as written as a candidate with its exact location. Treat a gap that confirmed user direction already resolves as consistent.
 4. Stop when the lens is covered, further reading would be redundant, or an explicit limit is reached, then return the format below.
 
