@@ -7304,6 +7304,30 @@ stimuli:
     name: requested-task-selected
     config:
       pattern: ^\s*2607\s*$
+- name: rpi-plan-critic-conformance-d89dd31d
+  prompt: |
+    This is a contained, response-only critic-contract scenario, not a native
+    subagent invocation. Read `policy/rpi-plan-critic.agent.md`. Under that
+    contract, your lens assessment found that task P02-T03 omits requirement
+    FR-004. Who assigns that finding its `PC-xxx` ID and final severity? Choose
+    one: critique-parent, plan-critic, or implementer. Write no files. Return
+    only the chosen option.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/hve-core/subagents/rpi-plan-critic.agent.md
+      dest: policy/rpi-plan-critic.agent.md
+  tags:
+    category: agent-behavior
+    kind: agent
+    target_artifact: .github/agents/hve-core/subagents/rpi-plan-critic.agent.md
+    advisory: "true"
+    prompt_sha256: d89dd31d71f420c1fceda95c670f1d475411a8942b7e68623fa64ef4dab15ddd
+    agent: rpi-plan-critic
+  graders:
+  - type: output-matches
+    name: critique-parent-owns-ids
+    config:
+      pattern: (?i)^\s*[`*'"]*critique-parent[`*'"]*[.!]?\s*$
 - name: rpi-researcher-return-only-suggestions
   prompt: |
     You found three documentation pages that answer the caller's bounded
