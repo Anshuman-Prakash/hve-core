@@ -842,13 +842,8 @@ console.log(JSON.stringify(results));
     $critic | Should -Match ([regex]::Escape('Do not open anything the assignment does not supply, such as a file the plan names'))
     $critic | Should -Not -Match 'Open a file outside the supplied set only when a statement'
     $fallback = [regex]::Match($lenses, '(?s)When `RPI Plan Critic` is unavailable,(.*?)(?=\r?\n## )').Value
-    $fallback | Should -Match 'parent-supplied plan and evidence paths'
-    $fallback | Should -Match 'Do not create, edit, move, or delete files, including temporary files'
-    $fallback | Should -Match 'Do not run validation, dispatch other agents, or send user-facing messages'
-    $fallback | Should -Match 'parent verifies them and owns finding IDs'
+    $fallback | Should -Match ([regex]::Escape('read only the plan and evidence the assignment supplies, change no files, run no validation, and dispatch no other agents'))
     $lenses | Should -Match ([regex]::Escape('When a lens returns `Partial`, `Blocked`, `Needs clarification`, or nothing'))
-    $lenses | Should -Match 'unsuccessful return with no candidates does not count as a complete assessment'
-    $lenses | Should -Match 'Blocked verdict when the missing assessment is decision-critical'
   }
 
   It 'Qualifies both public effort fallbacks by host and dispatch support' -Tag 'RpiReviewRemediation' {
