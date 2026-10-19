@@ -3,7 +3,7 @@ title: RPI Reviewer
 description: "Reviews one bounded, context-heavy portion of RPI evidence assigned by the review parent and returns findings with evidence locations, why each matters, and suggested severity and route as suggestions for the calling agent to verify. Use during review when isolating a large comparison would help."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-17
+ms.date: 2026-10-19
 ms.topic: reference
 keywords:
   - agent
@@ -34,8 +34,7 @@ It hands this helper one bounded, context-heavy portion of the comparison when r
 
 The assignment is in the parent's own words with the evidence paths to read and the acceptance basis to compare against. It does not need an `RV-xxx` ID or a `Pxx` or `Pxx-Txx` boundary.
 The parent selects each lane's reasoning effort when the dispatch tool supports that parameter.
-The frontmatter `max` fallback applies only on hosts that honor reasoning-effort frontmatter; VS Code's Local harness ignores that field.
-When the dispatcher cannot select an effort, record host default rather than claiming the requested level or a guaranteed `max`.
+The frontmatter `max` fallback applies only on hosts that honor reasoning-effort frontmatter; VS Code's Local harness ignores that field and uses the effort chosen for the helper's model in the model picker.
 The helper returns candidate findings with expected behavior, observed evidence and location, why each may matter, and suggested severity and route, plus each requirement it found consistent with the location where it is met, and what it could not assess.
 
 Every candidate is a suggestion. The review parent reads the cited evidence, goes deeper on anything that needs it, records an `RV-xxx` finding only when it confirms the candidate, and decides execution status, outcome, and every route in `## Parent Decision Record`. The helper writes no file, runs no validation, and never speaks to the user.

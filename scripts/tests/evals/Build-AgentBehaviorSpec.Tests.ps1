@@ -853,7 +853,7 @@ console.log(JSON.stringify(results));
       $text | Should -Match 'only on hosts that honor reasoning-effort frontmatter'
       $text | Should -Match ([regex]::Escape("VS Code's Local harness ignores that field"))
       $text | Should -Match 'dispatch tool supports that parameter'
-      $text | Should -Match 'record host default'
+      $text | Should -Match 'model picker'
     }
   }
 

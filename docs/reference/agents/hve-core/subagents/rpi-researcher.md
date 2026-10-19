@@ -3,7 +3,7 @@ title: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-17
+ms.date: 2026-10-19
 ms.topic: reference
 keywords:
   - agent
@@ -32,8 +32,7 @@ Gathers candidate sources for one bounded research question and returns source p
 
 Each dispatch can select the helper's reasoning effort when the dispatch tool supports that parameter.
 Its frontmatter declares Claude Haiku 5.5 at `max`; that fallback applies only on hosts that honor reasoning-effort frontmatter.
-VS Code's Local harness ignores that field.
-When the dispatcher cannot select an effort, record host default rather than claiming the requested level or a guaranteed `max`.
+VS Code's Local harness ignores that field, so the helper runs at the effort chosen for its model in the model picker.
 Where supported, rpi-research lowers a lane to `low` when a tool guarantees a complete result, such as a search inventory, and keeps `max` for lanes that read for meaning.
 
 The helper gathers and returns; it does not conclude. Its return lists each suggested source with an exact location (a workspace-relative path and heading or symbol, or a URL with retrieval date), a line on what it appears to contain, a line on why it seems relevant, verbatim excerpts when a contract was requested, and a brief interpretation labeled as unverified.

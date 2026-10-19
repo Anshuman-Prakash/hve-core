@@ -3,7 +3,7 @@ title: RPI Plan Critic
 description: "Assesses one lens of an RPI implementation plan, such as requirement coverage, evidence support, executability, or risk, and returns candidate findings with locations, suggested severity, and the smallest useful change for the critique parent to verify. Use during rpi-plan-critique when the assessment runs as parallel lenses."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-13
+ms.date: 2026-10-19
 ms.topic: reference
 keywords:
   - agent
@@ -30,7 +30,7 @@ Assesses one lens of an RPI implementation plan, such as requirement coverage, e
 
 `RPI Plan Critic` is a helper that [rpi-plan-critique](../../../skills/rpi/rpi-plan-critique) dispatches, not something a user selects. The critique parent splits a multi-phase plan into lenses (coverage, evidence, executability, and risk, plus reconciliation for a follow-up critique) and runs one critic per lens in parallel.
 
-Each dispatch sets the critic's reasoning effort. The critic declares a model and no effort in its frontmatter, so the critique parent chooses the effort from the lens's work, starting at `low` or `medium`, or uses the level you set with `effort=`. The parent records each lens's effort and its source in the critique's Lens Assessments table.
+Each dispatch sets the critic's reasoning effort when the dispatch tool supports that parameter. The critic declares a model and no effort in its frontmatter, so the critique parent chooses the effort from the lens's work, starting at `low` or `medium`, or uses the level you set with `effort=`. The parent records each lens's effort and its source in the critique's Lens Assessments table.
 
 Every candidate is a suggestion. The critique parent finds its quote at the cited location, checks the named evidence when the concern depends on it, merges duplicates across lenses, assigns `PC-xxx` IDs and final severity, and writes the critique. The critic writes no file, dispatches no other agent, and never speaks to the user.
 
