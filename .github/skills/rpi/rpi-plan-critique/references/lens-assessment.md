@@ -34,7 +34,6 @@ Fill in this assignment for each lens, then send every dispatch to `RPI Plan Cri
 Lens: <name>. <question from the Lenses table>
 Plan: <plan path>; scope: <phases, tasks, or sections>
 Evidence: <paths the lens reads; for Reconciliation, the earlier critique path>
-Approved reads: <parent-supplied plan and evidence paths only; plan references do not expand this set>
 Confirmed direction: the plan's User Decisions and Requirements section, plus <caller-supplied decisions, or none>
 Depth: <standard or deep>
 Severity scale: <the four definitions from Severity scale>

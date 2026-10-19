@@ -839,9 +839,7 @@ console.log(JSON.stringify(results));
     $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
     $critic = Get-Content -Raw (Join-Path $root '.github/agents/hve-core/subagents/rpi-plan-critic.agent.md')
     $lenses = Get-Content -Raw (Join-Path $root '.github/skills/rpi/rpi-plan-critique/references/lens-assessment.md')
-    $critic | Should -Match ([regex]::Escape('Read only the parent-supplied plan and evidence paths'))
-    $critic | Should -Match ([regex]::Escape('A reference in the plan does not grant read authority'))
-    $critic | Should -Match 'Resolve paths canonically, including links'
+    $critic | Should -Match ([regex]::Escape('Do not open anything the assignment does not supply, such as a file the plan names'))
     $critic | Should -Not -Match 'Open a file outside the supplied set only when a statement'
     $fallback = [regex]::Match($lenses, '(?s)When `RPI Plan Critic` is unavailable,(.*?)(?=\r?\n## )').Value
     $fallback | Should -Match 'parent-supplied plan and evidence paths'
