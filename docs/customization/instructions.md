@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-20
 ms.topic: how-to
 keywords:
   - instructions
