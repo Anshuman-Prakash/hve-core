@@ -3,12 +3,12 @@ title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-10-21
 ms.topic: tutorial
 keywords:
   - getting started
   - first interaction
-   - rpi agent
+  - rpi agent
   - github copilot
 estimated_reading_time: 2
 ---
