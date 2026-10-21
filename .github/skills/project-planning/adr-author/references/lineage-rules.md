@@ -2,7 +2,7 @@
 title: ADR Lineage Rules
 description: Five supersession and lineage rules enforced by the adr-author skill validators (GP-06)
 author: microsoft/hve-core
-ms.date: 2026-05-02
+ms.date: 2026-10-21
 ms.topic: reference
 keywords:
   - adr
