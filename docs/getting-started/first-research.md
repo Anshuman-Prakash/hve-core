@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-21
 ms.topic: tutorial
 keywords:
   - getting started
