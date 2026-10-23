@@ -56,7 +56,7 @@ Switch agents in the picker, this time to SSSC Planner. The agent runs a six-pha
 3. Standards mapping against OpenSSF Scorecard, SLSA, Sigstore, the OpenSSF Best Practices Badge, and SBOM minimum elements
 4. Gap analysis with adoption categories and effort sizing
 5. Backlog generation with priority derivation
-6. Review and handoff to the next planner or to your work-tracking system
+6. Review and handoff to your work-tracking system
 
 The research document from step 1 makes the scoping phase faster. The planner has context to work with instead of asking you to recite the repo from memory.
 
