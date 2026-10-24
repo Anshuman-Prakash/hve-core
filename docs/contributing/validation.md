@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-10-22
 ms.topic: how-to
 keywords:
   - validation
@@ -127,6 +127,33 @@ The hosted Python test workflow runs on Ubuntu. A green hosted check therefore
 demonstrates Linux behavior, not a native-Windows full-suite pass; run the
 Windows commands above for that evidence. Screen-reader execution and browser
 installation are separate prerequisites for their own validation lanes.
+
+## Node test lane
+
+PR validation runs Node tests through one reusable lane. Discovery selects every
+directory that ships a `*.test.*` or `*.spec.*` module (`mjs`, `cjs`, or `js`)
+among these project kinds:
+
+* Skills: a directory that contains `SKILL.md`
+* Slide decks: a direct child of `slides/`
+* Copilot extensions and canvases: a directory under `.github/extensions/` that
+  contains `extension.mjs`
+* The workflow validator under `scripts/linting/workflow-validator/`
+
+Each project runs `node --test` with coverage from its own directory and
+uploads coverage under the Codecov `node` flag. A project runs only when its
+JavaScript files change, except where its tests read other inputs: slide decks
+and the `hve-slides` skill run on any change in their directory, and every
+extension runs on any change under `.github/extensions/`, because canvas tests
+also read UI assets and the repository project entries.
+
+Reproduce a project locally with `node --test` from its directory, or use a
+package command:
+
+| Project                         | Command                   |
+|---------------------------------|---------------------------|
+| Copilot extensions and canvases | `npm run test:extensions` |
+| HVE slides skill and decks      | `npm run test:slides`     |
 
 ## Install behind a restricted network
 
@@ -351,7 +378,32 @@ npm run security:codeql-gate -- -SarifPath ./python.sarif
 
 The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
 `PowerShell-Yaml` module. It makes no network calls and does not change alert
-state.
+state. It accepts SARIF from any code-scanning tool; pass `-Threshold All` to
+fail every result, as scanners gated at zero findings do.
+
+### Gated local scanner runs
+
+`validate:local` runs the workflow validator, tool-version check, and
+dependency-pinning scan through the same gate, as CI does. A finding fails only
+when `security/code-scanning-exceptions.yml` does not excuse it, and a stale or
+malformed exception also fails.
+
+| Command                                       | Scanner                           | SARIF                                   |
+|-----------------------------------------------|-----------------------------------|-----------------------------------------|
+| `npm run lint:workflows:gated`                | Workflow validator and ShellCheck | `logs/workflow-validation.sarif`        |
+| `npm run lint:tool-version-consistency:gated` | `Test-ToolVersionConsistency.ps1` | `logs/tool-version-consistency.sarif`   |
+| `npm run lint:dependency-pinning:gated`       | `Test-DependencyPinning.ps1`      | `logs/dependency-pinning-results.sarif` |
+
+Each command runs `scripts/security/Invoke-ScannerGate.ps1`. It fails when the
+scanner exits with a code it never uses for findings or writes no SARIF.
+`lint:workflows:gated` needs the validator's npm dependencies and the exact
+ShellCheck version from `scripts/security/tool-checksums.json` on `PATH`. The
+raw `lint:workflows`, `lint:tool-version-consistency`, and
+`lint:dependency-pinning` scripts report every finding without consulting the
+register.
+
+`npm run lint:zizmor` passes `--no-ignores`, as `zizmor-scan.yml` does, so
+inline `zizmor: ignore` comments suppress nothing.
 
 ## Rust unit-test network-isolation lane
 
