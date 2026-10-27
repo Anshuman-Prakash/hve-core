@@ -73,6 +73,6 @@ The scripts emit free-form messages rather than error codes. The messages below 
 | 4    | `update_lineage.py supersede` | `update_lineage: superseded ADR not found: <path>`, or `update_lineage: I/O error: <detail>` when a write fails           | 1         |
 | 5    | `update_lineage.py allocate`  | `update_lineage: last_decision_id: must be int or NNNN string`, or `update_lineage: last_decision_id exhausted (>= 9999)` | 1         |
 
-`update_lineage.py` returns `0` on success, `1` for a validation or I/O failure, and `2` for a single-parent violation. `validate_frontmatter.py` returns `0` when every file passes and `1` when any file has errors.
+`update_lineage.py` returns `0` on success, `2` for a single-parent violation or a permission error, and `1` for other validation or I/O failures. `validate_frontmatter.py` returns `0` when every file passes and `1` when any file has errors.
 
 Rule 3 has no entry above because no script detects a violation of it.
