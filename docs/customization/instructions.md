@@ -174,7 +174,7 @@ Practical stacking example:
 * Both activate when you edit any Markdown file, and their guidance combines
 
 > [!NOTE]
-> Instruction stacking is additive. Avoid placing contradictory rules in files with overlapping `applyTo` patterns, because overlapping patterns create ambiguity that no precedence rule will settle. To see which instructions were applied to a response, start a new chat and check its **References** section.
+> Instruction stacking is additive. Avoid placing contradictory rules in files with overlapping `applyTo` patterns, because overlapping patterns create ambiguity that no precedence rule will settle. To see which instructions were applied to a response, expand its **References** section.
 
 ## Role Scenarios
 
