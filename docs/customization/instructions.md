@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-10-23
+ms.date: 2026-10-26
 ms.topic: how-to
 keywords:
   - instructions
@@ -165,7 +165,11 @@ When you edit a file that matches multiple instruction files, Copilot loads all 
 2. **Broad `applyTo` patterns** (like `'**'`) apply to every file they match.
 3. **Specific `applyTo` patterns** (like `'**/*.test.py'`) apply *alongside* the broader ones, not instead of them.
 
-Because the guidance is combined rather than ranked, a contradiction between two matching files is not resolved for you. [VS Code's guidance](https://code.visualstudio.com/docs/agent-customization/custom-instructions#_resolve-conflicting-instructions) is explicit: do not depend on a file order or precedence rule to resolve conflicts, and do not assume that one source overrides the others. Resolve contradictions at their source instead - remove the duplicate guidance, or narrow the `applyTo` patterns so that the two files no longer match the same file.
+Because the guidance is combined rather than ranked, a contradiction between two matching files is not resolved for you.
+[VS Code's guidance](https://code.visualstudio.com/docs/agent-customization/custom-instructions#_resolve-conflicting-instructions) is explicit:
+do not depend on a file order or precedence rule to resolve conflicts, and do not assume that one source overrides the others.
+Resolve contradictions at their source instead - remove the duplicate guidance, or narrow the `applyTo` patterns
+so that the two files no longer match the same file.
 
 Practical stacking example:
 
